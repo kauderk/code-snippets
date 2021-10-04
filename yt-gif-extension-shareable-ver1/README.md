@@ -20,7 +20,7 @@ Hover over the YT GIF icon on the topbar.
 - Previous Time Stamp
   - Seek to the last timestamp before editing a block (tweak the same block's content)
 - Clip Span Format
-  - Display the clip's remainings duration or it's duration only. You either want to see the clip's live span from `t=` to `end=` or from the `t=` to the `actual video end`. The automatic rewind YT GIF feature will persist no matter what.
+  - Display the clip's remainings duration or it's duration only. You either want to see the clip's live span from `t=` to `end=` or from the `t=` to the `actual video duration`. The YT GIF will rewind when it reaches it's `end=` no matter what.
 - Referenced Time Stamp
   - Use the last timestamp from it's referenced parent. Say you are watching a YT GIF on the main bar and you want to open the BLOCK `shift + click`, should the clip start `t=` be referenced?
 - Smoll Vid When Big Ends
