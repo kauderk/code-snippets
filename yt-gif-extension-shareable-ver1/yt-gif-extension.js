@@ -1,4 +1,4 @@
-//verion 20 - semi-refactored
+//verion 21 - semi-refactored
 // Load the IFrame Player API code asynchronously.
 const tag = document.createElement('script');
 tag.src = "https://www.youtube.com/player_api";
@@ -69,7 +69,15 @@ function isHTML_AND_InputsSetUP() {
                     <span class="bp3-popover-wrapper">
                         <span class="bp3-popover-target">
                             <div class="dropdown">
-                                <span class="dropbtn bp3-button bp3-minimal bp3-small bp3-icon-more"></span>
+                                <span class="dropbtn bp3-button bp3-minimal bp3-small bp3-icon-more ty-gif-icon">
+                                    <svg class="yt-gif-svg" width="24px" height="24px" viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path class="yt-gif-svg-bg-none" fill="none" d="m11 14 7-4-7-4z" />
+                                        <path class="yt-gif-svg-bg" d="M4 8H2v12c0 1.103.897 2 2 2h12v-2H4V8z" />
+                                        <path class="yt-gif-svg-bg"
+                                            d="M20 2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm-9 12V6l7 4-7 4z" />
+                                    </svg>
+                                </span>
                                 <div class="dropdown-content">
                                     <span class="dropdown-item">
                                         <label for="" title="Seek to last timestamp before editing a block">Previous Time
@@ -82,7 +90,8 @@ function isHTML_AND_InputsSetUP() {
                                         <input type="checkbox" name="" id="clipSpanCheck" checked>
                                     </span>
                                     <span class="dropdown-item">
-                                        <label for="" title="Should use the last timestamp from it's referenced parent">Referenced
+                                        <label for=""
+                                            title="Should use the last timestamp from it's referenced parent">Referenced
                                             Time Stamp</label>
                                         <input type="checkbox" name="" id="referencedTimeStamp" checked>
                                     </span>
@@ -103,6 +112,14 @@ function isHTML_AND_InputsSetUP() {
                                         <input type="range" min="1" max="60" value="1" class="slider" id="wheelOffset">
                                         <label for="" title="Amount of seconds | scroll wheel" id="rangeValue">1</label>
                                     </span>
+                                    <div class="dropdown-show-info">
+                                        <span class="dropdown-info-message">Show Info</span>
+                                        <div class="dropdown-info-box">
+                                            <span class="dropdown-info">💡 Hover over the YT GIFs to enable them</span>
+                                            <span class="dropdown-info">🗲 While hovering out HOLD the middle mouse 🖱️ button
+                                                to keep on playing the YT GIF</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </span>
@@ -140,7 +157,8 @@ function checkVidExist() {
 
 
 
-
+//↓↓↓↓↓↓↓↓↓↓
+// 
 async function onYouTubePlayerAPIReady(playerWrap) {
     const newId = iframeIDprfx + Number(++creationCounter);
 
@@ -305,7 +323,11 @@ async function onYouTubePlayerAPIReady(playerWrap) {
         };
     }
 }
-
+//
+//↓↓↓↓↓↓↓↓↓↓
+//↓↓↓↓↓↓↓↓↓↓
+//↓↓↓↓↓↓↓↓↓↓
+// 
 function onPlayerReady(event) {
     const t = event.target;
     const iframe = document.querySelector("#" + t.h.id) || t.getIframe();
@@ -691,8 +713,6 @@ function onPlayerReady(event) {
     //#endregion
 
 }
-
-
 //
 //↓↓↓↓↓↓↓↓↓↓
 //↓↓↓↓↓↓↓↓↓↓
