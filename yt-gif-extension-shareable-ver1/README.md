@@ -9,7 +9,7 @@ Simple as that, create as many "YouTube Gifs" and begin to visualize some ideas.
 `Disclaimer` It's crucial that you have installed `roam42` https://roamjs.com/extensions/roam42
 ![Snag_4cf13e14](https://user-images.githubusercontent.com/65237382/135795342-c27f21b9-fbbe-4567-b6b0-b345a031f522.png)
 
-# Detail Functionality
+# Functionality
 Hover over the YT GIF icon on the topbar.
 
 ![Snag_4f6750e8](https://user-images.githubusercontent.com/65237382/135885824-e00adae9-3887-48ce-b5fc-5e02aef7e466.png)
