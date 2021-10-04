@@ -9,10 +9,10 @@ Simple as that, create as many "Youtube Gifs" and begin to visualize some ideas.
 
 ## How & where
 ### CSS
-Under the `roam/css` page or a block with the component `{{{[[roam/css]]}}}`, in both cases, the CSS will live inside a ```css ``` code block.
+Under the `roam/css` page or a block with the component `{{{[[roam/css]]}}}`, in both cases, the CSS will live inside a \`\`\`css \`\`\` code block.
 
 ### JS
-Under a block with the component `{{{[[roam/js]]}}}`, the javascript code will live inside a `\`\`\`javascript \`\`\`` code block.
+Under a block with the component `{{{[[roam/js]]}}}`, the javascript code will live inside a \`\`\`javascript \`\`\` code block.
 
 # WHAT IT CAN LOOK LIKE
 ## `DISCALIMER` these styles && DARK CSS rules are not part of the demo
