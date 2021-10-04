@@ -9,6 +9,29 @@ Simple as that, create as many "YouTube Gifs" and begin to visualize some ideas.
 `Disclaimer` It's crucial that you have installed `roam42` https://roamjs.com/extensions/roam42
 ![Snag_4cf13e14](https://user-images.githubusercontent.com/65237382/135795342-c27f21b9-fbbe-4567-b6b0-b345a031f522.png)
 
+# Detail Functionality
+Hover over the YT GIF icon on the topbar
+![Snag_4f6750e8](https://user-images.githubusercontent.com/65237382/135885824-e00adae9-3887-48ce-b5fc-5e02aef7e466.png)
+
+- ### Timestamp: Hovering the YT GIF, most specifically the middle bottom section, you'll see the desired elapsed time format.
+
+- Previous Time Stamp
+ - Seek to the last timestamp before editing a block (tweak the same block's content)
+- Clip Span Format
+ - Display the clip's remainings duration or it's duration only. You either want to see the clip's live span from `t=` to `end=` or from the `t=` to the `actual video end`. The automatic rewind YT GIF feature will persist no matter what.
+- Referenced Time Stamp
+ - Use the last timestamp from it's referenced parent. Say you are watching a YT GIF on the main bar and you want to open the BLOCK `shift + click`, should the clip start `t=` be referenced?
+- Smoll Vid When Big Ends
+ - Exit Fullscreen When Clip Ends. Might seem trivial, but watching your favorite YT GIFs is hypnotizing and time consuming. So once the clip ends, should it exit full screen automatically?
+- Play On Hover
+ - All videos are paused to focus on one at a time. Hop form one video to the next one, without worrying about multiple YT GIFs playing at the same time.
+- Playing
+ - Loaded videos autoplay and keep on playing. ALL VISISBLE YT GIFs are playing without sound. Hover over one at a time to unmute them.
+- Scroll Wheel
+ - Up to 60 seconds, hover over the `Timestamp` and scroll up and down to go back and forward into the video. You can't go past the end `end=` of behind the start `t=`. 
+
+---
+
 ## How & where
   - ### CSS
     - Under the `roam/css` page or a block with the component `{{{[[roam/css]]}}}`, in both cases, the CSS will live inside a \`\`\`css \`\`\` code block.
