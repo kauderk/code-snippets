@@ -10,14 +10,14 @@ Simple as that, create as many "Youtube Gifs" and begin to visualize some ideas.
 ![Snag_4cf13e14](https://user-images.githubusercontent.com/65237382/135795342-c27f21b9-fbbe-4567-b6b0-b345a031f522.png)
 
 ## How & where
-### CSS
-Under the `roam/css` page or a block with the component `{{{[[roam/css]]}}}`, in both cases, the CSS will live inside a \`\`\`css \`\`\` code block.
+  - ### CSS
+    - Under the `roam/css` page or a block with the component `{{{[[roam/css]]}}}`, in both cases, the CSS will live inside a \`\`\`css \`\`\` code block.
 
-### JS
-Under a block with the component `{{{[[roam/js]]}}}`, the javascript code will live inside a \`\`\`javascript \`\`\` code block.
+  - ### JS
+    - Under a block with the component `{{{[[roam/js]]}}}`, the javascript code will live inside a \`\`\`javascript \`\`\` code block.
 
 # WHAT IT CAN LOOK LIKE
-## `DISCALIMER` these styles && DARK CSS rules are not part of the demo
+### `DISCALIMER` these styles && DARK CSS rules are not part of the demo
 
 ![Snag_4d185b14](https://user-images.githubusercontent.com/65237382/135798255-c4a7f083-bd55-4043-9609-e08cdf8b8a43.png)
 ![Snag_4d17ff58](https://user-images.githubusercontent.com/65237382/135798221-d9831d2e-7592-498a-a39a-6aeece868ec9.png)
