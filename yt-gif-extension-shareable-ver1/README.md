@@ -1,4 +1,5 @@
 # What does it do?
+Loops videos between the `start` and `end` youtube parameters.
 You create `{{[[video]]: https://youtu.be/46A01oukux0?t=20&end=100 }}` blocks, note the `t=` and `end=`, though you can add playback speed also with `s=` up to `2`.
 Simple as that, create as many "Youtube Gifs" and start to visualize some ideas.
 
