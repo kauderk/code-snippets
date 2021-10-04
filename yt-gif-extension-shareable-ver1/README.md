@@ -4,8 +4,8 @@ You create some `{{[[video]]: https://youtu.be/46A01oukux0?t=20&end=100 }}` bloc
 Simple as that, create as many "Youtube Gifs" and begin to visualize some ideas.
 
 # HOW TO SET IT UP
-![Snag_4c9a90de](https://user-images.githubusercontent.com/65237382/135787192-6a43761d-e7a0-47e0-a633-1f093a6ff87d.png)
-
+`Disclaimer` It's crucial that you have installed `roam42` https://roamjs.com/extensions/roam42
+![Snag_4cf13e14](https://user-images.githubusercontent.com/65237382/135795342-c27f21b9-fbbe-4567-b6b0-b345a031f522.png)
 
 ## How & where
 ### CSS
