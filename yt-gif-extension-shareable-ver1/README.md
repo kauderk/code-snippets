@@ -13,3 +13,11 @@ Under the `roam/css` page or a block with the component `{{{[[roam/css]]}}}`, in
 
 ### JS
 Under a block with the component `{{{[[roam/js]]}}}`, the javascript code will live inside a ```javascript ``` code block.
+
+# WHAT IT CAN LOOK LIKE
+## `DISCALIMER` these styles && DARK CSS rules are not part of the demo
+
+![Snag_4d185b14](https://user-images.githubusercontent.com/65237382/135798255-c4a7f083-bd55-4043-9609-e08cdf8b8a43.png)
+![Snag_4d17ff58](https://user-images.githubusercontent.com/65237382/135798221-d9831d2e-7592-498a-a39a-6aeece868ec9.png)
+![Snag_4d1838c7](https://user-images.githubusercontent.com/65237382/135798239-d1ee9251-bc36-4c29-8cf8-a2f261e77dd1.png)
+![Snag_4d180b2f](https://user-images.githubusercontent.com/65237382/135798225-091e8f9c-0b08-42d5-999e-da2309e002d9.png)
