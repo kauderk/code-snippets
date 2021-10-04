@@ -8,7 +8,7 @@
   --yt-gif-icon-bg: #696969;
 }
 /*light mode*/
-:root{
+:root-{
   --drop-menu-opt-h-bg: rgba(167,182,194,0.3);
   --drop-menu-opt-c: inherit;
   --drop-menu-btn-h: var(--drop-menu-opt-h-bg);
@@ -21,6 +21,11 @@
 }
 .ty-gif-icon:before{
   display: none;
+}
+svg.yt-gif-svg {
+  height: 100%;
+  width: 85%;
+  aspect-ratio: 1 / 1;
 }
 path.yt-gif-svg-bg{
   fill: var(--yt-gif-icon-bg);
