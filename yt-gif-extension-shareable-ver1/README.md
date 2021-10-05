@@ -9,6 +9,14 @@ Simple as that, create as many "YouTube Gifs" and begin to visualize some ideas.
 `Disclaimer` It's crucial that you have installed `roam42` https://roamjs.com/extensions/roam42
 ![Snag_4cf13e14](https://user-images.githubusercontent.com/65237382/135795342-c27f21b9-fbbe-4567-b6b0-b345a031f522.png)
 
+## How & where
+  - ### CSS
+    - Under the `roam/css` page or a block with the component `{{{[[roam/css]]}}}`, in both cases, the CSS will live inside a \`\`\`css \`\`\` code block.
+
+  - ### JS
+    - Under a block with the component `{{{[[roam/js]]}}}`, the javascript code will live inside a \`\`\`javascript \`\`\` code block.
+---
+
 # Functionality
 Hover over the YT GIF icon on the topbar.
 
@@ -33,13 +41,6 @@ Hover over the YT GIF icon on the topbar.
   - Up to 60 seconds, hover over the `Timestamp` and scroll up and down to go back and forward into the video. You can't go past the end `end=` of behind the start `t=`.
 
 ---
-
-## How & where
-  - ### CSS
-    - Under the `roam/css` page or a block with the component `{{{[[roam/css]]}}}`, in both cases, the CSS will live inside a \`\`\`css \`\`\` code block.
-
-  - ### JS
-    - Under a block with the component `{{{[[roam/js]]}}}`, the javascript code will live inside a \`\`\`javascript \`\`\` code block.
 
 # WHAT IT CAN LOOK LIKE
 ### `DISCALIMER` these styles && DARK CSS rules are not part of the demo
