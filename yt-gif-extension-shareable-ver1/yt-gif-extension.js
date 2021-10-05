@@ -4,14 +4,17 @@ const tag = document.createElement('script');
 tag.src = "https://www.youtube.com/player_api";
 const firstScriptTag = document.getElementsByTagName('script')[0];
 firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-const iframeIDprfx = "player_";
-let creationCounter = -1;
-
-//-----------------------------------
+// there are some funny checkbox combos 
+/*-----------------------------------*/
+//PERSISTANTE SETTINGS
+const InAndOutKeys = {
+    ctrlKey: "false",
+    shiftKey: "false",
+    altKey: "false",
+}
+/*-----------------------------------*/
 const allVideoParameters = new Map();
 const lastBlockIDParameters = new Map();
-//
 const videoParams = {
     src: "https://www.youtube.com/embed/---------?",
     id: "---------",
@@ -33,16 +36,21 @@ const UI = {
     timeStamp: input(),
     referencedTimeStamp: input(),
     exitFullscreenWhenClipEnds: input(),
+    hoverInMute: input(),
+    strictOneUnmuted: input(),
     playOnHoverBtn: input(),
     playingBtn: input(),
     wheelOffset: input(),
     rangeValue: label()
 }
-//-----------------------------------
+//
+const iframeIDprfx = "player_";
+let creationCounter = -1;
+/*-----------------------------------*/
 
 
 
-//onse finished, iframe detection will be called every 500ms
+//once finished, iframe detection will be called every 500ms
 let setUP = setInterval(() => {
     if ((typeof window.roam42?.common == 'undefined')) {
         //this is ugly - 
@@ -98,6 +106,16 @@ function isHTML_AND_InputsSetUP() {
                                     <span class="dropdown-item">
                                         <label for="" title="Exit Fullscreen When Clip Ends">Smoll Vid When Big Ends</label>
                                         <input type="checkbox" name="" id="exitFullscreenWhenClipEnds" checked>
+                                    </span>
+                                    <span class="dropdown-item">
+                                        <label for="" title="Play the video without sound when hovering the frame">YT GIF mutted
+                                            on mouse over</label>
+                                        <input type="checkbox" name="" id="hoverInMute">
+                                    </span>
+                                    <span class="dropdown-item">
+                                        <label for="" title="Maximum of 1 YT GIF to play unmuted at a time">Mute everything
+                                            except current</label>
+                                        <input type="checkbox" name="" id="strictOneUnmuted" checked>
                                     </span>
                                     <span class="dropdown-item">
                                         <label for="" title="All videos are paused to focus on one at the time">Play On
@@ -157,15 +175,15 @@ function checkVidExist() {
 
 
 
-//↓↓↓↓↓↓↓↓↓↓
-// 
+/*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
+//
 async function onYouTubePlayerAPIReady(playerWrap) {
     const newId = iframeIDprfx + Number(++creationCounter);
 
-    //extract data form url and loading clip allVideoParameters
-    const InputBlockUID = await playerWrap.closest("span[data-uid]")?.getAttribute("data-uid") ||
-        await playerWrap.closest(".rm-block__input")?.id.slice(-9) ||
-        await document.querySelector(".bp3-popover-open").closest(".rm-block__input")?.id.slice(-9);
+    // uid slicing the last 9 characters form closest blockID
+    const uid = playerWrap.closest("span[data-uid]")?.getAttribute("data-uid") ||
+        closestBlockID(playerWrap).slice(-9) ||
+        closestBlockID(document.querySelector(".bp3-popover-open")).slice(-9);
 
     //the div that the YTiframe will replace
     playerWrap.className = 'YTwrapper dont-focus-block';
@@ -177,20 +195,20 @@ async function onYouTubePlayerAPIReady(playerWrap) {
     </div>`);
 
     //weird recursive function
-    const url = await InputBlockVideoParams(InputBlockUID);
+    const url = await InputBlockVideoParams(uid);
     allVideoParameters.set(newId, urlConfig(url));
 
     // record a point of reference, mainly for theater mode
-    const recording = Object.create(recordedIDs);
-    recording.uid = InputBlockUID;
-    const blockID = playerWrap.closest(".rm-block__input")?.id;
+    const record = Object.create(sesionIDs);
+    sesionIDs.uid = uid;
+    const blockID = closestBlockID(playerWrap);
     if (blockID != null)
-        recordedIDs.set(blockID, recording);
+        recordedIDs.set(blockID, record);
 
     //ACTUAL CREATION OF THE EMBEDED YOUTUBE VIDEO PLAYER (target)
     return new window.YT.Player(newId, playerConfig());
 
-    //////////////////////////////////////////////////////////////////////////////
+    //#region local utilites
     async function InputBlockVideoParams(tempUID) {
         let [finalURL, innerUIDs] = await TryToFindURL(tempUID);
         //
@@ -322,12 +340,14 @@ async function onYouTubePlayerAPIReady(playerWrap) {
             }
         };
     }
+    //#endregion
 }
 //
-//↓↓↓↓↓↓↓↓↓↓
-//↓↓↓↓↓↓↓↓↓↓
-//↓↓↓↓↓↓↓↓↓↓
-// 
+/*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
+/*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
+/*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
+/*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
+//
 function onPlayerReady(event) {
     const t = event.target;
     const iframe = document.querySelector("#" + t.h.id) || t.getIframe();
@@ -341,7 +361,7 @@ function onPlayerReady(event) {
     const speed = map?.speed || 1;
     const tickOffset = 1000 / speed;
     //
-    const blockID = iframe?.closest(".rm-block__input")?.id;
+    const blockID = closestBlockID(iframe);
     const rocording = recordedIDs.get(blockID);
     //theaterMode 🚧
     if (rocording != null)
@@ -376,6 +396,13 @@ function onPlayerReady(event) {
             t.pauseVideo();
         }
     }
+    function anyValidInAndOutKey(e) {
+        for (const name in InAndOutKeys) {
+            const pass = e[name];
+            if (pass) return pass;
+        }
+        return false;
+    }
     //#endregion
 
     //
@@ -408,7 +435,7 @@ function onPlayerReady(event) {
                 if (players[i] === iframe) continue;
                 if (players[i]?.src.slice(0, -11) == iframe.src.slice(0, -11)) { //removes at least "widgetid=··" so they reconize each other
                     //
-                    const desiredBlockID = blockID || document.querySelector("body > span[blockID]")?.getAttribute("blockID") || players[i].closest(".rm-block__input")?.id;
+                    const desiredBlockID = blockID || document.querySelector("body > span[blockID]")?.getAttribute("blockID") || closestBlockID(players[i]);
                     //
                     const desiredTarget = recordedIDs.get(desiredBlockID)?.target || t;
                     const desiredTime = tick(desiredTarget) || start;
@@ -435,14 +462,24 @@ function onPlayerReady(event) {
         if (e.type == "mouseenter") {
             // I'm afraid this event is slower to get attached than 200ms intervals... well 
             globalHumanInteraction = true;
-            if (UI.playOnHoverBtn.checked) {
-                togglePlay(UI.playOnHoverBtn.checked);
-                t.unMute();
+            //
+            togglePlay(true);
+            // kinda spaguetti code🚧 
+            if ((e.buttons == 4 || anyValidInAndOutKey(e)) && UI.strictOneUnmuted.checked) {
+                const ytGifs = inViewport(allIframeIDprfx());
+                if (ytGifs)
+                    for (let i = 0; i < ytGifs.length; i++) {
+                        const blockID = closestBlockID(ytGifs[i]);
+                        recordedIDs.get(blockID)?.target?.mute();
+                    }
             }
+            // ...but how else...? 🚧
+            if (!UI.hoverInMute.checked)
+                t.unMute();
         }
         else if (e.type == "mouseleave") {
             globalHumanInteraction = false;
-            //true = play | false = stop
+
             togglePlay(!UI.playOnHoverBtn.checked && t.__proto__.isPlaying);
             t.mute();
         }
@@ -536,7 +573,8 @@ function onPlayerReady(event) {
     }
     function OptionToKeepPlaying(e) {
         e = e || window.event;
-        if (e.ctrlKey || e.buttons == 4)
+
+        if (e.buttons == 4 || anyValidInAndOutKey(e))
             videoIsPlayingWithSound();
     }
     // for the timeDisplay | Utilie
@@ -714,10 +752,11 @@ function onPlayerReady(event) {
 
 }
 //
-//↓↓↓↓↓↓↓↓↓↓
-//↓↓↓↓↓↓↓↓↓↓
-//↓↓↓↓↓↓↓↓↓↓
-// 
+/*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
+/*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
+/*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
+/*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
+//
 //loops between "start" and "end" boundaries
 function onStateChange(state) {
     let t = state.target;
@@ -782,8 +821,8 @@ function emptyEl(classList, el) {
 }
 
 function exitFullscreen() {
-    if (!(window.innerHeight == screen.height)) return false;
-
+    //if (window.innerHeight == screen.height) return false;
+    if (!document.fullscreenElement) return false;
     if (document.exitFullscreen) {
         document.exitFullscreen();
     } else if (document.mozCancelFullScreen) {
@@ -792,6 +831,13 @@ function exitFullscreen() {
         document.webkitExitFullscreen();
     }
 }
+function closestBlockID(el) {
+    return el?.closest(".rm-block__input")?.id
+}
+function allIframeIDprfx() {
+    return document.querySelectorAll(`[id*=${iframeIDprfx}]`);
+}
+
 
 function htmlToElement(html) {
     var template = document.createElement('template');
