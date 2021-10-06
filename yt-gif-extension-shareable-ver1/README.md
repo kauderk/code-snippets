@@ -25,6 +25,7 @@ Hover over the YT GIF icon on the topbar.
 ---
 
 ### Timestamp: Hover over the YT GIF, most specifically the middle bottom section, you'll see the desired elapsed time format.
+####### Some are outdated, I'll update them tomorrow
 - Previous Time Stamp
   - Seek to the last timestamp before editing a block (tweak the same block's content)
 - Clip Span Format
