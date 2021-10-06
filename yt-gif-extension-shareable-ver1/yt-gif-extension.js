@@ -1,5 +1,5 @@
 //verion 21 - semi-refactored
-// Load the IFrame Player API.
+// loading the YOUTUBE IFRAME API
 const tag = document.createElement('script');
 tag.src = "https://www.youtube.com/player_api";
 const firstScriptTag = document.getElementsByTagName('script')[0];
