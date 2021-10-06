@@ -500,7 +500,7 @@ function onPlayerReady(event) {
             for (let i = 0; i < players.length; i++) {
                 //ignore itself
                 if (players[i] === iframe) continue;
-                if (players[i]?.src.slice(0, -11) == iframe.src.slice(0, -11)) { //removes at least "widgetid=··" so they reconize each other
+                if (players[i]?.src?.slice(0, -11) == iframe?.src?.slice(0, -11)) { //removes at least "widgetid=··" so they reconize each other
                     //
                     const desiredBlockID = blockID || document.querySelector("body > span[blockID]")?.getAttribute("blockID") || closestBlockID(players[i]);
                     //
