@@ -20,7 +20,7 @@ Simple as that, create as many "YouTube Gifs" and begin to visualize some ideas.
 # Functionality
 Hover over the YT GIF icon on the topbar.
 
-![Snag_56fcae78](https://user-images.githubusercontent.com/65237382/136136151-5e621d8b-b360-4146-8a44-c39fa8432bb8.png)
+![Snag_57088dd6](https://user-images.githubusercontent.com/65237382/136137184-54ee390e-45f7-4f46-b5f5-ccd530f2b0bc.png)
 
 ---
 
