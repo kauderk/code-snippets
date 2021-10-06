@@ -10,11 +10,11 @@ Simple as that, create as many "YouTube Gifs" and begin to visualize some ideas.
 ![Snag_4cf13e14](https://user-images.githubusercontent.com/65237382/135795342-c27f21b9-fbbe-4567-b6b0-b345a031f522.png)
 
 ## How & where
-  - ### CSS
-    - Under the `roam/css` page or a block with the component `{{{[[roam/css]]}}}`, in both cases, the CSS will live inside a \`\`\`css \`\`\` code block.
-
   - ### JS
     - Under a block with the component `{{{[[roam/js]]}}}`, the javascript code will live inside a \`\`\`javascript \`\`\` code block.
+  - ### CSS
+    - Under the `roam/css` page or a block with the component `{{{[[roam/css]]}}}`, in both cases, the CSS will live inside a \`\`\`css \`\`\` code block.
+    - **DISCLAIMER - the extension works regardless, this is only for visuals.** Because of the `cross origin` web policy - we are not able to style the YT IFRAME. But I've developed the perfect CSS [STYLUS](https://chrome.google.com/webstore/detail/stylus/clngdbkpkpeebahjckkjfobafhncgmne?hl=en) rules to accommodate this annoyance. Just install the extension (chromium or mozilla) and import this [.json](https://github.com/kauderk/code-snippets/blob/7dd7cc565e4d4b1fbd83417719a41dcd7663a69f/yt-gif-extension-shareable-ver1/stylus-2021-10-03-yt-gif.json) file.
 ---
 
 # Functionality
