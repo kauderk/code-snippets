@@ -1,5 +1,5 @@
 //verion 21 - semi-refactored
-// loading the YOUTUBE IFRAME API
+// Load the IFrame Player API.
 const tag = document.createElement('script');
 tag.src = "https://www.youtube.com/player_api";
 const firstScriptTag = document.getElementsByTagName('script')[0];
@@ -105,21 +105,17 @@ function isHTML_AND_InputsSetUP() {
                                 <div class="dropdown-content">
                                     <span class="dropdown-item">
                                         <label for="" class="dropdown-item-description"
-                                            title="Seek to last timestamp before editing a block">Start form previous
-                                            timestamp
-                                        </label>
+                                            title="Seek to last timestamp before editing a block">Start from previous timestamp</label>
                                         <input type="checkbox" name="" id="start_form_previous_timestamp" checked>
                                     </span>
                                     <span class="dropdown-item">
                                         <label for="" class="dropdown-item-description"
-                                            title="Display the clip remaindings and it's duration only">Clip life span
-                                            format</label>
+                                            title="Display the clip remaindings and it's duration only">Clip lifespan format</label>
                                         <input type="checkbox" name="" id="clip_life_span_format" checked>
                                     </span>
                                     <span class="dropdown-item">
                                         <label for="" class="dropdown-item-description"
-                                            title="Should use the last timestamp from it's referenced parent">Referenced start
-                                            timestamp</label>
+                                            title="Should use the last timestamp from it's referenced parent">Referenced start timestamp</label>
                                         <input type="checkbox" name="" id="referenced_start_timestamp" checked>
                                     </span>
                                     <span class="dropdown-item">
@@ -132,20 +128,18 @@ function isHTML_AND_InputsSetUP() {
                                         <div class="dropdown-content dropdown-info-box">
                                             <span class="dropdown-item">
                                                 <label for="" class="dropdown-item-description"
-                                                    title="Maximum of 1 YT GIF to play unmuted at a time">Strict & recomended -
+                                                    title="Maximum of 1 YT GIF to play unmuted at a time">Strict & recommended -
                                                     mute everything except current</label>
                                                 <input type="radio" name="soundStyle" id="strict_mute_everything_except_current" checked>
                                             </span>
                                             <span class="dropdown-item">
                                                 <label for="" class="dropdown-item-description"
-                                                    title="Play the video without sound when hovering the frame">muted on
-                                                    mouse over</label>
+                                                    title="Play the video without sound when hovering the frame">muted on mouse enter</label>
                                                 <input type="radio" name="soundStyle" id="muted_on_mouse_over">
                                             </span>
                                             <span class="dropdown-item">
                                                 <label for="" class="dropdown-item-description"
-                                                    title="Holding the middle mouse button or the In and Out Keys won't unmute the YT GIF">muted
-                                                    on any mouse interaction</label>
+                                                    title="Holding the middle mouse button or the In and Out Keys won't unmute the YT GIF">muted either way</label>
                                                 <input type="radio" name="soundStyle" id="muted_on_any_mouse_interaction">
                                             </span>
                                         </div>
@@ -155,21 +149,18 @@ function isHTML_AND_InputsSetUP() {
                                         <div class="dropdown-content dropdown-info-box">
                                             <span class="dropdown-item">
                                                 <label for="" class="dropdown-item-description"
-                                                    title="All videos are paused to focus on one at the time">Recomended - play
-                                                    on mouse over</label>
+                                                    title="All videos are paused to focus on one at the time">Recomended - play on mouse enter</label>
                                                 <input type="radio" name="playStyle" id="play_on_mouse_over" checked>
                                             </span>
                                             <span class="dropdown-item">
                                                 <label for="" class="dropdown-item-description"
-                                                    title="Loaded videos autoplay and keep on playing">Visible clips start
-                                                    playing unmuted</label>
+                                                    title="Loaded videos autoplay and keep on playing">Visible clips begin to play unmuted</label>
                                                 <input type="radio" name="playStyle" id="visible_clips_start_to_play_unmuted">
                                             </span>
                                         </div>
                                     </div>
                                     <span class="dropdown-item rangeOffset">
-                                        <span class="dropdown-info-message dropdown-item-description">Scroll wheel timestamp
-                                            offset</span>
+                                        <span class="dropdown-info-message dropdown-item-description">Time offset on scroll wheel</span>
                                         <div class="dropdown-item-contain-two">
                                             <input type="range" min="1" max="60" value="1" class="slider" id="wheelOffset">
                                             <label for="" class="dropdown-item-description"
