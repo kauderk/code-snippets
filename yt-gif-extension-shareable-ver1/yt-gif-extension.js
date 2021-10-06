@@ -18,10 +18,10 @@ const UI = {
     },
     /* one at the time - radio */
     soundStyle: {
-        
+
         strict_mute_everything_except_current: 'true',
-        mutted_on_mouse_over: '',
-        mutted_on_any_mouse_interaction: '',
+        muted_on_mouse_over: '',
+        muted_on_any_mouse_interaction: '',
     },
     /* one at the time - radio */
     playStyle: {
@@ -138,15 +138,15 @@ function isHTML_AND_InputsSetUP() {
                                             </span>
                                             <span class="dropdown-item">
                                                 <label for="" class="dropdown-item-description"
-                                                    title="Play the video without sound when hovering the frame">Mutted on
+                                                    title="Play the video without sound when hovering the frame">muted on
                                                     mouse over</label>
-                                                <input type="radio" name="soundStyle" id="mutted_on_mouse_over">
+                                                <input type="radio" name="soundStyle" id="muted_on_mouse_over">
                                             </span>
                                             <span class="dropdown-item">
                                                 <label for="" class="dropdown-item-description"
-                                                    title="Holding the middle mouse button or the In and Out Keys won't unmute the YT GIF">Mutted
+                                                    title="Holding the middle mouse button or the In and Out Keys won't unmute the YT GIF">muted
                                                     on any mouse interaction</label>
-                                                <input type="radio" name="soundStyle" id="mutted_on_any_mouse_interaction">
+                                                <input type="radio" name="soundStyle" id="muted_on_any_mouse_interaction">
                                             </span>
                                         </div>
                                     </div>
@@ -550,8 +550,8 @@ function onPlayerReady(event) {
                     }
             }
             // ...but how else...? 🚧
-            //if soundStyle.mutted_on_mouse_over == false &&  soundStyle.mutted_on_any_mouse_interaction == false > unMute
-            if (!UI.soundStyle.mutted_on_mouse_over.checked && !UI.soundStyle.mutted_on_any_mouse_interaction.checked)
+            //if soundStyle.muted_on_mouse_over == false &&  soundStyle.muted_on_any_mouse_interaction == false > unMute
+            if (!UI.soundStyle.muted_on_mouse_over.checked && !UI.soundStyle.muted_on_any_mouse_interaction.checked)
                 t.unMute();
         }
         else if (e.type == "mouseleave") {
@@ -559,7 +559,7 @@ function onPlayerReady(event) {
 
             //if playStyle.play_on_mouse_over == false && video isPlying == true
             //weird
-            if (!UI.soundStyle.mutted_on_any_mouse_interaction.checked)
+            if (!UI.soundStyle.muted_on_any_mouse_interaction.checked)
                 togglePlay(!UI.playStyle.play_on_mouse_over.checked && t.__proto__.isPlaying);
             t.mute();
         }
@@ -654,7 +654,7 @@ function onPlayerReady(event) {
     function OptionToKeepPlaying(e) {
         e = e || window.event;
 
-        if (UI.soundStyle.mutted_on_any_mouse_interaction.checked)
+        if (UI.soundStyle.muted_on_any_mouse_interaction.checked)
             return;
 
         if (e.buttons == 4 || anyValidInAndOutKey(e))
