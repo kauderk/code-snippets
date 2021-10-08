@@ -5,6 +5,8 @@ Loops videos between the `start` and `end` YouTube URL parameters.
 You create some `{{[[video]]: https://youtu.be/46A01oukux0?t=20&end=100 }}` blocks, note the `t=` and `end=`, though you can add playback speed also with `s=` up to `2`.
 Simple as that, create as many "**YouTube Gifs**" and begin to visualize some ideas.
 
+# You can [watch some video demos as well.](https://www.youtube.com/channel/UCkmeoqFlcEW99EdjK7H5ekw/videos)
+
 ### This demo's base css should withstand your graphs' css rules. If it looks funny. [DM me on Twitter](https://twitter.com/kauDerk_), and we'll see what's going on.
 
 ## HOW TO SET IT UP
