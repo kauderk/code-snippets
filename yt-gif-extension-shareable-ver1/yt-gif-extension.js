@@ -1,3 +1,4 @@
+
 //verion 21 - semi-refactored
 // Load the IFrame Player API.
 const tag = document.createElement('script');
@@ -11,21 +12,21 @@ firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 const UI = {
     /* permutations - checkbox */
     permutations: {
-        start_form_previous_timestamp: 'true',
-        clip_life_span_format: 'true',
-        referenced_start_timestamp: 'true',
+        start_form_previous_timestamp: '1',
+        clip_life_span_format: '1',
+        referenced_start_timestamp: '1',
         smoll_vid_when_big_ends: '1',
     },
     /* one at the time - radio */
     soundStyle: {
-
-        strict_mute_everything_except_current: 'true',
+        strict_mute_everything_except_current: '1',
         muted_on_mouse_over: '',
         muted_on_any_mouse_interaction: '',
     },
     /* one at the time - radio */
     playStyle: {
-        play_on_mouse_over: 'true',
+        strict_current_play_on_mouse_over: '1',
+        play_on_mouse_over: '',
         visible_clips_start_to_play_unmuted: '',
     },
     range: {
@@ -37,8 +38,8 @@ const UI = {
     },
     InAndOutKeys: {
         ctrlKey: '1',
-        shiftKey: 'false',
-        altKey: 'false',
+        shiftKey: '',
+        altKey: '',
     }
 }
 /*-----------------------------------*/
@@ -67,25 +68,31 @@ const sesionIDs = {
 
 
 //once finished, iframe detection will be called every 500ms
-let setUP = setInterval(() => {
-    if ((typeof window.roam42?.common == 'undefined')) {
+let setUP = setInterval(() =>
+{
+    if ((typeof window.roam42?.common == 'undefined'))
+    {
         //this is ugly - 
         console.count("activating YT GIF extension | common");
         return;
     }
-    if ((typeof (YT) == 'undefined')) {
+    if ((typeof (YT) == 'undefined'))
+    {
         console.count("activating YT libraries | common");
         console.count("this is ugly | YT");
         return;
     }
-    if (isHTML_AND_InputsSetUP() === true) {
+    if (isHTML_AND_InputsSetUP() === true)
+    {
         clearInterval(setUP);
         setInterval(checkVidExist, 500);
     }
 }, 500);
-function isHTML_AND_InputsSetUP() {
+function isHTML_AND_InputsSetUP()
+{
     //arbitrary child to check if custom HTML is attached to the DOM
-    if (document.querySelector("#start_form_previous_timestamp") == null) {
+    if (document.querySelector("#start_form_previous_timestamp") == null)
+    {
         document.querySelector("#app > div > div.roam-app > div.flex-h-box > div.roam-main > div.rm-files-dropzone > div > span:nth-child(8)")
             .insertAdjacentHTML("afterend", `<div class="rm-topbar__spacer-sm"></div>
             <span class="bp3-popover-wrapper">
@@ -105,17 +112,20 @@ function isHTML_AND_InputsSetUP() {
                                 <div class="dropdown-content">
                                     <span class="dropdown-item">
                                         <label for="" class="dropdown-item-description"
-                                            title="Seek to last timestamp before editing a block">Start from previous timestamp</label>
+                                            title="Seek to last timestamp before editing a block">Start from previous
+                                            timestamp</label>
                                         <input type="checkbox" name="" id="start_form_previous_timestamp" checked>
                                     </span>
                                     <span class="dropdown-item">
                                         <label for="" class="dropdown-item-description"
-                                            title="Display the clip remaindings and it's duration only">Clip lifespan format</label>
+                                            title="Display the clip remaindings and it's duration only">Clip lifespan
+                                            format</label>
                                         <input type="checkbox" name="" id="clip_life_span_format" checked>
                                     </span>
                                     <span class="dropdown-item">
                                         <label for="" class="dropdown-item-description"
-                                            title="Should use the last timestamp from it's referenced parent">Referenced start timestamp</label>
+                                            title="Should use the last timestamp from it's referenced parent">Referenced start
+                                            timestamp</label>
                                         <input type="checkbox" name="" id="referenced_start_timestamp" checked>
                                     </span>
                                     <span class="dropdown-item">
@@ -130,16 +140,19 @@ function isHTML_AND_InputsSetUP() {
                                                 <label for="" class="dropdown-item-description"
                                                     title="Maximum of 1 YT GIF to play unmuted at a time">Strict & recommended -
                                                     mute everything except current</label>
-                                                <input type="radio" name="soundStyle" id="strict_mute_everything_except_current" checked>
+                                                <input type="radio" name="soundStyle" id="strict_mute_everything_except_current"
+                                                    checked>
                                             </span>
                                             <span class="dropdown-item">
                                                 <label for="" class="dropdown-item-description"
-                                                    title="Play the video without sound when hovering the frame">muted on mouse enter</label>
+                                                    title="Play the video without sound when hovering the frame">muted on mouse
+                                                    enter</label>
                                                 <input type="radio" name="soundStyle" id="muted_on_mouse_over">
                                             </span>
                                             <span class="dropdown-item">
                                                 <label for="" class="dropdown-item-description"
-                                                    title="Holding the middle mouse button or the In and Out Keys won't unmute the YT GIF">muted either way</label>
+                                                    title="Holding the middle mouse button or the In and Out Keys won't unmute the YT GIF">muted
+                                                    either way</label>
                                                 <input type="radio" name="soundStyle" id="muted_on_any_mouse_interaction">
                                             </span>
                                         </div>
@@ -149,18 +162,28 @@ function isHTML_AND_InputsSetUP() {
                                         <div class="dropdown-content dropdown-info-box">
                                             <span class="dropdown-item">
                                                 <label for="" class="dropdown-item-description"
-                                                    title="All videos are paused to focus on one at the time">Recomended - play on mouse enter</label>
+                                                    title="In and Out Keys or not, all get muted exect currten">Strict &
+                                                    Recomended - play current on mouse enter</label>
+                                                <input type="radio" name="playStyle" id="strict_current_play_on_mouse_over"
+                                                    checked>
+                                            </span>
+                                            <span class="dropdown-item">
+                                                <label for="" class="dropdown-item-description"
+                                                    title="All videos are paused to focus on one at the time">Play
+                                                    on mouse enter</label>
                                                 <input type="radio" name="playStyle" id="play_on_mouse_over" checked>
                                             </span>
                                             <span class="dropdown-item">
                                                 <label for="" class="dropdown-item-description"
-                                                    title="Loaded videos autoplay and keep on playing">Visible clips begin to play unmuted</label>
+                                                    title="Loaded videos autoplay and keep on playing">Visible clips begin to
+                                                    play unmuted</label>
                                                 <input type="radio" name="playStyle" id="visible_clips_start_to_play_unmuted">
                                             </span>
                                         </div>
                                     </div>
                                     <span class="dropdown-item rangeOffset">
-                                        <span class="dropdown-info-message dropdown-item-description">Time offset on scroll wheel</span>
+                                        <span class="dropdown-info-message dropdown-item-description">Time offset on scroll
+                                            wheel</span>
                                         <div class="dropdown-item-contain-two">
                                             <input type="range" min="1" max="60" value="1" class="slider" id="wheelOffset">
                                             <label for="" class="dropdown-item-description"
@@ -191,10 +214,13 @@ function isHTML_AND_InputsSetUP() {
             </span>`);
     }
     // FINALLY assign all valid dom elements
-    else {
+    else
+    {
         //this took a solid hour. thak you thank you
-        for (const property in UI) {
-            for (let key in UI[property]) {
+        for (const property in UI)
+        {
+            for (let key in UI[property])
+            {
                 const userValue = UI[property][key];
                 const domEl = document.getElementById(key);
                 //don't mess up any other variable
@@ -213,7 +239,8 @@ function isHTML_AND_InputsSetUP() {
         }
 
         UI.range.wheelOffset.addEventListener("change", () => UpdateRangeValue());
-        UI.range.wheelOffset.addEventListener("wheel", (e) => {
+        UI.range.wheelOffset.addEventListener("wheel", (e) =>
+        {
             let dir = Math.sign(e.deltaY) * -1;
             let parsed = parseInt(UI.range.wheelOffset.value, 10);
             UI.range.wheelOffset.value = Number(dir + parsed);
@@ -224,14 +251,16 @@ function isHTML_AND_InputsSetUP() {
         console.count("loop");
         return true;
 
-        function UpdateRangeValue() {
+        function UpdateRangeValue()
+        {
             UI.label.rangeValue.innerHTML = UI.range.wheelOffset.value;
         }
     }
 
 
 }
-function checkVidExist() {
+function checkVidExist()
+{
     let wrappers = document.querySelectorAll(".rm-video-player__container");
     wrappers = inViewport(wrappers);
 
@@ -244,7 +273,8 @@ function checkVidExist() {
 
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
 //
-async function onYouTubePlayerAPIReady(playerWrap) {
+async function onYouTubePlayerAPIReady(playerWrap)
+{
     const newId = iframeIDprfx + Number(++creationCounter);
 
     // uid slicing the last 9 characters form closest blockID
@@ -276,7 +306,8 @@ async function onYouTubePlayerAPIReady(playerWrap) {
     return new window.YT.Player(newId, playerConfig());
 
     //#region local utilites
-    async function InputBlockVideoParams(tempUID) {
+    async function InputBlockVideoParams(tempUID)
+    {
         let [finalURL, innerUIDs] = await TryToFindURL(tempUID);
         //
         const aliasText = document.querySelector(".bp3-popover-open .rm-alias--block")?.textContent;
@@ -284,16 +315,19 @@ async function onYouTubePlayerAPIReady(playerWrap) {
         if (finalURL && aliasText == null) return finalURL;
 
         // try on the same block
-        for (let i = 0; i < innerUIDs.length; i++) {
+        for (let i = 0; i < innerUIDs.length; i++)
+        {
             const [pURL, uids] = await TryToFindURL(innerUIDs[i]);
             if (pURL) return pURL;
         }
 
 
-        for (let i = 0; i < innerUIDs.length; i++) {
+        for (let i = 0; i < innerUIDs.length; i++)
+        {
             const [pURL, nestedUIDs, pAliases] = await TryToFindURL(innerUIDs[i]);
             //
-            for (let j = 0; j < nestedUIDs.length; j++) {
+            for (let j = 0; j < nestedUIDs.length; j++)
+            {
                 //
                 const [pNestedURL] = await TryToFindURL(nestedUIDs[j]);
                 //
@@ -301,7 +335,8 @@ async function onYouTubePlayerAPIReady(playerWrap) {
                     return pNestedURL;
             }
         }
-        async function TryToFindURL(desiredUID) {
+        async function TryToFindURL(desiredUID)
+        {
             const info = await window.roam42.common.getBlockInfoByUID(desiredUID);
             const rawText = info[0][0].string;
             const urls = rawText.match(/(http:|https:)?\/\/(www\.)?(youtube.com|youtu.be)\/(watch)?(\?v=)?(\S+)?[^ }]/);
@@ -311,10 +346,12 @@ async function onYouTubePlayerAPIReady(playerWrap) {
             return [Array.isArray(urls) ? urls[0] : null, innerUIDs, aliases];
         }
     }
-    function urlConfig(url) {
+    function urlConfig(url)
+    {
         let success = false;
         const media = Object.create(videoParams);
-        if (url.match('https://(www.)?youtube|youtu\.be')) {
+        if (url.match('https://(www.)?youtube|youtu\.be'))
+        {
             // get ids //url = 'https://www.youtube.com/embed//JD-tF73Lyqo?t=423?end=425';
             const stepOne = url.split('?')[0];
             const stepTwo = stepOne.split('/');
@@ -339,20 +376,24 @@ async function onYouTubePlayerAPIReady(playerWrap) {
             media.speed = speedFloat;
             //
             success = true;
-            function extractValue(key, regexedValue) {
+            function extractValue(key, regexedValue)
+            {
                 let pass;
                 let desiredValue;
                 let valueCallback = () => { };
-                switch (key) {
+                switch (key)
+                {
                     case "int":
-                        valueCallback = (desiredValue, pass) => {
+                        valueCallback = (desiredValue, pass) =>
+                        {
                             desiredValue = pass[0].match(/\d+/g).map(Number);
                             desiredValue = parseInt(desiredValue);
                             return desiredValue;
                         }
                         break;
                     case "float":
-                        valueCallback = (desiredValue, pass) => {
+                        valueCallback = (desiredValue, pass) =>
+                        {
                             desiredValue = pass[0].match(/[+-]?\d+(\.\d+)?/g).map(function (v) { return parseFloat(v); });
                             desiredValue = parseFloat(desiredValue);
                             return desiredValue;
@@ -360,8 +401,10 @@ async function onYouTubePlayerAPIReady(playerWrap) {
                         break;
                 }
                 //
-                while ((pass = regexedValue.exec(url)) != null) {
-                    if (pass.index === regexedValue.lastIndex) {
+                while ((pass = regexedValue.exec(url)) != null)
+                {
+                    if (pass.index === regexedValue.lastIndex)
+                    {
                         regexedValue.lastIndex++;
                     }
                     desiredValue = valueCallback(desiredValue, pass);
@@ -374,7 +417,8 @@ async function onYouTubePlayerAPIReady(playerWrap) {
         else { alert("No valid media id detected"); }
         return false;
     }
-    function playerConfig() {
+    function playerConfig()
+    {
         let map = allVideoParameters.get(newId);
         return params = {
             height: '100%',
@@ -414,7 +458,8 @@ async function onYouTubePlayerAPIReady(playerWrap) {
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
 //
-function onPlayerReady(event) {
+function onPlayerReady(event)
+{
     const t = event.target;
     const iframe = document.querySelector("#" + t.h.id) || t.getIframe();
     const parent = iframe.parentElement;
@@ -445,30 +490,45 @@ function onPlayerReady(event) {
     //#region Utilies
     let tick = (target = t) => target?.getCurrentTime();
     let bounded = (x) => start < x && x < end;
-    function videoIsPlayingWithSound(boo = true) {
+    //
+    function videoIsPlayingWithSound(boo = true)
+    {
         if (boo)
             t.unMute();
         else
             t.mute();
         togglePlay(boo);
     }
-    function togglePlay(bol, playing = true) {
-        if (bol && playing) {
+    function togglePlay(bol, playing = true)
+    {
+        if (bol && playing)
+        {
             t.__proto__.isPlaying = true;
             t.playVideo();
         }
-        else {
+        else
+        {
             t.__proto__.isPlaying = false;
             t.pauseVideo();
         }
     }
-    function anyValidInAndOutKey(e) {
+    function anyValidInAndOutKey(e)
+    {
         for (const name in UI.InAndOutKeys)
             if (e[name] && isTrue(UI.InAndOutKeys[name]))
                 return true;
         //
         return false;
 
+    }
+    function AnyPlayOnHover()
+    {
+        return UI.playStyle.play_on_mouse_over.checked || UI.playStyle.strict_current_play_on_mouse_over.checked
+    }
+    function CanUnmute()
+    {
+        //NotMuteAnyHover
+        return !UI.soundStyle.muted_on_mouse_over.checked && !UI.soundStyle.muted_on_any_mouse_interaction.checked
     }
     //#endregion
 
@@ -484,7 +544,8 @@ function onPlayerReady(event) {
 
     //#region Loading values 🌿
     // load last sesion values
-    if (lastBlockIDParameters.has(blockID)) {
+    if (lastBlockIDParameters.has(blockID))
+    {
         let sesion = lastBlockIDParameters.get(blockID);
         //
         if (UI.permutations.start_form_previous_timestamp?.checked && bounded(sesion.updateTime))
@@ -493,14 +554,18 @@ function onPlayerReady(event) {
         t.setVolume(sesion.volume);
     }
     // load referenced values
-    else {
+    else
+    {
         //Future Brand new adition to "lastBlockIDParameters" map
-        if (UI.permutations.referenced_start_timestamp.checked) {
+        if (UI.permutations.referenced_start_timestamp.checked)
+        {
             let players = document.querySelectorAll(`[id*=${iframeIDprfx}]`);
-            for (let i = 0; i < players.length; i++) {
+            for (let i = 0; i < players.length; i++)
+            {
                 //ignore itself
                 if (players[i] === iframe) continue;
-                if (players[i]?.src?.slice(0, -11) == iframe?.src?.slice(0, -11)) { //removes at least "widgetid=··" so they reconize each other
+                if (players[i]?.src?.slice(0, -11) == iframe?.src?.slice(0, -11))
+                { //removes at least "widgetid=··" so they reconize each other
                     //
                     const desiredBlockID = blockID || document.querySelector("body > span[blockID]")?.getAttribute("blockID") || closestBlockID(players[i]);
                     //
@@ -515,7 +580,8 @@ function onPlayerReady(event) {
             }
         }
     }
-    function seekToUpdatedTime(desiredTime) {
+    function seekToUpdatedTime(desiredTime)
+    {
         updateStartTime = desiredTime;
         t.seekTo(updateStartTime);
     }
@@ -524,53 +590,83 @@ function onPlayerReady(event) {
 
 
     //#region Event Handelers | DDMO stands for "Drop Down Menu Option"
-    function InAndOutHoverStatesDDMO(e) {
+    function InAndOutHoverStatesDDMO(e)
+    {
         //🌿
-        if (e.type == "mouseenter") {
+        if (e.type == "mouseenter")
+        {
             // I'm afraid this event is slower to get attached than 200ms intervals... well 
             globalHumanInteraction = true;
             //
             togglePlay(true);
+            //
+            //
+            //
             // kinda spaguetti code🚧 
-            if ((e.buttons == 4 || anyValidInAndOutKey(e)) && UI.soundStyle.strict_mute_everything_except_current.checked) {
-                const ytGifs = inViewport(allIframeIDprfx());
-                if (ytGifs)
-                    for (let i = 0; i < ytGifs.length; i++) {
-                        const blockID = closestBlockID(ytGifs[i]);
-                        recordedIDs.get(blockID)?.target?.mute();
-                    }
+            if (UI.soundStyle.strict_mute_everything_except_current.checked)
+            {
+                if ((e.buttons == 4 || anyValidInAndOutKey(e)))
+                {
+                    LoopTroughVisibleYTGIFs((blockID) => recordedIDs.get(blockID)?.target?.mute());
+                }
+            }
+            if (UI.playStyle.strict_current_play_on_mouse_over.checked)
+            {
+                LoopTroughVisibleYTGIFs((blockID) => recordedIDs.get(blockID)?.target?.pauseVideo(), false);
             }
             // ...but how else...? 🚧
-            //if soundStyle.muted_on_mouse_over == false &&  soundStyle.muted_on_any_mouse_interaction == false > unMute
-            if (!UI.soundStyle.muted_on_mouse_over.checked && !UI.soundStyle.muted_on_any_mouse_interaction.checked)
+            //
+            //
+            //
+            if (CanUnmute())
                 t.unMute();
+
+            //#region local utils
+            function LoopTroughVisibleYTGIFs(BlockID_callback, self = true)
+            {
+                const ytGifs = inViewport(allIframeIDprfx());
+                for (let i = 0; i < ytGifs.length; i++)
+                {
+                    const blockID = closestBlockID(ytGifs[i]);
+                    if (ytGifs[i] != iframe)
+                        BlockID_callback(blockID);
+                    else if (self)
+                        BlockID_callback(blockID);
+                }
+            }
+            //#endregion
         }
-        else if (e.type == "mouseleave") {
+        else if (e.type == "mouseleave")
+        {
             globalHumanInteraction = false;
 
             //if playStyle.play_on_mouse_over == false && video isPlying == true
             //weird
             if (!UI.soundStyle.muted_on_any_mouse_interaction.checked)
-                togglePlay(!UI.playStyle.play_on_mouse_over.checked && t.__proto__.isPlaying);
+                togglePlay(!AnyPlayOnHover() && t.__proto__.isPlaying);
             t.mute();
         }
     }
-    function playStyleDDMO() {
+    function playStyleDDMO()
+    {
         //play all VISIBLE Players
         if (!inViewport(iframe)) return;
 
         if (UI.playStyle.visible_clips_start_to_play_unmuted.checked)
             togglePlay(UI.playStyle.visible_clips_start_to_play_unmuted.checked);
-        if (UI.playStyle.play_on_mouse_over.checked)
-            togglePlay(!UI.playStyle.play_on_mouse_over.checked);
+        if (AnyPlayOnHover())
+            togglePlay(!AnyPlayOnHover());
     }
+
     //#endregion
 
 
     // #region EventListeners | from DDMO
     // toggle them all it's playing state
-    UI.playStyle.visible_clips_start_to_play_unmuted.addEventListener("change", playStyleDDMO);
-    UI.playStyle.play_on_mouse_over.addEventListener("change", playStyleDDMO);
+    for (const checkbox in UI.playStyle)
+    {
+        UI.playStyle[checkbox].addEventListener("change", playStyleDDMO);
+    }
     //toggle visuals or sound on hover
     parent.addEventListener("mouseenter", InAndOutHoverStatesDDMO);
     parent.addEventListener("mouseleave", InAndOutHoverStatesDDMO);
@@ -586,9 +682,11 @@ function onPlayerReady(event) {
     t.__proto__.ClearTimers = ClearTimers;
 
     // for the timeDisplay
-    function ContinuouslyUpdateTimeDisplay() {
+    function ContinuouslyUpdateTimeDisplay()
+    {
         //🙋
-        if (document.querySelector("#" + key) == null) {
+        if (document.querySelector("#" + key) == null)
+        {
             //this is too uggly
             t.__proto__.enter = () => { };
             t.destroy();
@@ -601,7 +699,8 @@ function onPlayerReady(event) {
         t.__proto__.timerID = window.setInterval(() => UpdateTimeDisplay(), tickOffset);
         t.__proto__.timers.push(t.__proto__.timerID);
     }
-    function UpdateTimeDisplay() {
+    function UpdateTimeDisplay()
+    {
         const sec = Math.abs(clipSpan - (end - tick()));
         //console.count(`UpdateTimeDisplay for ${key} with timer -> ${t.__proto__.timerID}`);
 
@@ -611,7 +710,8 @@ function onPlayerReady(event) {
         else //"update":"end"
             timeDisplay.innerHTML = `${fmtMSS(tick())}/${fmtMSS(end)}`;
 
-        function fmtMSS(seconds) {
+        function fmtMSS(seconds)
+        {
             const format = val => `0${Math.floor(val)}`.slice(-2);
             const hours = seconds / 3600;
             const minutes = (seconds % 3600) / 60;
@@ -620,7 +720,8 @@ function onPlayerReady(event) {
             return displayFormat.map(format).join(':');
         }
     }
-    function BoundWheelValueToSeek(e) {
+    function BoundWheelValueToSeek(e)
+    {
         videoIsPlayingWithSound(false);
         //
         let dir = tick() + (Math.sign(e.deltaY) * Math.round(UI.range.wheelOffset.value) * -1);
@@ -629,20 +730,24 @@ function onPlayerReady(event) {
         t.seekTo(dir);
         UpdateTimeDisplay();
         //
-        setTimeout(() => { //nice delay to show feedback
+        setTimeout(() =>
+        { //nice delay to show feedback
             if (t.__proto__.timeDisplayHumanInteraction)
                 videoIsPlayingWithSound();
         }, tickOffset);
     }
-    function HumanInteractionHandeler() {
+    function HumanInteractionHandeler()
+    {
         t.__proto__.timeDisplayHumanInteraction = true
     }
     // for the parent
-    function ResetTrackingValues() {
+    function ResetTrackingValues()
+    {
         t.__proto__.timeDisplayHumanInteraction = false;
         ClearTimers();
     }
-    function OptionToKeepPlaying(e) {
+    function OptionToKeepPlaying(e)
+    {
         e = e || window.event;
 
         if (UI.soundStyle.muted_on_any_mouse_interaction.checked)
@@ -652,13 +757,16 @@ function onPlayerReady(event) {
             videoIsPlayingWithSound();
     }
     // for the timeDisplay | Utilie
-    function ClearTimers() {
+    function ClearTimers()
+    {
         window.clearInterval(t.__proto__.timerID);
         t.__proto__.timerID = null;
         //
-        if (t.__proto__.timers != []) {
+        if (t.__proto__.timers != [])
+        {
             //
-            t.__proto__.timers.forEach(tmr => {
+            t.__proto__.timers.forEach(tmr =>
+            {
                 clearInterval(tmr);
             });
             //
@@ -666,7 +774,8 @@ function onPlayerReady(event) {
         }
     }
     // for the TheaterMode
-    function OnTheaterMode(e) {
+    function OnTheaterMode(e)
+    {
         e.stopPropagation();
         e.preventDefault();
         if (e.button != 0) return; // left click only 
@@ -680,12 +789,14 @@ function onPlayerReady(event) {
         const inputB = iframe.closest(".rm-block__input");
 
         //🚧 🌿
-        if (theaterMode) {
+        if (theaterMode)
+        {
             parent.classList.add("YTwrapper-OnTheaterMode");
             inputB.classList.add("YTwrapper-HihgerZIndex");
             page.style
         }
-        else {
+        else
+        {
             parent.classList.remove("YTwrapper-OnTheaterMode");
             inputB.classList.remove("YTwrapper-HihgerZIndex");
             page.classList.remove("YTwrapper-OneHundredPercent");
@@ -711,20 +822,26 @@ function onPlayerReady(event) {
 
 
     //#region OnDestroyed | UpdateNextSesionValues | Delete allVideoParameters | removeEventListeners
-    let OnDestroyedObserver = new MutationObserver(function (mutations) {
+    let OnDestroyedObserver = new MutationObserver(function (mutations)
+    {
         // check for removed target
-        mutations.forEach(function (mutation) {
+        mutations.forEach(function (mutation)
+        {
 
             const nodes = Array.from(mutation.removedNodes);
             const directMatch = nodes.indexOf(iframe) > -1
             const parentMatch = nodes.some(parent => parent.contains(iframe));
 
-            if (directMatch) {
+            if (directMatch)
+            {
                 console.log('node', iframe, 'was directly removed!');
-            } else if (parentMatch) {
+            } else if (parentMatch)
+            {
                 // expensive for sure 🙋
-                UI.playStyle.visible_clips_start_to_play_unmuted.removeEventListener("change", playStyleDDMO);
-                UI.playStyle.play_on_mouse_over.removeEventListener("change", playStyleDDMO);
+                for (const checkbox in UI.playStyle)
+                {
+                    UI.playStyle[checkbox].removeEventListener("change", playStyleDDMO);
+                }
                 //
                 timeDisplay.removeEventListener("wheel", BoundWheelValueToSeek);
                 timeDisplay.removeEventListener("mouseenter", HumanInteractionHandeler);
@@ -759,9 +876,11 @@ function onPlayerReady(event) {
                 if (targetExist)
                     return console.log(`${key} is displaced not removed thus is not destroyed.`);
 
-                setTimeout(() => {
+                setTimeout(() =>
+                {
                     //this is too uggly
-                    if (!targetExist) {
+                    if (!targetExist)
+                    {
                         t.destroy();
                         console.count("Destroyed! " + key);
                     }
@@ -781,7 +900,8 @@ function onPlayerReady(event) {
 
 
     // #region pause onOffScreen
-    let YscrollObserver = new IntersectionObserver(function (entries) {
+    let YscrollObserver = new IntersectionObserver(function (entries)
+    {
         if (!entries[0])
             YscrollObserver.disconnect();
 
@@ -800,7 +920,8 @@ function onPlayerReady(event) {
         iframe.closest(".myPortal"); //myPortal
 
     //simulate hover
-    if (autoplayParent) {
+    if (autoplayParent)
+    {
         let simHover = new MouseEvent('mouseenter', {
             'view': window,
             'bubbles': true,
@@ -808,11 +929,15 @@ function onPlayerReady(event) {
         });
         parent.dispatchEvent(simHover);
         t.__proto__.timeDisplayHumanInteraction = false;
-    } else { //Freeze
-        let OneFrame = setInterval(() => {
-            if (tick() > updateStartTime + loadingMarginOfError) {
+    } else
+    { //Freeze
+        let OneFrame = setInterval(() =>
+        {
+            if (tick() > updateStartTime + loadingMarginOfError)
+            {
                 //
-                if (globalHumanInteraction) {
+                if (globalHumanInteraction)
+                {
                     videoIsPlayingWithSound(true);
                 }
                 else if (inViewport(iframe) && globalHumanInteraction === false)
@@ -832,33 +957,39 @@ function onPlayerReady(event) {
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
 //
 //loops between "start" and "end" boundaries
-function onStateChange(state) {
+function onStateChange(state)
+{
     let t = state.target;
     let map = allVideoParameters.get(t.h.id);
 
-    if (state.data === YT.PlayerState.ENDED) {
+    if (state.data === YT.PlayerState.ENDED)
+    {
         t.seekTo(map?.start || 0);
         if (UI.permutations.smoll_vid_when_big_ends.checked)
             exitFullscreen();
     }
-    if (state.data === YT.PlayerState.PLAYING) {
+    if (state.data === YT.PlayerState.PLAYING)
+    {
         t.__proto__.isPlaying = true;
         //
         if (t.__proto__.timerID === null) // NON ContinuouslyUpdateTimeDisplay
             t.__proto__.enter();
     }
-    if (state.data === YT.PlayerState.PAUSED) {
+    if (state.data === YT.PlayerState.PAUSED)
+    {
         t.__proto__.isPlaying = false;
         t.__proto__.ClearTimers();
     }
 }
 
 //#region Utilies
-function inViewport(els) {
+function inViewport(els)
+{
     let matches = [],
         elCt = els.length;
 
-    for (let i = 0; i < elCt; ++i) {
+    for (let i = 0; i < elCt; ++i)
+    {
         let el = els[i],
             b = el.getBoundingClientRect(),
             c;
@@ -868,82 +999,101 @@ function inViewport(els) {
             b.top + b.height > 0 && b.bottom - b.width < window.outerHeight &&
             (c = window.getComputedStyle(el)) &&
             c.getPropertyValue('visibility') === 'visible' &&
-            c.getPropertyValue('opacity') !== 'none') {
+            c.getPropertyValue('opacity') !== 'none')
+        {
             matches.push(el);
         }
     }
     return matches;
 }
 
-function div(classList) {
+function div(classList)
+{
     let el = document.createElement('div');
     return emptyEl(classList, el);
 }
-function checkbox(classList) {
+function checkbox(classList)
+{
     let el = document.createElement('input');
     return emptyEl(classList, el);
 }
-function radio(classList) {
+function radio(classList)
+{
     let el = document.createElement('input');
     return emptyEl(classList, el);
 }
-function range(classList) {
+function range(classList)
+{
     let el = document.createElement('label');
     return emptyEl(classList, el);
 }
-function label(classList) {
+function label(classList)
+{
     let el = document.createElement('label');
     return emptyEl(classList, el);
 }
 
-function emptyEl(classList, el) {
+function emptyEl(classList, el)
+{
     if (classList)
         el.classList.add(classList);
     return el;
 }
 
-function exitFullscreen() {
+function exitFullscreen()
+{
     //if (window.innerHeight == screen.height) return false;
     if (!document.fullscreenElement) return false;
-    if (document.exitFullscreen) {
+    if (document.exitFullscreen)
+    {
         document.exitFullscreen();
-    } else if (document.mozCancelFullScreen) {
+    } else if (document.mozCancelFullScreen)
+    {
         document.mozCancelFullScreen();
-    } else if (document.webkitExitFullscreen) {
+    } else if (document.webkitExitFullscreen)
+    {
         document.webkitExitFullscreen();
     }
 }
-function closestBlockID(el) {
+function closestBlockID(el)
+{
     return el?.closest(".rm-block__input")?.id
 }
-function allIframeIDprfx() {
+function allIframeIDprfx()
+{
     return document.querySelectorAll(`[id*=${iframeIDprfx}]`);
 }
 
 
-function htmlToElement(html) {
+function htmlToElement(html)
+{
     var template = document.createElement('template');
     html = html.trim(); // Never return a text node of whitespace as the result
     template.innerHTML = html;
     return template.content.firstChild;
 }
 
-function cleanUpHTML(content) {
+function cleanUpHTML(content)
+{
     var dom = document.createElement("div");
     dom.innerHTML = content;
     var elems = dom.getElementsByTagName('*');
-    for (var i = 0; i < elems.length; i++) {
-        if (elems[i].innerHTML) {
+    for (var i = 0; i < elems.length; i++)
+    {
+        if (elems[i].innerHTML)
+        {
             elems[i].innerHTML = elems[i].innerHTML.trim();
         }
     }
     return dom.innerHTML;
 }
-function isTrue(value) {
-    if (typeof (value) === 'string') {
+function isTrue(value)
+{
+    if (typeof (value) === 'string')
         value = value.trim().toLowerCase();
-    }
-    switch (value) {
+
+    switch (value)
+    {
         case true:
         case "true":
         case 1:
@@ -956,5 +1106,4 @@ function isTrue(value) {
     }
 }
 //#endregion
-
 
