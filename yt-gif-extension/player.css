@@ -1,0 +1,79 @@
+/*---------------------------------------------*/
+/* from version 25*/
+/* video size */
+.yt-gif-wrapper,
+.yt-gif-iframe-wrapper {
+  width: 100%; /* this is what you want */
+  max-width: 1000px;
+  height: 100%;
+  aspect-ratio: 16 / 9;
+}
+/* + nice round edges */
+.yt-gif-wrapper iframe {
+  border-radius: 7px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+}
+
+/*---------------------------------------------*/
+
+/* multiple videos are annoying and too bright */
+.yt-gif-wrapper {
+  filter: brightness(0.75);
+  position: relative;
+}
+
+/*---------------------------------------------*/
+
+/* down middle the video */
+.yt-gif-controls {
+  height: 20px;
+  width: 100%;
+
+  display: flex;
+  gap: 10px;
+
+  position: absolute;
+  bottom: 0;
+  transform: translate(0px, -30px);
+
+  justify-content: center;
+  align-items: center;
+
+  cursor: initial;
+}
+/* main feature 00:00/00:00 */
+.yt-gif-timestamp {
+  position: relative;
+  margin: 0px 5px;
+
+  right: 0;
+  bottom: 0;
+
+  overscroll-behavior: contain; /* so you can scroll back and forward in time and not the actual document */
+  overflow: auto;
+
+  height: 1.134em;
+}
+.yt-gif-timestamp.yt-gif-invisible-element:hover {
+  color: white;
+}
+
+/*---------------------------------------------*/
+
+/* beta functionality */
+.yt-gif-theater-mode {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+.yt-gif-theater-mode.yt-gif-invisible-element:hover {
+  background-color: gray;
+}
+
+/*---------------------------------------------*/
+.yt-gif-invisible-element {
+  color: transparent;
+}

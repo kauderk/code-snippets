@@ -76,7 +76,7 @@ const sesionIDs = {
 /*-----------------------------------*/
 function URLFolder(f)
 {
-    return `https://raw.githubusercontent.com/kauderk/code-snippets/master/yt-gif-extension-shareable-ver1/${f}`
+    return `https://kauderk.github.io/code-snippets/yt-gif-extension/${f}`
 };
 const links = {
     css: {
@@ -155,7 +155,7 @@ async function Ready()
     // 5. One time - the timestamp scroll offset updates on changes
     timestamp_offset_feature_ready();
 
-    // 6. is nice to have te option to stop the observer for good
+    // 6. is nice to have an option to stop the masterObserver for good
     masterObserver = ObserveIframesAndDelployYTPlayers();
 
 
