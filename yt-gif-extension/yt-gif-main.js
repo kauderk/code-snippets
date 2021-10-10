@@ -29,12 +29,10 @@ window.YTGIF = {
     },
     range: {
         /*seconds up to 60*/
-        wheelOffset: '5',
-    },
-    label: {
-        rangeValue: ''
+        wheelOffset: '1',
     },
     InAndOutKeys: {
+        /* middle mouse button is on by default */
         ctrlKey: '1',
         shiftKey: '',
         altKey: '',
@@ -44,12 +42,16 @@ window.YTGIF = {
         /* 'dark' or 'light' */
         yt_gif_drop_down_menu_theme: 'light',
         /* empty means 100% - only valid css units like px or % */
-        player_span: '30%'
+        player_span: '40%'
     }
 }
 /*-----------------------------------*/
 /* USER SETTINGS  */
 const UI = window.YTGIF;
+/* user doen't need to see this */
+UI.label = {
+    rangeValue: ''
+}
 /*-----------------------------------*/
 const iframeIDprfx = "player_";
 let creationCounter = -1;
@@ -140,14 +142,14 @@ const almostReady = setInterval(() =>
 async function Ready()
 {
     // 1.
-    const a1 = await LoadCSS(links.css.dropDownMenu);
-    const a2 = await LoadCSS(links.css.player);
+    await LoadCSS(links.css.dropDownMenu);
+    await LoadCSS(links.css.player);
 
     // 2.
-    const a3 = await dealWithUserCustimizations();
+    await dealWithUserCustimizations();
 
     // 3. 
-    const a4 = await loadHtmlDropDownMenu();
+    await loadHtmlDropDownMenu();
 
 
     // 4. assign the User Inputs (UI) to their variables
@@ -173,7 +175,6 @@ async function Ready()
         {
             create_css_rule(`.yt-gif-wrapper, .yt-gif-iframe-wrapper {
                 width: ${UI.default.player_span};
-                lol: F;
             }`);
         }
     }
