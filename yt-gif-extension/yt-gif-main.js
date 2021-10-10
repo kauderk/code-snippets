@@ -173,7 +173,7 @@ async function Ready()
 
         if (isValidCSSUnit(UI.default.player_span))
         {
-            create_css_rule(`.yt-gif-wrapper, .yt-gif-iframe-wrapper {
+            create_css_rule(`.${cssData.yt_gif_wrapper}, .yt-gif-iframe-wrapper {
                 width: ${UI.default.player_span} !important;
             }`);
         }
