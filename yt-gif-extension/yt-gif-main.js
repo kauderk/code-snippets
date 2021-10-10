@@ -83,8 +83,8 @@ const links = {
         dropDownMenu: URLFolder('drop-down-menu.css'),
         player: URLFolder('player.css'),
         themes: {
-            dark_dropDownMenu: URLFolder('themes/drop-down-menu.css'),
-            light_dropDownMenu: URLFolder('themes/light-down-menu.css'),
+            dark_dropDownMenu: URLFolder('themes/dark-drop-down-menu.css'),
+            light_dropDownMenu: URLFolder('themes/light-drop-down-menu.css'),
         }
     },
     html: {
@@ -144,23 +144,24 @@ async function Ready()
     const a2 = await LoadCSS(links.css.player);
 
     // 2.
-    const a3 = await deal_with_user_custimizations();
+    const a3 = await dealWithUserCustimizations();
 
     // 3. 
-    const a4 = await load_html_drop_down_menu();
+    const a4 = await loadHtmlDropDownMenu();
+
 
     // 4. assign the User Inputs (UI) to their variables
-    drop_down_menu_inputs_as_variables();
+    dropDownMenuInputsAsVariables();
 
     // 5. One time - the timestamp scroll offset updates on changes
-    timestamp_offset_feature_ready();
+    timestampOffsetFeatureReady();
 
     // 6. is nice to have an option to stop the masterObserver for good
     masterObserver = ObserveIframesAndDelployYTPlayers();
 
 
     //#region hidden functions
-    async function deal_with_user_custimizations()
+    async function dealWithUserCustimizations()
     {
         if (UI.default.yt_gif_drop_down_menu_theme === 'dark')
             await LoadCSS(links.css.themes.dark_dropDownMenu);
@@ -168,7 +169,7 @@ async function Ready()
         else
             await LoadCSS(links.css.themes.light_dropDownMenu);
 
-        if (validateCssUnitValue(UI.default.player_span))
+        if (isValidCSSUnit(UI.default.player_span))
         {
             create_css_rule(`.yt-gif-wrapper, .yt-gif-iframe-wrapper {
                 width: ${UI.default.player_span};
@@ -177,17 +178,15 @@ async function Ready()
         }
     }
 
-    async function load_html_drop_down_menu()
+    async function loadHtmlDropDownMenu()
     {
         const moreIcon = document.querySelector('.bp3-icon-more').closest('.rm-topbar .rm-topbar__spacer-sm + .bp3-popover-wrapper');
-
         const htmlText = await FetchText(links.html.dropDownMenu);
-
         moreIcon.insertAdjacentHTML("afterend", htmlText);
     }
 
 
-    function drop_down_menu_inputs_as_variables()
+    function dropDownMenuInputsAsVariables()
     {
         // this took a solid hour. thak you thank you
         for (const parentKey in UI)
@@ -218,7 +217,7 @@ async function Ready()
         }
     }
 
-    function timestamp_offset_feature_ready()
+    function timestampOffsetFeatureReady()
     {
         UI.range.wheelOffset.addEventListener("change", () => UpdateRangeValue());
         UI.range.wheelOffset.addEventListener("wheel", (e) =>
@@ -240,8 +239,10 @@ async function Ready()
     //#endregion
 
     //#region uitils
-    function LoadCSS(cssURL) // 'cssURL' is the stylesheet's URL, i.e. /css/styles.css
+    async function LoadCSS(cssURL) // 'cssURL' is the stylesheet's URL, i.e. /css/styles.css
     {
+        if (await !tryingToFetch(cssURL)) return;
+
         return new Promise(function (resolve, reject)
         {
             const link = document.createElement('link');
@@ -1280,8 +1281,24 @@ function isTrue(value)
 
 async function FetchText(url)
 {
-    const response = await fetch(url); // firt time fetching something... This is cool
-    return await response.text();
+    const [response, err] = await tryingToFetch(url); // firt time fetching something... This is cool
+    if (response)
+        return await response.text();
+}
+async function tryingToFetch(url)
+{
+    try
+    {
+        const response = await fetch(url);
+        if (!response.ok)
+            throw new Error('Request failed.');
+        return [response, null];
+    }
+    catch (error)
+    {
+        console.log(`Your custom link ${url} is corrupt. ;c`);
+        return [null, error];
+    };
 }
 
 function create_css_rule(css_rules = 'starndard css rules')
@@ -1291,7 +1308,7 @@ function create_css_rule(css_rules = 'starndard css rules')
     style.innerHTML = css_rules;
     document.getElementsByTagName('head')[0].appendChild(style);
 }
-function validateCssUnitValue(value)
+function isValidCSSUnit(value)
 {
     //  valid CSS unit types
     const CssUnitTypes = ['em', 'ex', 'ch', 'rem', 'vw', 'vh', 'vmin',
