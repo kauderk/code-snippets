@@ -76,7 +76,7 @@ const sesionIDs = {
 /*-----------------------------------*/
 function URLFolder(f)
 {
-    return `https://kauderk.github.io/yt-gif-extension/${f}`
+    return `https://raw.githubusercontent.com/kauderk/code-snippets/master/yt-gif-extension-shareable-ver1/${f}`
 };
 const links = {
     css: {
@@ -116,7 +116,7 @@ const styleIs = {
 /*-----------------------------------*/
 
 
-// wait for APIs to exist, load dropdown menu and deploy iframes
+// wait for APIs to exist
 const almostReady = setInterval(() =>
 {
     if ((typeof window.roam42?.common == 'undefined'))
@@ -133,11 +133,11 @@ const almostReady = setInterval(() =>
     }
 
     clearInterval(almostReady);
-    GettingReady();
+    Ready(); // load dropdown menu and deploy iframes
 
 }, 500);
 
-async function GettingReady()
+async function Ready()
 {
     // 1.
     const a1 = await LoadCSS(links.css.dropDownMenu);
