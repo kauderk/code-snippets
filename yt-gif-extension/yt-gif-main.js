@@ -41,7 +41,7 @@ window.YTGIF = {
         video_volume: 40,
         /* 'dark' or 'light' */
         yt_gif_drop_down_menu_theme: 'light',
-        /* empty means 100% - only valid css units like px or % */
+        /* empty means 50% - only valid css units like px  %  vw */
         player_span: '40%'
     }
 }
@@ -150,7 +150,6 @@ async function Ready()
 
     // 3. 
     await load_html_drop_down_menu();
-
 
     // 4. assign the User Inputs (UI) to their variables
     drop_down_menu_inputs_as_variables();
@@ -348,8 +347,10 @@ async function onYouTubePlayerAPIReady(playerWrap, message = 'I dunno')
 
     // 1. last 9 letter form the closest blockID
     const uid = playerWrap.closest('span[data-uid]')?.getAttribute('data-uid') ||
-        closestBlockID(playerWrap).slice(-9) ||
-        closestBlockID(document.querySelector('.bp3-popover-open')).slice(-9);
+        closestBlockID(playerWrap)?.slice(-9) ||
+        closestBlockID(document.querySelector('.bp3-popover-open'))?.slice(-9);
+
+    if (!uid) return;
 
     const newId = iframeIDprfx + Number(++creationCounter);
 
@@ -596,7 +597,7 @@ function onPlayerReady(event)
         //Future Brand new adition to 'lastBlockIDParameters' map
         if (UI.permutations.referenced_start_timestamp.checked)
         {
-            let players = document.querySelectorAll(`[id*=${iframeIDprfx}]`);
+            const players = document.querySelectorAll(`[id*=${iframeIDprfx}]`);
             for (let i = 0; i < players.length; i++)
             {
                 if (players[i] === iframe) continue; //ignore itself
@@ -613,6 +614,7 @@ function onPlayerReady(event)
                     seekToUpdatedTime(desiredTime)
 
                     console.count(`loaded referenced values to ${key} from ${desiredBlockID}`);
+                    break;
                 }
             }
         }
