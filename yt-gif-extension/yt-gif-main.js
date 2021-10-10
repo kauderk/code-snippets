@@ -1,5 +1,5 @@
 //This code is updated?
-//- Hello? 5
+//- Hello? 7
 
 // version 26 - semi-refactored
 // Load the IFrame Player API.
@@ -42,13 +42,15 @@ window.YTGIF = {
         /* 'dark' or 'light' */
         yt_gif_drop_down_menu_theme: 'light',
         /* empty means 50% - only valid css units like px  %  vw */
-        player_span: '40%'
+        player_span: '40%',
+        /* distinguish between {{[[video]]:}} from {{[[yt-gif]]:}} or 'both' which is also valid*/
+        override_roam_video_component: 'both'
     }
 }
 /*-----------------------------------*/
 /* USER SETTINGS  */
 const UI = window.YTGIF;
-/* user doen't need to see this */
+/* user doesn't need to see this */
 UI.label = {
     rangeValue: ''
 }
@@ -56,7 +58,7 @@ UI.label = {
 const iframeIDprfx = 'player_';
 let creationCounter = -1;
 let currentFullscreenPlayer = '';
-let currentMasterObserver = undefined;
+let MasterObservers = [undefined];
 /*-----------------------------------*/
 const allVideoParameters = new Map();
 const lastBlockIDParameters = new Map();
@@ -98,6 +100,7 @@ const links = {
     }
 }
 const cssData = {
+    yt_gif: 'yt-gif',
     yt_gif_wrapper: 'yt-gif-wrapper',
     yt_gif_timestamp: 'yt-gif-timestamp'
 }
@@ -114,6 +117,11 @@ const styleIs = {
     extra: {
         readyToEnable: 'readyToEnable'
     }
+}
+/*-----------------------------------*/
+const observeEls = {
+    yt_gif: `rm-xparser-default-${cssData.yt_gif}`,
+    video: 'rm-video-player__spacing-wrapper'
 }
 /*-----------------------------------*/
 
@@ -146,7 +154,7 @@ async function Ready()
     await LoadCSS(links.css.player);
 
     // 2.
-    await deal_with_user_custimizations();
+    await deal_with_visual_user_custimizations();
 
     // 3. 
     await load_html_drop_down_menu();
@@ -158,11 +166,11 @@ async function Ready()
     timestamp_offset_features();
 
     // 6. is nice to have an option to stop the masterObserver for good
-    currentMasterObserver = ObserveIframesAndDelployYTPlayers();
+    what_components_to_observe_and_deploy();
 
 
     //#region hidden functions
-    async function deal_with_user_custimizations()
+    async function deal_with_visual_user_custimizations()
     {
         if (UI.default.yt_gif_drop_down_menu_theme === 'dark')
             await LoadCSS(links.css.themes.dark_dropDownMenu);
@@ -173,7 +181,7 @@ async function Ready()
         if (isValidCSSUnit(UI.default.player_span))
         {
             create_css_rule(`.${cssData.yt_gif_wrapper}, .yt-gif-iframe-wrapper {
-                width: ${UI.default.player_span} !important;
+                width: ${UI.default.player_span};
             }`);
         }
     }
@@ -184,7 +192,6 @@ async function Ready()
         const htmlText = await FetchText(links.html.dropDownMenu);
         moreIcon.insertAdjacentHTML('afterend', htmlText);
     }
-
 
     function drop_down_menu_inputs_as_variables()
     {
@@ -236,12 +243,32 @@ async function Ready()
         }
         //#endregion
     }
+
+    function what_components_to_observe_and_deploy()
+    {
+        if (isTrue(UI.default.override_roam_video_component)) //video
+        {
+            MasterObservers.push(ObserveIframesAndDelployYTPlayers(observeEls.video));
+        }
+        else if (UI.default.override_roam_video_component === 'both') //observeEls values
+        {
+            for (const key in observeEls)
+            {
+                MasterObservers.push(ObserveIframesAndDelployYTPlayers(observeEls[key]));
+            }
+        }
+        else // yt-gif
+        {
+            MasterObservers.push(ObserveIframesAndDelployYTPlayers(observeEls.yt_gif));
+        }
+    }
+
     //#endregion
 
     //#region uitils
     async function LoadCSS(cssURL) // 'cssURL' is the stylesheet's URL, i.e. /css/styles.css
     {
-        if (await !tryingToFetch(cssURL)) return;
+        if (await !isValidFetch(cssURL)) return;
 
         return new Promise(function (resolve, reject)
         {
@@ -257,26 +284,24 @@ async function Ready()
     //#endregion
 }
 
-function ObserveIframesAndDelployYTPlayers()
+function ObserveIframesAndDelployYTPlayers(targetClass)
 {
-    const targetClass = 'rm-video-player__spacing-wrapper';
-
     // 1. set up all visible YT GIFs
-    const visible = inViewport(document.querySelectorAll('.' + targetClass));
-    for (const wrapper of visible)
+    const visible = inViewport(AvoidAllZoomChilds());
+    for (const component of visible)
     {
-        onYouTubePlayerAPIReady(wrapper, 'first wave');
+        onYouTubePlayerAPIReady(component, 'first wave');
     }
 
     // 2. IntersectionObserver attached to deploy when visible
-    const hidden = document.querySelectorAll('.' + targetClass);
-    for (const wrapper of hidden)
+    const hidden = AvoidAllZoomChilds();
+    for (const component of hidden)
     {
-        ObserveIntersectToSetUpPlayer(wrapper, 'second wave'); // I'm quite impressed with this... I mean...
+        ObserveIntersectToSetUpPlayer(component, 'second wave'); // I'm quite impressed with this... I mean...
     }
 
     // 3. ready to observe and deploy iframes
-    const targetNode = document.getElementById('app');
+    const targetNode = document.querySelector('body');
     const config = { childList: true, subtree: true };
     const observer = new MutationObserver(mutation_callback);
     observer.observe(targetNode, config);
@@ -286,9 +311,9 @@ function ObserveIframesAndDelployYTPlayers()
     //#region observer utils
     function ObserveIntersectToSetUpPlayer(iterator, message = 'YscrollObserver')
     {
-        const yobs = new IntersectionObserver(Ycallback, { threshold: [0] });
+        const yobs = new IntersectionObserver(Intersection_callback, { threshold: [0] });
 
-        function Ycallback(entries)
+        function Intersection_callback(entries)
         {
             if (!entries[0])
                 yobs.disconnect();
@@ -331,36 +356,53 @@ function ObserveIframesAndDelployYTPlayers()
         }
         for (const node of found)
         {
-            ObserveIntersectToSetUpPlayer(node, 'valid entries MutationObserver');
+            if (isNotZoomPath(node))
+                ObserveIntersectToSetUpPlayer(node, 'valid entries MutationObserver');
         }
     };
+    //#endregion
+
+    //#region local utils
+    function AvoidAllZoomChilds()
+    {
+        const components = Array.from(document.querySelectorAll('.' + targetClass));
+        //valids
+        return components.filter(el => isNotZoomPath(el));
+    }
+    function isNotZoomPath(el)
+    {
+        return !el.closest("[class*='rm-zoom']");
+    }
     //#endregion
 }
 
 
-
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
 //
-async function onYouTubePlayerAPIReady(playerWrap, message = 'I dunno')
+async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
 {
-    if (!playerWrap) return; //console.count(message);
+    if (!wrapper) return;
 
     // 1. last 9 letter form the closest blockID
-    const uid = playerWrap.closest('span[data-uid]')?.getAttribute('data-uid') ||
-        closestBlockID(playerWrap)?.slice(-9) ||
+    const uid = wrapper.closest('span[data-uid]')?.getAttribute('data-uid') ||
+        closestBlockID(wrapper)?.slice(-9) ||
         closestBlockID(document.querySelector('.bp3-popover-open'))?.slice(-9);
 
-    if (!uid) return;
-
+    if (!uid) return; // don't add up false positives
     const newId = iframeIDprfx + Number(++creationCounter);
 
 
     // 2. the div that the YTiframe will replace
-    playerWrap.className = `${cssData.yt_gif_wrapper} dont-focus-block`;
-    playerWrap.innerHTML = '';
+    if (wrapper.tagName != 'DIV')
+    {
+        wrapper = ChangeElementType(wrapper, 'div');
+    }
+    wrapper.parentElement.classList.add(`${cssData.yt_gif_wrapper}-parent`);
+    wrapper.className = `${cssData.yt_gif_wrapper} dont-focus-block`;
+    wrapper.innerHTML = '';
     const htmlText = await FetchText(links.html.playerControls);
-    playerWrap.insertAdjacentHTML('afterbegin', htmlText);
-    playerWrap.querySelector('.yt-gif-player').id = newId;
+    wrapper.insertAdjacentHTML('afterbegin', htmlText);
+    wrapper.querySelector('.yt-gif-player').id = newId;
 
 
     // 3. weird recursive function... guys...
@@ -371,10 +413,11 @@ async function onYouTubePlayerAPIReady(playerWrap, message = 'I dunno')
     // 4. to record a target's point of reference
     const record = Object.create(sesionIDs);
     sesionIDs.uid = uid;
-    const blockID = closestBlockID(playerWrap);
+    const blockID = closestBlockID(wrapper);
     if (blockID != null)
         recordedIDs.set(blockID, record);
 
+    console.count(message);
 
     // 5. ACTUAL CREATION OF THE EMBEDED YOUTUBE VIDEO PLAYER (target)
     return new window.YT.Player(newId, playerConfig());
@@ -533,6 +576,7 @@ async function onYouTubePlayerAPIReady(playerWrap, message = 'I dunno')
             }
         };
     }
+
     //#endregion
 }
 //
@@ -1283,11 +1327,11 @@ function isTrue(value)
 
 async function FetchText(url)
 {
-    const [response, err] = await tryingToFetch(url); // firt time fetching something... This is cool
+    const [response, err] = await isValidFetch(url); // firt time fetching something... This is cool
     if (response)
         return await response.text();
 }
-async function tryingToFetch(url)
+async function isValidFetch(url)
 {
     try
     {
@@ -1327,6 +1371,28 @@ function isValidCSSUnit(value)
     const isValid = regexps.find((regexp) => regexp.test(value)) !== undefined;
 
     return isValid;
+}
+
+function ChangeElementType(element, newtype)
+{
+    let newelement = document.createElement(newtype);
+
+    // move children
+    while (element.firstChild) newelement.appendChild(element.firstChild);
+
+    // copy attributes
+    for (var i = 0, a = element.attributes, l = a.length; i < l; i++)
+    {
+        newelement.attributes[a[i].name] = a[i].value;
+    }
+
+    // event handlers on children will be kept. Unfortunately, there is
+    // no easy way to transfer event handlers on the element itself,
+    // this would require a full management system for events, which is
+    // beyond the scope of this answer. If you figure it out, do it here.
+
+    element.parentNode.replaceChild(newelement, element);
+    return newelement;
 }
 //#endregion
 
