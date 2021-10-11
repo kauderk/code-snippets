@@ -109,8 +109,8 @@ const lastBlockIDParameters = new Map();
 const videoParams = {
     src: 'https://www.youtube.com/embed/---------?',
     id: '---------',
-    start: 000,
-    end: 000,
+    start: 0,
+    end: 0,
     speed: 1,
     updateTime: 0,
     volume: UI.default.video_volume
@@ -1469,7 +1469,7 @@ function ChangeElementType(element, newtype)
     return newelement;
 }
 
-function LoopTroughVisibleYTGIFs(config = { styleQuery = ytGifAttr, self = iframe, others_callback: () => { }, self_callback: () => { } })
+function LoopTroughVisibleYTGIFs(config = { styleQuery: ytGifAttr, self: iframe, others_callback: () => { }, self_callback: () => { } })
 {
     const ytGifs = inViewport(allIframeStyle(config?.styleQuery));
     for (const i of ytGifs)
