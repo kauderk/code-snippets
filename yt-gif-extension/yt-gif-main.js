@@ -1,35 +1,6 @@
-//This code is updated?
 //- Hello? 9
-
-// version 26 - semi-refactored
+// version 27 - semi-refactored
 // Load the IFrame Player API.
-
-
-// I want to add ☐ ☑
-// radios : mute pause when document is inactive ☑ ✘
-// click the item checks the btn ☑ ☑
-
-// play a sound to indicate the current gif makes loop ☑ ☑
-// https://freesound.org/people/candy299p/sounds/250091/          * film ejected *
-// https://freesound.org/data/previews/250/250091_4586102-lq.mp3
-
-// https://freesound.org/people/nckn/sounds/256113/               * param ram *
-// https://freesound.org/data/previews/256/256113_3263906-lq.mp3
-
-// https://freesound.org/data/previews/35/35631_18799-lq.mp3 - roam research podoro ding -
-
-
-// Discarted
-// shortcuts for any btn ✘
-// all hoverable actions, after 500ms the item it's checked // and this feature own btn ofcourse ✘
-// add yt_api customizable settings ✘
-
-
-// Bugs to fix
-// hover a frame > mouse leave with sound > focus on another window > go back to roam & and mouse enter a new frame, both videos play unmuted even with strict_mute_everything_except_current enabled ☐
-// work around > mouse enter a new frame holding middle mouse > mutes the previous, but the previous video still plays unmuted even though play_on_mouse_over enebled ☐
-
-
 const tag = document.createElement('script');
 tag.src = 'https://www.youtube.com/player_api';
 const firstScriptTag = document.getElementsByTagName('script')[0];
@@ -1497,3 +1468,30 @@ function targetNotTogglePlay(id, bol = false)
 }
 //#endregion
 
+
+
+
+
+// I want to add ☐ ☑
+// radios : mute pause when document is inactive ☑ ✘
+// click the item checks the btn ☑ ☑
+
+// play a sound to indicate the current gif makes loop ☑ ☑
+// https://freesound.org/people/candy299p/sounds/250091/          * film ejected *
+// https://freesound.org/data/previews/250/250091_4586102-lq.mp3
+
+// https://freesound.org/people/nckn/sounds/256113/               * param ram *
+// https://freesound.org/data/previews/256/256113_3263906-lq.mp3
+
+// https://freesound.org/data/previews/35/35631_18799-lq.mp3 - roam research podoro ding -
+
+
+// Discarted
+// shortcuts for any btn ✘
+// all hoverable actions, after 500ms the item it's checked // and this feature own btn ofcourse ✘
+// add yt_api customizable settings ✘
+
+
+// Bugs to fix
+// hover a frame > mouse leave with sound > focus on another window > go back to roam & and mouse enter a new frame, both videos play unmuted even with strict_mute_everything_except_current enabled ☐
+// work around > mouse enter a new frame holding middle mouse > mutes the previous, but the previous video still plays unmuted even though play_on_mouse_over enebled ☐
