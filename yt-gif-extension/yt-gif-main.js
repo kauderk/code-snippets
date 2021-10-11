@@ -1,15 +1,15 @@
 //This code is updated?
-//- Hello? 8
+//- Hello? 9
 
 // version 26 - semi-refactored
 // Load the IFrame Player API.
 
 
 // I want to add ☐ ☑
-// radios : mute pause when document is inactive ☑ ☐
-// click the item checks the btn ☑ ☐
+// radios : mute pause when document is inactive ☑ ✘
+// click the item checks the btn ☑ ☑
 
-// play a sound to indicate the current gif makes loop ☑ ☐
+// play a sound to indicate the current gif makes loop ☑ ☑
 // https://freesound.org/people/candy299p/sounds/250091/          * film ejected *
 // https://freesound.org/data/previews/250/250091_4586102-lq.mp3
 
@@ -40,7 +40,9 @@ window.YTGIF = {
         start_form_previous_timestamp: '1',
         clip_life_span_format: '1',
         referenced_start_timestamp: '1',
-        smoll_vid_when_big_ends: '1',
+    },
+    experience: {
+        sound_when_video_loops: '1'
     },
     /* permutations - checkbox */
     inactiveStyle: {
@@ -78,9 +80,9 @@ window.YTGIF = {
     default: {
         video_volume: 40,
         /* 'dark' or 'light' */
-        yt_gif_drop_down_menu_theme: 'light',
+        yt_gif_drop_down_menu_theme: 'dark',
         /* empty means 50% - only valid css units like px  %  vw */
-        player_span: '40%',
+        player_span: '45%',
         /* distinguish between {{[[video]]:}} from {{[[yt-gif]]:}} or 'both' which is also valid*/
         override_roam_video_component: 'both',
         /* src sound when yt gif makes a loop, empty if unwanted */
@@ -137,7 +139,10 @@ const links = {
     },
     html: {
         dropDownMenu: URLFolder('drop-down-menu.html'),
-        playerControls: URLFolder('player-controls.html')
+        playerControls: URLFolder('player-controls.html'),
+        fetched: {
+            playerControls: '',
+        },
     },
     js: {
         main: URLFolder('yt-gif-main.js')
@@ -146,7 +151,8 @@ const links = {
 const cssData = {
     yt_gif: 'yt-gif',
     yt_gif_wrapper: 'yt-gif-wrapper',
-    yt_gif_timestamp: 'yt-gif-timestamp'
+    yt_gif_timestamp: 'yt-gif-timestamp',
+    yt_gif_audio: 'yt-gif-audio'
 }
 /*-----------------------------------*/
 const ytGifAttr = {
@@ -201,6 +207,7 @@ async function Ready()
 
     // 2.
     await deal_with_visual_user_custimizations();
+    await load_html_player_attrs();
 
     // 3. 
     await load_html_drop_down_menu();
@@ -239,6 +246,17 @@ async function Ready()
         moreIcon.insertAdjacentHTML('afterend', htmlText);
     }
 
+    async function load_html_player_attrs()
+    {
+        let htmlText = await FetchText(links.html.playerControls);
+        if (UI.default.clip_end_sound != '')
+        {
+            htmlText = htmlText.replace(/(?<=<source src=\")(?=")/gm, UI.default.clip_end_sound);
+        }
+        links.html.fetched.playerControls = htmlText;
+        return htmlText
+    }
+
     function drop_down_menu_inputs_as_variables()
     {
         // this took a solid hour. thak you thank you
@@ -261,7 +279,7 @@ async function Ready()
                     case 'playStyle':
                         const binaryInput = UI[parentKey][childKey];
                         binaryInput.checked = isTrue(userValue);
-                        binaryInput.previousSibling.setAttribute('for', binaryInput.id);
+                        binaryInput.previousElementSibling.setAttribute('for', binaryInput.id);
                         break;
                     case 'range':
                         UI[parentKey][childKey].value = Number(userValue);
@@ -444,6 +462,7 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
     const newId = iframeIDprfx + Number(++creationCounter);
 
 
+
     // 2. the div that the YTiframe will replace
     if (wrapper.tagName != 'DIV')
     {
@@ -452,18 +471,17 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
     wrapper.parentElement.classList.add(`${cssData.yt_gif_wrapper}-parent`);
     wrapper.className = `${cssData.yt_gif_wrapper} dont-focus-block`;
     wrapper.innerHTML = '';
-    const htmlText = await FetchText(links.html.playerControls);
-    if (UI.default.clip_end_sound)
-    {
-        htmlText.replace(/(?<=<source src=\")(?<=)/gm, UI.default.clip_end_sound)
-    }
+    let htmlText = links.html.fetched.playerControls;
+    htmlText = htmlText.replace(/(?<=<audio id=\").*(?=")/gm, `${cssData.yt_gif_audio}-${uid}`);
     wrapper.insertAdjacentHTML('afterbegin', htmlText);
     wrapper.querySelector('.yt-gif-player').id = newId;
+
 
 
     // 3. weird recursive function... guys...
     const url = await InputBlockVideoParams(uid);
     allVideoParameters.set(newId, urlConfig(url));
+
 
 
     // 4. to record a target's point of reference
@@ -472,6 +490,8 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
     const blockID = closestBlockID(wrapper);
     if (blockID != null)
         recordedIDs.set(blockID, record);
+
+
 
     //console.count(message);
 
@@ -662,26 +682,24 @@ function onPlayerReady(event)
     if (rocording != null)
         rocording.target = t;
 
-    // store them to cleare them
-    t.__proto__.timers = [];
-    t.__proto__.isPlaying = true;
-
     //autostop 🚧
     const loadingMarginOfError = 1; //seconds
     let updateStartTime = start;
-    //
+
+    // javascript is crazy
+    t.__proto__.timers = [];
+    t.__proto__.timerID;
+    t.__proto__.ClearTimers = ClearTimers;
+    t.__proto__.enter = ContinuouslyUpdateTimeDisplay;
     t.__proto__.globalHumanInteraction = undefined;
+    t.__proto__.timeDisplayHumanInteraction = false;
 
 
-
-
-
-
-    t.setVolume(volume);
     iframe.removeAttribute('title');
+    t.setVolume(volume);
     t.setPlaybackRate(speed);
 
-    //huh
+
     const timeDisplay = parent.querySelector('div.' + cssData.yt_gif_timestamp);
 
     //#region Loading values 🌿
@@ -754,12 +772,18 @@ function onPlayerReady(event)
             {
                 if (anyValidInAndOutKey(e))
                 {
+                    function muteWithBlock(id, el)
+                    {
+                        SoundIs(ytGifAttr.sound.mute, el);
+                        recordedIDs.get(id)?.target?.mute();
+                    }
+
                     const config = {
                         styleQuery: ytGifAttr.sound.unMute,
-                        self: iframe,
-                        self_callback: (id) => targetIsNotSoundingFine(id),
-                        others_callback: (id) => targetIsNotSoundingFine(id)
+                        self_callback: (id, el) => muteWithBlock(id, el),
+                        others_callback: (id, el) => muteWithBlock(id, el)
                     }
+
                     LoopTroughVisibleYTGIFs(config);
                 }
             }
@@ -767,8 +791,11 @@ function onPlayerReady(event)
             {
                 const config = {
                     styleQuery: ytGifAttr.play.playing,
-                    self: iframe,
-                    others_callback: (id) => targetIsNotSoundingFine(id),
+                    others_callback: (id, el) =>
+                    {
+                        PlayIs(ytGifAttr.play.paused, el);
+                        recordedIDs.get(id)?.target?.pauseVideo()
+                    }
                 }
                 LoopTroughVisibleYTGIFs(config);
             }
@@ -784,12 +811,29 @@ function onPlayerReady(event)
             {
                 isSoundingFine(false);
             }
+
+            //#region local utils
+            function LoopTroughVisibleYTGIFs(config = { styleQuery, others_callback: () => { }, self_callback: () => { } })
+            {
+                const ytGifs = inViewport(allIframeStyle(config?.styleQuery));
+                for (const i of ytGifs)
+                {
+                    const blockID = closestBlockID(i);
+                    if (i != iframe)
+                    {
+                        config?.others_callback(blockID, i);
+                    }
+                    else if (config.BlockID_self_callback)
+                    {
+                        config?.self_callback(blockID, i);
+                    }
+                }
+            }
+            //#endregion
         }
         else if (e.type == 'mouseleave')
         {
             t.__proto__.globalHumanInteraction = false;
-
-            togglePlay(!AnyPlayOnHover() && t.__proto__.isPlaying);
 
             //ﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠ//the same as: if it's true, then the other posibilities are false
             if (anyValidInAndOutKey(e) && !UI.muteStyle.muted_on_any_mouse_interaction.checked)
@@ -798,10 +842,15 @@ function onPlayerReady(event)
             }
             else
             {
+                //ﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠ// playing
+                togglePlay(!AnyPlayOnHover() && (t.getPlayerState() === 1));
+
                 isSoundingFine(false);
             }
         }
     }
+
+
     function playStyleDDMO()
     {
         if (!inViewport(iframe)) return; //play all VISIBLE Players, this will be called on all visible iframes
@@ -815,7 +864,6 @@ function onPlayerReady(event)
         {
             togglePlay(!AnyPlayOnHover());
         }
-        //console.count('playStyleDDMO');
     }
 
     function muteStyleDDMO()
@@ -826,7 +874,6 @@ function onPlayerReady(event)
         {
             isSoundingFine(false);
         }
-        //console.count('muteStyleDDMO');
     }
     //#endregion
 
@@ -849,11 +896,6 @@ function onPlayerReady(event)
 
 
     //#region Event Handelers | Instantiance Interactive Elements
-    t.__proto__.timerID;
-    t.__proto__.timeDisplayHumanInteraction = false;
-    t.__proto__.enter = ContinuouslyUpdateTimeDisplay;
-    t.__proto__.ClearTimers = ClearTimers;
-
     // for the timeDisplay
     function ContinuouslyUpdateTimeDisplay()
     {
@@ -906,7 +948,7 @@ function onPlayerReady(event)
         videoIsPlayingWithSound(false);
 
         let dir = tick() + (Math.sign(e.deltaY) * Math.round(UI.range.wheelOffset.value) * -1);
-        if (UI.permutations.clip_life_span_format)
+        if (UI.permutations.clip_life_span_format.checked)
         {
             if (dir <= start)
                 dir = end - 1;
@@ -965,10 +1007,27 @@ function onPlayerReady(event)
     timeDisplay.addEventListener('mouseleave', ResetTrackingValues);
     // #endregion 
 
+    //#region detect fullscreen mode
+    iframe.addEventListener('fullscreenchange', () =>
+    {
+        currentFullscreenPlayer = t.h.id;
+
+        if (!document.fullscreenElement)
+        {
+            if (UI.fullscreenStyle.mute_on_exit_fullscreenchange.checked)
+            {
+                isSoundingFine(false);
+            }
+            if (UI.fullscreenStyle.pause_on_exit_fullscreenchange.checked)
+            {
+                togglePlay(false);
+            }
+        }
+    });
+    //#endregion
 
 
-    //const withEventListeners = [parent, parent.parentNode, timeDisplay, ...Object.values(UI.playStyle), ...Object.values(UI.muteStyle)];
-    const withEventListeners = [parent, parent.parentNode, timeDisplay];
+    const withEventListeners = [parent, parent.parentNode, timeDisplay, iframe];
 
     //#region OnDestroyed | UpdateNextSesionValues | Delete allVideoParameters | removeEventListeners
     const OnDestroyedObserver = new MutationObserver(function (mutationsList)
@@ -1046,9 +1105,12 @@ function onPlayerReady(event)
         if (!entries[0])
             YscrollObserver.disconnect();
 
-        if (tick() > updateStartTime + loadingMarginOfError && t.__proto__.globalHumanInteraction === false) // and the interval function 'OneFrame' to prevent the loading black screen
+        if (tick() > updateStartTime + loadingMarginOfError && !t.__proto__.globalHumanInteraction) // and the interval function 'OneFrame' to prevent the loading black screen
         {
-            togglePlay(entries[0]?.isIntersecting, UI.playStyle.visible_clips_start_to_play_unmuted.checked);
+            if (UI.playStyle.visible_clips_start_to_play_unmuted.checked)
+                togglePlay(entries[0]?.isIntersecting);
+            else
+                togglePlay(false);
         }
     }, { threshold: [0] });
     YscrollObserver.observe(iframe);
@@ -1086,7 +1148,7 @@ function onPlayerReady(event)
                 {
                     videoIsPlayingWithSound(true);
                 }
-                else if (inViewport(iframe) && t.__proto__.globalHumanInteraction === false)
+                else if (inViewport(iframe) && !t.__proto__.globalHumanInteraction)
                 {
                     togglePlay(UI.playStyle.visible_clips_start_to_play_unmuted.checked);
                 }
@@ -1098,8 +1160,7 @@ function onPlayerReady(event)
     //#endregion
 
 
-    // detect fullscreen mode
-    iframe.addEventListener('fullscreenchange', () => currentFullscreenPlayer = t.h.id);
+
 
     //#region Utils
     function tick(target = t)
@@ -1123,32 +1184,30 @@ function onPlayerReady(event)
     }
 
 
-    function togglePlay(bol, playing = true)
+    function togglePlay(bol, el = iframe)
     {
-        if (bol && playing)
+        if (bol)
         {
-            t.__proto__.isPlaying = true;
-            PlayIs(ytGifAttr.play.playing);
+            PlayIs(ytGifAttr.play.playing, el);
             t.playVideo();
         }
         else
         {
-            t.__proto__.isPlaying = false;
             PlayIs(ytGifAttr.play.paused);
             t.pauseVideo();
         }
     }
 
-    function isSoundingFine(boo = true)
+    function isSoundingFine(boo = true, el = iframe)
     {
         if (boo)
         {
-            SoundIs(ytGifAttr.sound.unMute);
+            SoundIs(ytGifAttr.sound.unMute, el);
             t.unMute();
         }
         else
         {
-            SoundIs(ytGifAttr.sound.mute);
+            SoundIs(ytGifAttr.sound.mute, el);
             t.mute();
         }
     }
@@ -1197,34 +1256,10 @@ function onPlayerReady(event)
 
 }
 
-// UI InactiveStyles
-document.addEventListener("visibilitychange", InactiveStyle_callback);
+// UI InactiveStyles .... man...
+//visibilityChange
 
-function InactiveStyle_callback(e)
-{
-    if (document.hidden)
-    {
-        const fullscreenPlayer = document.getElementById(currentFullscreenPlayer);
-        if (UI.inactiveStyle.mute_on_inactive_window)
-        {
-            const config = {
-                styleQuery: ytGifAttr.sound.unMute,
-                self: fullscreenPlayer,
-                others_callback: (id) => targetIsNotSoundingFine(id),
-            }
-            LoopTroughVisibleYTGIFs(config);
-        }
-        if (UI.inactiveStyle.pause_on_inactive_window)
-        {
-            const config = {
-                styleQuery: ytGifAttr.play.playing,
-                self: fullscreenPlayer,
-                others_callback: (id) => targetNotTogglePlay(id),
-            }
-            LoopTroughVisibleYTGIFs(config);
-        }
-    }
-}
+
 
 
 //
@@ -1242,11 +1277,35 @@ function onStateChange(state)
     {
         t.seekTo(map?.start || 0);
 
-        if (UI.permutations.smoll_vid_when_big_ends.checked && (currentFullscreenPlayer === t.h.id)) // let's not talk about that this took at least 30 mins. Don't. Ughhhh
+        if (UI.default.clip_end_sound != '')
+        {
+            if (UI.experience.sound_when_video_loops.checked)
+            {
+                play(UI.default.clip_end_sound);
+                //#region util
+                function play(url)
+                {
+                    return new Promise(function (resolve, reject)
+                    { // return a promise
+                        var audio = new Audio();                     // create audio wo/ src
+                        audio.preload = "auto";                      // intend to play through
+                        audio.autoplay = true;                       // autoplay when loaded
+                        audio.onerror = reject;                      // on error, reject
+                        audio.onended = resolve;                     // when done, resolve
+
+                        audio.src = url
+                    });
+                }
+                //#endregion
+            }
+        }
+
+        if (UI.fullscreenStyle.smoll_vid_when_big_ends.checked && (currentFullscreenPlayer === t.h.id)) // let's not talk about that this took at least 30 mins. Don't. Ughhhh
         {
             if (document.fullscreenElement)
             {
                 exitFullscreen();
+                currentFullscreenPlayer = '';
             }
         }
     }
@@ -1254,8 +1313,6 @@ function onStateChange(state)
 
     if (state.data === YT.PlayerState.PLAYING)
     {
-        t.__proto__.isPlaying = true;
-
         if (t.__proto__.timerID === null) // NON ContinuouslyUpdateTimeDisplay
         {
             t.__proto__.enter();
@@ -1265,7 +1322,6 @@ function onStateChange(state)
 
     if (state.data === YT.PlayerState.PAUSED)
     {
-        t.__proto__.isPlaying = false;
         t.__proto__.ClearTimers();
     }
 }
@@ -1469,7 +1525,7 @@ function ChangeElementType(element, newtype)
     return newelement;
 }
 
-function LoopTroughVisibleYTGIFs(config = { styleQuery: ytGifAttr, self: iframe, others_callback: () => { }, self_callback: () => { } })
+function LoopTroughVisibleYTGIFsGlobal(config = { styleQuery: ytGifAttr, self: iframe, others_callback: () => { }, self_callback: () => { } })
 {
     const ytGifs = inViewport(allIframeStyle(config?.styleQuery));
     for (const i of ytGifs)
@@ -1486,7 +1542,7 @@ function LoopTroughVisibleYTGIFs(config = { styleQuery: ytGifAttr, self: iframe,
     }
 }
 
-function targetIsNotSoundingFine(id, bol = false)
+function targetIsSoundingFine(id, bol = true)
 {
     return recordedIDs.get(id)?.target?.isSoundingFine(bol);
 }
