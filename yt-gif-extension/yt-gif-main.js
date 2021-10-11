@@ -3,6 +3,33 @@
 
 // version 26 - semi-refactored
 // Load the IFrame Player API.
+
+
+// I want to add ☐ ☑
+// radios : mute pause when document is inactive ☑ ☐
+// click the item checks the btn ☑ ☐
+
+// play a sound to indicate the current gif makes loop ☑ ☐
+// https://freesound.org/people/candy299p/sounds/250091/          * film ejected *
+// https://freesound.org/data/previews/250/250091_4586102-lq.mp3
+
+// https://freesound.org/people/nckn/sounds/256113/               * param ram *
+// https://freesound.org/data/previews/256/256113_3263906-lq.mp3
+
+// https://freesound.org/data/previews/35/35631_18799-lq.mp3 - roam research podoro ding -
+
+
+// Discarted
+// shortcuts for any btn ✘
+// all hoverable actions, after 500ms the item it's checked // and this feature own btn ofcourse ✘
+// add yt_api customizable settings ✘
+
+
+// Bugs to fix
+// hover a frame > mouse leave with sound > focus on another window > go back to roam & and mouse enter a new frame, both videos play unmuted even with strict_mute_everything_except_current enabled ☐
+// work around > mouse enter a new frame holding middle mouse > mutes the previous, but the previous video still plays unmuted even though play_on_mouse_over enebled ☐
+
+
 const tag = document.createElement('script');
 tag.src = 'https://www.youtube.com/player_api';
 const firstScriptTag = document.getElementsByTagName('script')[0];
@@ -14,6 +41,17 @@ window.YTGIF = {
         clip_life_span_format: '1',
         referenced_start_timestamp: '1',
         smoll_vid_when_big_ends: '1',
+    },
+    /* permutations - checkbox */
+    inactiveStyle: {
+        mute_on_inactive_window: '1',
+        pause_on_inactive_window: '',
+    },
+    /* permutations - checkbox */
+    fullscreenStyle: {
+        smoll_vid_when_big_ends: '1',
+        mute_on_exit_fullscreenchange: '',
+        pause_on_exit_fullscreenchange: '',
     },
     /* one at a time - radio */
     muteStyle: {
@@ -44,9 +82,15 @@ window.YTGIF = {
         /* empty means 50% - only valid css units like px  %  vw */
         player_span: '40%',
         /* distinguish between {{[[video]]:}} from {{[[yt-gif]]:}} or 'both' which is also valid*/
-        override_roam_video_component: 'both'
-    }
+        override_roam_video_component: 'both',
+        /* src sound when yt gif makes a loop, empty if unwanted */
+        clip_end_sound: 'https://freesound.org/data/previews/256/256113_3263906-lq.mp3',
+    },
 }
+
+
+
+
 /*-----------------------------------*/
 /* USER SETTINGS  */
 const UI = window.YTGIF;
@@ -105,7 +149,7 @@ const cssData = {
     yt_gif_timestamp: 'yt-gif-timestamp'
 }
 /*-----------------------------------*/
-const styleIs = {
+const ytGifAttr = {
     sound: {
         mute: 'yt-mute',
         unMute: 'yt-unmute'
@@ -124,6 +168,8 @@ const observeEls = {
     video: 'rm-video-player__spacing-wrapper'
 }
 /*-----------------------------------*/
+
+
 
 
 // wait for APIs to exist
@@ -209,9 +255,13 @@ async function Ready()
                 switch (parentKey)
                 {
                     case 'permutations':
+                    case 'inactiveStyle':
+                    case 'fullscreenStyle':
                     case 'muteStyle':
                     case 'playStyle':
-                        UI[parentKey][childKey].checked = isTrue(userValue);
+                        const binaryInput = UI[parentKey][childKey];
+                        binaryInput.checked = isTrue(userValue);
+                        binaryInput.previousSibling.setAttribute('for', binaryInput.id);
                         break;
                     case 'range':
                         UI[parentKey][childKey].value = Number(userValue);
@@ -377,6 +427,8 @@ function ObserveIframesAndDelployYTPlayers(targetClass)
 }
 
 
+
+
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
 //
 async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
@@ -401,6 +453,10 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
     wrapper.className = `${cssData.yt_gif_wrapper} dont-focus-block`;
     wrapper.innerHTML = '';
     const htmlText = await FetchText(links.html.playerControls);
+    if (UI.default.clip_end_sound)
+    {
+        htmlText.replace(/(?<=<source src=\")(?<=)/gm, UI.default.clip_end_sound)
+    }
     wrapper.insertAdjacentHTML('afterbegin', htmlText);
     wrapper.querySelector('.yt-gif-player').id = newId;
 
@@ -417,7 +473,7 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
     if (blockID != null)
         recordedIDs.set(blockID, record);
 
-    console.count(message);
+    //console.count(message);
 
     // 5. ACTUAL CREATION OF THE EMBEDED YOUTUBE VIDEO PLAYER (target)
     return new window.YT.Player(newId, playerConfig());
@@ -597,7 +653,7 @@ function onPlayerReady(event)
     const end = map?.end || t.getDuration();
     const clipSpan = end - start;
     const speed = map?.speed || 1;
-    const volume = map?.volume || videoParams.volume || 40;
+    const volume = validVolume();
     const tickOffset = 1000 / speed;
     //
     const blockID = closestBlockID(iframe);
@@ -614,7 +670,11 @@ function onPlayerReady(event)
     const loadingMarginOfError = 1; //seconds
     let updateStartTime = start;
     //
-    t.__proto__.globalHumanInteraction = false;
+    t.__proto__.globalHumanInteraction = undefined;
+
+
+
+
 
 
     t.setVolume(volume);
@@ -628,11 +688,11 @@ function onPlayerReady(event)
     // load last sesion values
     if (lastBlockIDParameters.has(blockID))
     {
-        let sesion = lastBlockIDParameters.get(blockID);
-        //
+        const sesion = lastBlockIDParameters.get(blockID);
+
         if (UI.permutations.start_form_previous_timestamp?.checked && bounded(sesion.updateTime))
             seekToUpdatedTime(sesion.updateTime);
-        //
+
         t.setVolume(sesion.volume);
     }
     // load referenced values
@@ -641,23 +701,28 @@ function onPlayerReady(event)
         //Future Brand new adition to 'lastBlockIDParameters' map
         if (UI.permutations.referenced_start_timestamp.checked)
         {
-            const players = document.querySelectorAll(`[id*=${iframeIDprfx}]`);
-            for (let i = 0; i < players.length; i++)
+            const ytGifs = allIframeIDprfx();
+            for (const i of ytGifs)
             {
-                if (players[i] === iframe) continue; //ignore itself
+                if (i === iframe) continue; //ignore itself
 
-                if (players[i]?.src?.slice(0, -11) == iframe?.src?.slice(0, -11))
+                if (i?.src?.slice(0, -11) == iframe?.src?.slice(0, -11))
                 { //removes at least 'widgetid=··' so they reconize each other
 
-                    const desiredBlockID = blockID || document.querySelector('body > span[blockID]')?.getAttribute('blockID') || closestBlockID(players[i]);
+                    const desiredBlockID = blockID || document.querySelector('body > span[blockID]')?.getAttribute('blockID') || closestBlockID(i);
 
                     const desiredTarget = recordedIDs.get(desiredBlockID)?.target || t;
                     const desiredTime = tick(desiredTarget) || start;
-                    const desiredVolume = desiredTarget?.getVolume();
+                    const desiredVolume = desiredTarget?.getVolume() || validVolume();
 
                     seekToUpdatedTime(desiredTime)
 
-                    console.count(`loaded referenced values to ${key} from ${desiredBlockID}`);
+                    if ((typeof (desiredTarget.__proto__.globalHumanInteraction) != 'undefined'))
+                    {
+                        t.setVolume(desiredVolume);
+                    }
+
+                    console.count(`${key} referenced from ${desiredBlockID}`);
                     break;
                 }
             }
@@ -689,30 +754,21 @@ function onPlayerReady(event)
             {
                 if (anyValidInAndOutKey(e))
                 {
-                    function muteWithBlock(id, el)
-                    {
-                        SoundIs(styleIs.sound.mute, el);
-                        recordedIDs.get(id)?.target?.mute();
-                    }
-
                     const config = {
-                        styleQuery: styleIs.sound.unMute,
-                        self_callback: (id, el) => muteWithBlock(id, el),
-                        others_callback: (id, el) => muteWithBlock(id, el)
+                        styleQuery: ytGifAttr.sound.unMute,
+                        self: iframe,
+                        self_callback: (id) => targetIsNotSoundingFine(id),
+                        others_callback: (id) => targetIsNotSoundingFine(id)
                     }
-
                     LoopTroughVisibleYTGIFs(config);
                 }
             }
             if (UI.playStyle.strict_current_play_on_mouse_over.checked)
             {
                 const config = {
-                    styleQuery: styleIs.play.playing,
-                    others_callback: (id, el) =>
-                    {
-                        PlayIs(styleIs.play.paused, el);
-                        recordedIDs.get(id)?.target?.pauseVideo()
-                    }
+                    styleQuery: ytGifAttr.play.playing,
+                    self: iframe,
+                    others_callback: (id) => targetIsNotSoundingFine(id),
                 }
                 LoopTroughVisibleYTGIFs(config);
             }
@@ -728,25 +784,6 @@ function onPlayerReady(event)
             {
                 isSoundingFine(false);
             }
-
-            //#region local utils
-            function LoopTroughVisibleYTGIFs(config = { styleQuery, others_callback: () => { }, self_callback: () => { } })
-            {
-                const ytGifs = inViewport(allIframeStyle(config?.styleQuery));
-                for (const i of ytGifs)
-                {
-                    const blockID = closestBlockID(i);
-                    if (i != iframe)
-                    {
-                        config?.others_callback(blockID, i);
-                    }
-                    else if (config.BlockID_self_callback)
-                    {
-                        config?.self_callback(blockID, i);
-                    }
-                }
-            }
-            //#endregion
         }
         else if (e.type == 'mouseleave')
         {
@@ -1073,6 +1110,10 @@ function onPlayerReady(event)
     {
         return start < x && x < end;
     }
+    function validVolume()
+    {
+        return map?.volume || videoParams.volume || 40;
+    }
 
 
     function videoIsPlayingWithSound(boo = true)
@@ -1087,13 +1128,13 @@ function onPlayerReady(event)
         if (bol && playing)
         {
             t.__proto__.isPlaying = true;
-            PlayIs(styleIs.play.playing);
+            PlayIs(ytGifAttr.play.playing);
             t.playVideo();
         }
         else
         {
             t.__proto__.isPlaying = false;
-            PlayIs(styleIs.play.paused);
+            PlayIs(ytGifAttr.play.paused);
             t.pauseVideo();
         }
     }
@@ -1102,12 +1143,12 @@ function onPlayerReady(event)
     {
         if (boo)
         {
-            SoundIs(styleIs.sound.unMute);
+            SoundIs(ytGifAttr.sound.unMute);
             t.unMute();
         }
         else
         {
-            SoundIs(styleIs.sound.mute);
+            SoundIs(ytGifAttr.sound.mute);
             t.mute();
         }
     }
@@ -1137,12 +1178,12 @@ function onPlayerReady(event)
 
     function SoundIs(style, el = iframe)
     {
-        StyleAttribute(styleIs.sound, style, el);
+        StyleAttribute(ytGifAttr.sound, style, el);
     }
 
     function PlayIs(style, el = iframe)
     {
-        StyleAttribute(styleIs.play, style, el);
+        StyleAttribute(ytGifAttr.play, style, el);
     }
 
     function StyleAttribute(subStyle, style, el)
@@ -1155,12 +1196,42 @@ function onPlayerReady(event)
     //#endregion
 
 }
+
+// UI InactiveStyles
+document.addEventListener("visibilitychange", InactiveStyle_callback);
+
+function InactiveStyle_callback(e)
+{
+    if (document.hidden)
+    {
+        const fullscreenPlayer = document.getElementById(currentFullscreenPlayer);
+        if (UI.inactiveStyle.mute_on_inactive_window)
+        {
+            const config = {
+                styleQuery: ytGifAttr.sound.unMute,
+                self: fullscreenPlayer,
+                others_callback: (id) => targetIsNotSoundingFine(id),
+            }
+            LoopTroughVisibleYTGIFs(config);
+        }
+        if (UI.inactiveStyle.pause_on_inactive_window)
+        {
+            const config = {
+                styleQuery: ytGifAttr.play.playing,
+                self: fullscreenPlayer,
+                others_callback: (id) => targetNotTogglePlay(id),
+            }
+            LoopTroughVisibleYTGIFs(config);
+        }
+    }
+}
+
+
 //
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
-//
 //loops between 'start' and 'end' boundaries
 function onStateChange(state)
 {
@@ -1198,6 +1269,9 @@ function onStateChange(state)
         t.__proto__.ClearTimers();
     }
 }
+
+
+
 
 //#region Utilies
 function inViewport(els)
@@ -1393,6 +1467,32 @@ function ChangeElementType(element, newtype)
 
     element.parentNode.replaceChild(newelement, element);
     return newelement;
+}
+
+function LoopTroughVisibleYTGIFs(config = { styleQuery = ytGifAttr, self = iframe, others_callback: () => { }, self_callback: () => { } })
+{
+    const ytGifs = inViewport(allIframeStyle(config?.styleQuery));
+    for (const i of ytGifs)
+    {
+        const blockID = closestBlockID(i);
+        if (i != self)
+        {
+            config?.others_callback(blockID, i);
+        }
+        else if (config.BlockID_self_callback)
+        {
+            config?.self_callback(blockID, i);
+        }
+    }
+}
+
+function targetIsNotSoundingFine(id, bol = false)
+{
+    return recordedIDs.get(id)?.target?.isSoundingFine(bol);
+}
+function targetNotTogglePlay(id, bol = false)
+{
+    return recordedIDs.get(id)?.target?.togglePlay(bol);
 }
 //#endregion
 
