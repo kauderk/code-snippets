@@ -17,4 +17,7 @@
   --submenu-info-btn-bg-h: rgb(87 184 144);
 
   --submenu-info-item-bg-h: rgb(87 184 144 / 45%);
+
+  --deployment-fb-extreme-bg: rgb(235, 194, 119);
+  --deployment-fb-mid-bg: #ad301b;
 }
