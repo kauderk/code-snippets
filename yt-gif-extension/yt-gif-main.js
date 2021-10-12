@@ -135,7 +135,7 @@ const cssData = {
     yt_gif_audio: 'yt-gif-audio',
     ty_gif_custom_player_span_first_usage: 'ty-gif-custom-player-span-first-usage',
 
-    dropdown_not_allowed_input: 'dropdown_not-allowed_input',
+    dropdown_input_not_allowed: 'dropdown_not-allowed_input',
     dropdown_fadeIt_bg_animation: 'dropdown_fadeIt-bg_animation',
     dropdown_forbidden_input: 'dropdown_forbidden-input',
     dropdown_allright_input: 'dropdown_allright-input',
@@ -198,7 +198,7 @@ async function Ready()
     timestamp_offset_features();
 
     // 6.
-    while_running_features();
+    await while_running_features();
 
     // 7. is nice to have an option to stop the masterObserver for good
     what_components_to_observe_and_deploy();
@@ -309,84 +309,89 @@ async function Ready()
         //#endregion
     }
 
-    function while_running_features()
+    async function while_running_features()
     {
         //ﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠ// UI.deploymentStyle.suspend_yt_gif_deployment
         const menuDeployCheckbox = UI.deploymentStyle.suspend_yt_gif_deployment;
-        menuDeployCheckbox.addEventListener('change', handleMenuDeploy);
+        menuDeployCheckbox.addEventListener('change', handleOutherMenuDeploy);
+
+        const parent = menuDeployCheckbox.parentElement;
+        const hiddenDeploySubMenu = document.querySelector(`.${cssData.dropdown__hidden}.${cssData.dropdown_deployment_style}`);
+
 
         const label = menuDeployCheckbox.previousElementSibling;
         const info = {
             suspend: 'Suspend YT GIF deployment',
             deploy: 'Deploy with customizations',
-            loading: 'loading',
+            discharging: '** Coding and stuff **',
+            loading: '** Loading and stuff **',
         }
         label.innerHTML = info.suspend;
         const islabel = (str) => label.innerHTML == str;
+        const labelTxt = (str) => label.innerHTML = str;
 
         label.setAttribute('for', menuDeployCheckbox.id); // link checks
+
+
 
         const submenuSubmit = UI.deploymentStyle.deploy_yt_gifs;
         submenuSubmit.addEventListener('change', handleSubMenuDeploy);
 
 
-        const hiddenDeploySubMenu = document.querySelector(`.${cssData.dropdown__hidden}.${cssData.dropdown_deployment_style}`);
 
-        function handleMenuDeploy(e)
+        const redAnimationNoInputs = [cssData.dropdown_fadeIt_bg_animation, cssData.dropdown_forbidden_input, cssData.dropdown_input_not_allowed];
+        const greeAnimationInputReady = [cssData.dropdown_fadeIt_bg_animation, cssData.dropdown_allright_input];
+
+        async function handleOutherMenuDeploy(e)
         {
             if (menuDeployCheckbox.checked)
             {
                 if (islabel(info.suspend))
                 {
+                    labelTxt(info.discharging);
                     isSubMenuHidden(false);
-                    label.innerHTML = info.deploy;
-
-                    console.count('clean observers')
+                    await restricInputsfor10SecMeanWhile(redAnimationNoInputs);   //showing the red animation, because you are choosing to suspend
+                    labelTxt(info.deploy); //after the 10 seconds allow inputs again
                 }
                 else if (islabel(info.deploy))
                 {
+                    labelTxt(info.loading);                    //change label to suspend
                     isSubMenuHidden(true);
-                    label.innerHTML = info.suspend;
-
-                    console.count('new observers')
+                    await restricInputsfor10SecMeanWhile(greeAnimationInputReady);
+                    labelTxt(info.suspend);
                 }
             }
-            menuDeployCheckbox.checked = false;
-            console.count('clicks');
-
-            isMenuCheckboxDisabled(true); //don't spam it
-            setTimeout(() => isMenuCheckboxDisabled(false), 10000);
         }
 
-        function handleSubMenuDeploy(e)
+        function restricInputsfor10SecMeanWhile(animation)
+        {
+            return new Promise(function (resolve, reject)
+            {
+                menuDeployCheckbox.disabled = true;
+                menuDeployCheckbox.checked = false;
+
+                toggleClasses(true, animation, parent);
+
+                setTimeout(() =>
+                {
+                    menuDeployCheckbox.disabled = false;
+
+                    toggleClasses(false, animation, parent);
+                    resolve();
+                }, 10000);
+            });
+        }
+
+        async function handleSubMenuDeploy(e)
         {
             if (submenuSubmit.checked && (islabel(info.deploy)))
             {
-                isSubMenuHidden(true);
-                isMenuCheckboxDisabled(false);
-
-                label.innerHTML = info.suspend;
                 submenuSubmit.checked = false;
-
-                console.log('deploy form submenu' + e);
+                labelTxt(info.loading);                    //change label to suspend
+                isSubMenuHidden(true);
+                await restricInputsfor10SecMeanWhile(greeAnimationInputReady);
+                labelTxt(info.suspend);
             }
-        }
-
-        //#region utils
-        function isMenuCheckboxDisabled(bol)
-        {
-            menuDeployCheckbox.disabled = bol;
-            const parent = menuDeployCheckbox.parentNode;
-
-            const dirClass = [cssData.dropdown_forbidden_input, cssData.dropdown_allright_input];
-            const dir = bol ? dirClass[1] : dirClass[0];
-
-            toggleClasses(false, dirClass, parent);
-
-            const classNamesCheckbox = [cssData.dropdown_not_allowed_input, cssData.dropdown_fadeIt_bg_animation, dir]
-            toggleClasses(bol, classNamesCheckbox, parent);
-
-            console.log({ disabled: menuDeployCheckbox.disabled });
         }
 
         function isSubMenuHidden(bol)
@@ -394,6 +399,7 @@ async function Ready()
             const classNames = [`${cssData.dropdown__hidden}`]
             toggleClasses(bol, classNames, hiddenDeploySubMenu);
         }
+
 
         function toggleClasses(bol, classNames, el)
         {
