@@ -18,6 +18,9 @@
 
   --submenu-info-item-bg-h: rgb(87 184 144 / 45%);
 
+  --deployment-extreme-bg: blue;
+  --deployment-mid-bg: red;
+
   --deployment-forbidden-extreme-bg: var(--dropdown--bg);
   --deployment-forbidden-mid-bg: #eb5034;
 
