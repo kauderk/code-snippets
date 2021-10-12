@@ -363,6 +363,8 @@ async function Ready()
             if (submenuSubmit.checked && (islabel(info.deploy)))
             {
                 isSubMenuHidden(true);
+                isMenuCheckboxDisabled(false);
+
                 label.innerHTML = info.suspend;
                 submenuSubmit.checked = false;
 
@@ -374,13 +376,17 @@ async function Ready()
         function isMenuCheckboxDisabled(bol)
         {
             menuDeployCheckbox.disabled = bol;
-            const classNamesCheckbox = [cssData.dropdown_not_allowed_input, cssData.dropdown_fadeIt_bg_animation, cssData.dropdown_forbidden_input]
-            toggleClasses(bol, classNamesCheckbox, menuDeployCheckbox.parentElement);
+            const parent = menuDeployCheckbox.parentNode;
 
-            const classNameslabel = [cssData.dropdown_not_allowed_input]
-            toggleClasses(bol, classNameslabel, label);
+            const dirClass = [cssData.dropdown_forbidden_input, cssData.dropdown_allright_input];
+            const dir = bol ? dirClass[1] : dirClass[0];
 
-            console.log({ menuDeployCheckbox: () => menuDeployCheckbox.disabled });
+            toggleClasses(false, dirClass, parent);
+
+            const classNamesCheckbox = [cssData.dropdown_not_allowed_input, cssData.dropdown_fadeIt_bg_animation, dir]
+            toggleClasses(bol, classNamesCheckbox, parent);
+
+            console.log({ disabled: menuDeployCheckbox.disabled });
         }
 
         function isSubMenuHidden(bol)
@@ -395,7 +401,6 @@ async function Ready()
             {
                 el.classList.add(...classNames);
             }
-
             else
             {
                 el.classList.remove(...classNames);

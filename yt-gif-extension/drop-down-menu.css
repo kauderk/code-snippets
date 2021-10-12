@@ -196,7 +196,7 @@ span.dropdown-info {
 .dropdown--hidden {
   display: none;
 }
-.dropdown_not-allowed_input{
+.dropdown_not-allowed_input *{
   cursor: not-allowed;
 }
 
