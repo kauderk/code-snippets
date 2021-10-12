@@ -18,8 +18,10 @@
 
   --submenu-info-item-bg-h: #3e8a47ba;
 
-  --deployment-fb-extreme-bg: var(--dropdown--bg);
-  --deployment-fb-mid-bg: #ad301b;
+  --deployment-forbidden-extreme-bg: var(--dropdown--bg);
+  --deployment-forbidden-mid-bg: #ad301b;
+
+  --deployment-allright-mid-bg: #176951;
 
   --submenu-message-bg-high: #144b54;
 }
