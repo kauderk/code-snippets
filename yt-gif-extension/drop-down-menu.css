@@ -168,3 +168,22 @@ div.dropdown-show-info:hover > span.dropdown-info-message{
 span.dropdown-info {
   color: var(--dropdown-c);
 }
+
+
+/* deployment funcionality feedback */
+@-o-keyframes fadeIt {
+  0%   { background-color: var(--deployment-fb-extreme-bg); }
+  50%  { background-color: var(--deployment-fb-mid-bg); }
+  100% { background-color: var(--deployment-fb-extreme-bg); }
+}
+@keyframes fadeIt {
+  0%   { background-color: var(--deployment-fb-extreme-bg); }
+  50%  { background-color: var(--deployment-fb-mid-bg); }
+  100% { background-color: var(--deployment-fb-extreme-bg); }
+}
+
+.yt-gif-forbidden-input-animation{    
+    background-image:none !important; 
+         -o-animation: fadeIt 10s ease-in-out; 
+            animation: fadeIt 10s ease-in-out; 
+}
