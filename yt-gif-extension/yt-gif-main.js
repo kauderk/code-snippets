@@ -163,7 +163,11 @@ const ytGifAttr = {
 /*-----------------------------------*/
 const observeEls = {
     yt_gif: `rm-xparser-default-${cssData.yt_gif}`,
-    video: 'rm-video-player__spacing-wrapper'
+    video: 'rm-video-player__spacing-wrapper',
+}
+const observeElsSpecialCase = {
+    both: '',
+    current: '',
 }
 /*-----------------------------------*/
 
@@ -201,11 +205,11 @@ async function Ready()
     // 5. One time - the timestamp scroll offset updates on changes
     timestamp_offset_features();
 
-    // 6.
-    await while_running_features();
-
-    // 7. is nice to have an option to stop the masterObserver for good
+    // 6. is nice to have an option to stop the masterObserver for good
     what_components_to_observe_and_deploy();
+
+    // 7.
+    await while_running_features();
 
     console.log('YT GIF extension activated');
 
@@ -319,6 +323,7 @@ async function Ready()
         const menuDeployCheckbox = UI.deploymentStyle.suspend_yt_gif_deployment;
         menuDeployCheckbox.addEventListener('change', handleOutherMenuDeploy);
 
+
         const parent = menuDeployCheckbox.parentElement;
         const hiddenDeploySubMenu = document.querySelector(`.${cssData.dropdown__hidden}.${cssData.dropdown_deployment_style}`);
         const hiddenDeploySubMenuMessage = document.querySelector(`.${cssData.dwp_message}`);
@@ -338,7 +343,6 @@ async function Ready()
         label.setAttribute('for', menuDeployCheckbox.id); // link checks
 
 
-
         const submenuSubmit = UI.deploymentStyle.deploy_yt_gifs;
         submenuSubmit.addEventListener('change', handleSubMenuDeploy);
 
@@ -348,6 +352,15 @@ async function Ready()
         const redAnimationNoInputs = [...baseAnimation, cssData.dropdown_forbidden_input];
         const greeAnimationInputReady = [...baseAnimation, cssData.dropdown_allright_input];
 
+
+        const deployment = {
+            yt_gif: () => UI.deploymentStyle.deployment_style_yt_gif.checked,
+            video: () => UI.deploymentStyle.deployment_style_video.checked,
+            both: () => UI.deploymentStyle.deployment_style_both.checked,
+        }
+
+
+        //#region event handelers
         async function handleOutherMenuDeploy(e)
         {
             if (menuDeployCheckbox.checked)
@@ -356,6 +369,7 @@ async function Ready()
                 {
                     labelTxt(info.discharging);
                     isSubMenuHidden(false);
+                    CleanMasterObservers();
                     await restricInputsfor10SecMeanWhile(redAnimationNoInputs);   //showing the red animation, because you are choosing to suspend
                     labelTxt(info.deploy); //after the 10 seconds allow inputs again
                 }
@@ -365,9 +379,63 @@ async function Ready()
                 }
             }
         }
+        async function handleSubMenuDeploy(e)
+        {
+            if (submenuSubmit.checked && (islabel(info.deploy)))
+            {
+                await greenAnimationCombo();
+            }
+        }
+        //#endregion
+
+        //#region utils
+
+        function CleanMasterObservers()
+        {
+            let mutCnt = 0, inscCnt = 0;
+            for (let i = MasterMutationObservers.length - 1; i >= 0; i--)
+            {
+                MasterMutationObservers[i].disconnect();
+                MasterMutationObservers.splice(i, 1);
+                mutCnt++; // i don't understand why this ins't counting
+            }
+            for (let i = MasterIntersectionObservers.length - 1; i >= 0; i--)
+            {
+                MasterIntersectionObservers[i].disconnect();
+                MasterIntersectionObservers.splice(i, 1);
+                inscCnt++;
+            }
+
+            console.log(`${mutCnt} mutation and ${inscCnt} intersection master observers cleaned`);
+        }
+
+
+        function ChargeMasterObservers()
+        {
+            for (const key in deployment)
+            {
+                if (isTrue(deployment[key]())) // THIS IS CRAZY
+                {
+                    if (key == 'yt_gif')
+                    {
+                        yt_gif_MasterObserver();
+                    }
+                    else if (key == 'video')
+                    {
+                        video_MasterObserver();
+                    }
+                    else if (key == 'both')
+                    {
+                        both_MasterObserver();
+                    }
+                }
+            }
+        }
 
         async function greenAnimationCombo()
         {
+            ChargeMasterObservers();
+
             labelTxt(info.loading); //change label to suspend
             isSubMenuHidden(true);
             await restricInputsfor10SecMeanWhile(greeAnimationInputReady);
@@ -401,23 +469,14 @@ async function Ready()
             });
         }
 
-        async function handleSubMenuDeploy(e)
-        {
-            if (submenuSubmit.checked && (islabel(info.deploy)))
-            {
-                await greenAnimationCombo();
-            }
-        }
-
         function isSubMenuHidden(bol)
         {
             const hiddenClass = [`${cssData.dropdown__hidden}`]
             toggleClasses(bol, hiddenClass, hiddenDeploySubMenu);
 
             const pulseAnim = [cssData.dwn_pulse_anim]; // spagguetti
-            toggleClasses(bol, pulseAnim, hiddenDeploySubMenuMessage); // spagguetti
+            toggleClasses(!bol, pulseAnim, hiddenDeploySubMenuMessage); // spagguetti
         }
-
 
         function toggleClasses(bol, classNames, el)
         {
@@ -437,22 +496,19 @@ async function Ready()
     {
         if (isTrue(UI.default.override_roam_video_component)) //video
         {
-            MasterMutationObservers.push(ObserveIframesAndDelployYTPlayers(observeEls.video));
+            video_MasterObserver();
         }
         else if (UI.default.override_roam_video_component === 'both') //observeEls values
         {
-            for (const key in observeEls)
-            {
-                MasterMutationObservers.push(ObserveIframesAndDelployYTPlayers(observeEls[key]));
-            }
+            both_MasterObserver();
         }
         else // yt-gif
         {
-            MasterMutationObservers.push(ObserveIframesAndDelployYTPlayers(observeEls.yt_gif));
+            yt_gif_MasterObserver();
         }
     }
-
     //#endregion
+
 
     //#region uitils
     async function LoadCSS(cssURL) // 'cssURL' is the stylesheet's URL, i.e. /css/styles.css
@@ -468,6 +524,27 @@ async function Ready()
 
             link.onload = () => resolve();
         });
+    }
+
+    function both_MasterObserver()
+    {
+        for (const key in observeEls)
+        {
+            MasterMutationObservers.push(ObserveIframesAndDelployYTPlayers(observeEls[key]));
+            observeElsSpecialCase.current = 'both';
+        }
+    }
+
+    function video_MasterObserver()
+    {
+        MasterMutationObservers.push(ObserveIframesAndDelployYTPlayers(observeEls.video));
+        observeElsSpecialCase.current = 'video';
+    }
+
+    function yt_gif_MasterObserver()
+    {
+        MasterMutationObservers.push(ObserveIframesAndDelployYTPlayers(observeEls.yt_gif));
+        observeElsSpecialCase.current = 'yt_gif';
     }
 
     //#endregion
@@ -486,7 +563,8 @@ function ObserveIframesAndDelployYTPlayers(targetClass)
     const hidden = AvoidAllZoomChilds();
     for (const component of hidden)
     {
-        ObserveIntersectToSetUpPlayer(component, 'second wave'); // I'm quite impressed with this... I mean...
+        // I'm quite impressed with this... I mean...
+        MasterIntersectionObservers.push(ObserveIntersectToSetUpPlayer(component, 'second wave'));
     }
 
     // 3. ready to observe and deploy iframes
@@ -522,7 +600,7 @@ function ObserveIframesAndDelployYTPlayers(targetClass)
 
         return yobs;
     }
-    // ObserveIntersectToSetUpPlayer when cssClass is added to the DOM
+    // ObserveIntersectToSetUpPlaye when cssClass is added to the DOM
     function mutation_callback(mutationsList, observer)
     {
         const found = [];
@@ -546,7 +624,9 @@ function ObserveIframesAndDelployYTPlayers(targetClass)
         for (const node of found)
         {
             if (isNotZoomPath(node))
-                ObserveIntersectToSetUpPlayer(node, 'valid entries MutationObserver');
+            {
+                MasterIntersectionObservers.push(ObserveIntersectToSetUpPlayer(node, 'valid entries MutationObserver'));
+            }
         }
     };
     //#endregion
