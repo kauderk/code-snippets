@@ -135,12 +135,14 @@ const cssData = {
     yt_gif_audio: 'yt-gif-audio',
     ty_gif_custom_player_span_first_usage: 'ty-gif-custom-player-span-first-usage',
 
-    dropdown_input_not_allowed: 'dropdown_not-allowed_input',
+    dwn_no_input: 'dropdown_not-allowed_input',
     dropdown_fadeIt_bg_animation: 'dropdown_fadeIt-bg_animation',
     dropdown_forbidden_input: 'dropdown_forbidden-input',
     dropdown_allright_input: 'dropdown_allright-input',
+
     dropdown__hidden: 'dropdown--hidden',
     dropdown_deployment_style: 'dropdown_deployment-style',
+    dwp_message: 'dropdown-info-message',
 
     dwn_pulse_anim: 'drodown_item-pulse-animation',
 }
@@ -319,6 +321,7 @@ async function Ready()
 
         const parent = menuDeployCheckbox.parentElement;
         const hiddenDeploySubMenu = document.querySelector(`.${cssData.dropdown__hidden}.${cssData.dropdown_deployment_style}`);
+        const hiddenDeploySubMenuMessage = document.querySelector(`.${cssData.dwp_message}`);
 
 
         const label = menuDeployCheckbox.previousElementSibling;
@@ -340,7 +343,8 @@ async function Ready()
         submenuSubmit.addEventListener('change', handleSubMenuDeploy);
 
 
-        const baseAnimation = [cssData.dropdown_fadeIt_bg_animation, cssData.dropdown_input_not_allowed];
+        const noInputAnimation = [cssData.dwn_no_input]
+        const baseAnimation = [cssData.dropdown_fadeIt_bg_animation, cssData.dwn_no_input];
         const redAnimationNoInputs = [...baseAnimation, cssData.dropdown_forbidden_input];
         const greeAnimationInputReady = [...baseAnimation, cssData.dropdown_allright_input];
 
@@ -357,28 +361,41 @@ async function Ready()
                 }
                 else if (islabel(info.deploy))
                 {
-                    labelTxt(info.loading);                    //change label to suspend
-                    isSubMenuHidden(true);
-                    await restricInputsfor10SecMeanWhile(greeAnimationInputReady);
-                    labelTxt(info.suspend);
+                    await greenAnimationCombo();
                 }
             }
+        }
+
+        async function greenAnimationCombo()
+        {
+            labelTxt(info.loading); //change label to suspend
+            isSubMenuHidden(true);
+            await restricInputsfor10SecMeanWhile(greeAnimationInputReady);
+            labelTxt(info.suspend);
         }
 
         function restricInputsfor10SecMeanWhile(animation)
         {
             return new Promise(function (resolve, reject)
             {
+                // Hmmm how would this work... say for 100 checkboxes?
                 menuDeployCheckbox.disabled = true;
+                submenuSubmit.disabled = true; // spagguetti
+
                 menuDeployCheckbox.checked = false;
+                submenuSubmit.checked = false;  // spagguetti
 
                 toggleClasses(true, animation, parent);
+                toggleClasses(true, noInputAnimation, submenuSubmit.parentElement); // spagguetti
 
                 setTimeout(() =>
                 {
                     menuDeployCheckbox.disabled = false;
+                    submenuSubmit.disabled = false; // spagguetti
 
                     toggleClasses(false, animation, parent);
+                    toggleClasses(false, noInputAnimation, submenuSubmit.parentElement); // spagguetti
+
                     resolve();
                 }, 10000);
             });
@@ -388,11 +405,7 @@ async function Ready()
         {
             if (submenuSubmit.checked && (islabel(info.deploy)))
             {
-                submenuSubmit.checked = false;
-                labelTxt(info.loading);                    //change label to suspend
-                isSubMenuHidden(true);
-                await restricInputsfor10SecMeanWhile(greeAnimationInputReady);
-                labelTxt(info.suspend);
+                await greenAnimationCombo();
             }
         }
 
@@ -401,8 +414,8 @@ async function Ready()
             const hiddenClass = [`${cssData.dropdown__hidden}`]
             toggleClasses(bol, hiddenClass, hiddenDeploySubMenu);
 
-            const pulseAnim = [cssData.dwn_pulse_anim];
-            toggleClasses(bol, pulseAnim, hiddenDeploySubMenu);
+            const pulseAnim = [cssData.dwn_pulse_anim]; // spagguetti
+            toggleClasses(bol, pulseAnim, hiddenDeploySubMenuMessage); // spagguetti
         }
 
 
