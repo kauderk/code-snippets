@@ -20,4 +20,6 @@
 
   --deployment-fb-extreme-bg: var(--dropdown--bg);
   --deployment-fb-mid-bg: #ad301b;
+
+  --submenu-message-bg-high: rgb(93 112 128 / 12%);
 }
