@@ -195,3 +195,7 @@ span.dropdown-info {
 .yt-gif-disabled-input{
   cursor: not-allowed;
 }
+
+.yt-gif-deployment-style > .dropdown-info-message {
+  --submenu-message-bg: var(--submenu-message-bg-high);
+}
