@@ -171,21 +171,25 @@ span.dropdown-info {
 
 
 /* deployment funcionality feedback */
-@-o-keyframes fadeIt {
-  0%   { background-color: var(--deployment-fb-extreme-bg); }
-  50%  { background-color: var(--deployment-fb-mid-bg); }
-  100% { background-color: var(--deployment-fb-extreme-bg); }
-}
-@keyframes fadeIt {
-  0%   { background-color: var(--deployment-fb-extreme-bg); }
-  50%  { background-color: var(--deployment-fb-mid-bg); }
-  100% { background-color: var(--deployment-fb-extreme-bg); }
+.dropdown-forbidden-input{
+  --deployment-extreme-bg:var(--deployment-forbidden-extreme-bg);
+  --deployment-mid-bg:var(--deployment-forbidden-mid-bg);
 }
 
-.yt-gif-forbidden-input-animation{    
-    background-image:none !important; 
-         -o-animation: fadeIt 10s ease-in-out; 
-            animation: fadeIt 10s ease-in-out; 
+.dropdown-allright-input{
+  --deployment-extreme-bg:var(--deployment-forbidden-extreme-bg);
+  --deployment-mid-bg:var(--deployment-allright-mid-bg);
+}
+
+.dropdown-fadeIt-bg-animation {    
+    background-image:none !important;
+    animation: fadeIt 10s ease-in-out; 
+}
+
+@keyframes fadeIt {
+  0%   { background-color: var(--deployment-extreme-bg); }
+  50%  { background-color: var(--deployment-mid-bg); }
+  100% { background-color: var(--deployment-extreme-bg); }
 }
 
 /* should be added and removed through javascript*/
@@ -196,6 +200,7 @@ span.dropdown-info {
   cursor: not-allowed;
 }
 
+/* Treat it like a perma highlight */
 .yt-gif-deployment-style > .dropdown-info-message {
   --submenu-message-bg: var(--submenu-message-bg-high);
 }
