@@ -171,17 +171,17 @@ span.dropdown-info {
 
 
 /* deployment funcionality feedback */
-.dropdown-forbidden-input{
+.dropdown_forbidden-input{
   --deployment-extreme-bg:var(--deployment-forbidden-extreme-bg);
   --deployment-mid-bg:var(--deployment-forbidden-mid-bg);
 }
 
-.dropdown-allright-input{
+.dropdown_allright-input{
   --deployment-extreme-bg:var(--deployment-forbidden-extreme-bg);
   --deployment-mid-bg:var(--deployment-allright-mid-bg);
 }
 
-.dropdown-fadeIt-bg-animation {    
+.dropdown_fadeIt-bg_animation {    
     background-image:none !important;
     animation: fadeIt 10s ease-in-out; 
 }
@@ -193,14 +193,14 @@ span.dropdown-info {
 }
 
 /* should be added and removed through javascript*/
-.yt-gif-style--hidden {
+.dropdown--hidden {
   display: none;
 }
-.yt-gif-disabled-input{
+.dropdown_not-allowed_input{
   cursor: not-allowed;
 }
 
 /* Treat it like a perma highlight */
-.yt-gif-deployment-style > .dropdown-info-message {
+.dropdown_deployment-style > .dropdown-info-message {
   --submenu-message-bg: var(--submenu-message-bg-high);
 }
