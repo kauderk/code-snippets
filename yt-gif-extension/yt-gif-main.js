@@ -1,3 +1,58 @@
+window.YTGIF = {
+    /* permutations - checkbox */
+    permutations: {
+        start_form_previous_timestamp: '1',
+        clip_life_span_format: '1',
+        referenced_start_timestamp: '1',
+    },
+    experience: {
+        sound_when_video_loops: '1',
+    },
+    /* permutations - checkbox */
+    inactiveStyle: {
+        mute_on_inactive_window: '1',
+        pause_on_inactive_window: '',
+    },
+    /* permutations - checkbox */
+    fullscreenStyle: {
+        smoll_vid_when_big_ends: '1',
+        mute_on_exit_fullscreenchange: '',
+        pause_on_exit_fullscreenchange: '',
+    },
+    /* one at a time - radio */
+    muteStyle: {
+        strict_mute_everything_except_current: '1',
+        muted_on_mouse_over: '',
+        muted_on_any_mouse_interaction: '',
+    },
+    /* one at a time - radio */
+    playStyle: {
+        strict_current_play_on_mouse_over: '1',
+        play_on_mouse_over: '',
+        visible_clips_start_to_play_unmuted: '',
+    },
+    range: {
+        /*seconds up to 60*/
+        wheelOffset: '5',
+    },
+    InAndOutKeys: {
+        /* middle mouse button is on by default */
+        ctrlKey: '1',
+        shiftKey: '',
+        altKey: '',
+    },
+    default: {
+        video_volume: 40,
+        /* 'dark' or 'light' */
+        yt_gif_drop_down_menu_theme: 'dark',
+        /* empty means 50% - only valid css units like px  %  vw */
+        player_span: '50%',
+        /* distinguish between {{[[video]]:}} from {{[[yt-gif]]:}} or 'both' which is also valid*/
+        override_roam_video_component: '',
+        /* src sound when yt gif makes a loop, empty if unwanted */
+        clip_end_sound: 'https://freesound.org/data/previews/256/256113_3263906-lq.mp3',
+    },
+}
 //- Hello? 10
 // version 27 - semi-refactored
 // Load the IFrame Player API.
@@ -14,11 +69,21 @@ const UI = window.YTGIF;
 UI.label = {
     rangeValue: ''
 }
+UI.deploymentStyle = {
+    suspend_yt_gif_deployment: '',
+
+    deployment_style_yt_gif: '1',
+    deployment_style_video: '',
+    deployment_style_both: '',
+
+    deploy_yt_gifs: '',
+}
 /*-----------------------------------*/
 const iframeIDprfx = 'player_';
 let creationCounter = -1;
 let currentFullscreenPlayer = '';
-let MasterObservers = [undefined];
+let MasterMutationObservers = [];
+let MasterIntersectionObservers = [];
 /*-----------------------------------*/
 const allVideoParameters = new Map();
 const lastBlockIDParameters = new Map();
@@ -65,8 +130,15 @@ const links = {
 const cssData = {
     yt_gif: 'yt-gif',
     yt_gif_wrapper: 'yt-gif-wrapper',
+    yt_gif_iframe_wrapper: 'yt-gif-iframe-wrapper',
     yt_gif_timestamp: 'yt-gif-timestamp',
-    yt_gif_audio: 'yt-gif-audio'
+    yt_gif_audio: 'yt-gif-audio',
+    ty_gif_custom_player_span_first_usage: 'ty-gif-custom-player-span-first-usage',
+
+    yt_gif_disabled_input: 'yt-gif-disabled-input',
+    yt_gif_forbidden_input_animation: 'yt-gif-forbidden-input-animation',
+    yt_gif_style__hidden: 'yt-gif-style--hidden',
+    yt_gif_deployment_style: 'yt-gif-deployment-style',
 }
 /*-----------------------------------*/
 const ytGifAttr = {
@@ -95,19 +167,10 @@ const observeEls = {
 // wait for APIs to exist
 const almostReady = setInterval(() =>
 {
-    if ((typeof window.roam42?.common == 'undefined'))
-    {
-        //this is ugly - 
-        console.count('activating YT GIF extension | common');
-        return;
-    }
     if ((typeof (YT) == 'undefined'))
     {
-        console.count('activating YT libraries | common');
-        console.count('this is ugly | YT');
         return;
     }
-
     clearInterval(almostReady);
     Ready(); // load dropdown menu and deploy iframes
 
@@ -135,6 +198,7 @@ async function Ready()
     // 6. is nice to have an option to stop the masterObserver for good
     what_components_to_observe_and_deploy();
 
+    console.log('YT GIF extension activated');
 
     //#region hidden functions
     async function deal_with_visual_user_custimizations()
@@ -147,9 +211,21 @@ async function Ready()
 
         if (isValidCSSUnit(UI.default.player_span))
         {
-            create_css_rule(`.${cssData.yt_gif_wrapper}, .yt-gif-iframe-wrapper {
+            const css_rule = `.${cssData.yt_gif_wrapper}, .${cssData.yt_gif_iframe_wrapper} {
                 width: ${UI.default.player_span};
-            }`);
+            }`;
+            const id = `${cssData.ty_gif_custom_player_span}-${UI.default.player_span}`
+            create_css_rule(css_rule, id);
+            //#region util
+            function create_css_rule(css_rules = 'starndard css rules', id = `${cssData.yt_gif}-custom`)
+            {
+                const style = document.createElement('style');
+                style.id = id;
+                style.setAttribute('type', 'text/css');
+                style.innerHTML = css_rules;
+                document.getElementsByTagName('head')[0].appendChild(style);
+            }
+            //#endregion
         }
     }
 
@@ -187,6 +263,7 @@ async function Ready()
                 switch (parentKey)
                 {
                     case 'permutations':
+                    case 'deploymentStyle':
                     case 'experience':
                     case 'inactiveStyle':
                     case 'fullscreenStyle':
@@ -231,18 +308,18 @@ async function Ready()
     {
         if (isTrue(UI.default.override_roam_video_component)) //video
         {
-            MasterObservers.push(ObserveIframesAndDelployYTPlayers(observeEls.video));
+            MasterMutationObservers.push(ObserveIframesAndDelployYTPlayers(observeEls.video));
         }
         else if (UI.default.override_roam_video_component === 'both') //observeEls values
         {
             for (const key in observeEls)
             {
-                MasterObservers.push(ObserveIframesAndDelployYTPlayers(observeEls[key]));
+                MasterMutationObservers.push(ObserveIframesAndDelployYTPlayers(observeEls[key]));
             }
         }
         else // yt-gif
         {
-            MasterObservers.push(ObserveIframesAndDelployYTPlayers(observeEls.yt_gif));
+            MasterMutationObservers.push(ObserveIframesAndDelployYTPlayers(observeEls.yt_gif));
         }
     }
 
@@ -359,6 +436,97 @@ function ObserveIframesAndDelployYTPlayers(targetClass)
     //#endregion
 }
 
+(function while_running_features()
+{
+    //ﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠ// UI.deploymentStyle.suspend_yt_gif_deployment
+    const menuDeploy = UI.deploymentStyle.suspend_yt_gif_deployment;
+    menuDeploy.addEventListener('change', handleMenuDeploy);
+
+    const label = menuDeploy.previousElementSibling;
+    const info = {
+        suspend: 'Suspend YT GIF deployment',
+        deploy: 'Deploy with customizations',
+        loading: 'loading',
+    }
+    label.innerHTML = info.suspend;
+    const islabel = (str) => label.innerHTML == str;
+
+    label.setAttribute('for', menuDeploy.id); // link checks
+
+    const submenuSubmit = UI.deploymentStyle.deploy_yt_gifs;
+    submenuSubmit.addEventListener('change', handleSubMenuDeploy);
+
+
+    const hiddenDeploySubMenu = document.querySelector(`.${cssData.yt_gif_style__hidden}.${cssData.yt_gif_deployment_style}`);
+
+    function handleMenuDeploy(e)
+    {
+        if (menuDeploy.checked)
+        {
+            if (islabel(info.suspend))
+            {
+                isSubMenuHidden(false);
+                label.innerHTML = info.deploy;
+
+                console.count('clean observers')
+            }
+            if (islabel(info.deploy))
+            {
+                isSubMenuHidden(true);
+                label.innerHTML = info.suspend;
+
+                console.count('new observers')
+            }
+        }
+
+        isCheckboxDiabled(true); //don't spam it
+        setTimeout(() => isCheckboxDiabled(false), 10000);
+
+        //#region uitl
+        function isCheckboxDiabled(bol)
+        {
+            menuDeploy.disabled = bol;
+            const classNames = [cssData.yt_gif_disabled_input, cssData.yt_gif_forbidden_input_animation]
+            toggleClasses(bol, classNames, menuDeploy.parentElement);
+        }
+
+        //#endregion
+    }
+
+    function handleSubMenuDeploy(e)
+    {
+        if (submenuSubmit.checked && (islabel(info.deploy)))
+        {
+            isSubMenuHidden(true);
+            label.innerHTML = info.suspend;
+            submenuSubmit.checked = false;
+
+            console.log('deploy form submenu' + e);
+        }
+    }
+
+    //#region util
+    function isSubMenuHidden(bol)
+    {
+        const classNames = [`${cssData.yt_gif_style__hidden}`]
+        toggleClasses(!bol, classNames, hiddenDeploySubMenu);
+    }
+
+    function toggleClasses(bol, classNames, el)
+    {
+        if (bol)
+        {
+            el.classList.add(...classNames);
+        }
+
+        else
+        {
+            el.classList.remove(...classNames);
+        }
+    }
+    //#endregion
+}());
+
 
 
 
@@ -445,7 +613,8 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
 
         async function TryToFindURL(desiredUID)
         {
-            const info = await window.roam42.common.getBlockInfoByUID(desiredUID);
+            // const info42 = await window.roam42.common.getBlockInfoByUID(desiredUID);
+            const info = await window.roamAlphaAPI.q(`[:find (pull ?b [:block/string]):where [?b :block/uid "${desiredUID}"]]`);
             const rawText = info[0][0].string;
             const urls = rawText.match(/(http:|https:)?\/\/(www\.)?(youtube.com|youtu.be)\/(watch)?(\?v=)?(\S+)?[^ }]/);
             const innerUIDs = rawText.match(/(?<=\(\()([^(].*?[^)])(?=\)\))/gm);
@@ -460,7 +629,7 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
         const media = Object.create(videoParams);
         if (url.match('https://(www.)?youtube|youtu\.be'))
         {
-            // get ids //url = 'https://www.youtube.com/embed//JD-tF73Lyqo?t=423?end=425';
+            // get ids //url = 'https://www.youtube.com/embed//JD-tF73Lyqo?t=413?end=435';
             const stepOne = url.split('?')[0];
             const stepTwo = stepOne.split('/');
             const videoId = stepTwo[stepTwo.length - 1];
@@ -654,13 +823,26 @@ function onPlayerReady(event)
                     {
                         t.setVolume(desiredVolume);
                     }
-
-                    console.count(`${key} referenced from ${desiredBlockID}`);
+                    const saveMessage = stringWithNoEmail(desiredBlockID);
+                    console.count(`${key} referenced from ${saveMessage}`);
                     break;
+                    //#region local util
+                    function stringWithNoEmail(myString)
+                    {
+                        if (myString.search(/([^.@\s]+)(\.[^.@\s]+)*@([^.@\s]+\.)+([^.@\s]+)/) !== -1)
+                        {
+                            // There is an email! Remove it...
+                            myString = myString.replace(/([^.@\s]+)(\.[^.@\s]+)*@([^.@\s]+\.)+([^.@\s]+)/, "");
+                        }
+                        return myString
+                    }
+                    //#endregion
                 }
             }
         }
     }
+
+
     function seekToUpdatedTime(desiredTime)
     {
         updateStartTime = desiredTime;
@@ -1392,13 +1574,6 @@ async function isValidFetch(url)
     };
 }
 
-function create_css_rule(css_rules = 'starndard css rules')
-{
-    const style = document.createElement('style');
-    style.setAttribute('type', 'text/css');
-    style.innerHTML = css_rules;
-    document.getElementsByTagName('head')[0].appendChild(style);
-}
 function isValidCSSUnit(value)
 {
     //  valid CSS unit types
