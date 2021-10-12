@@ -195,7 +195,10 @@ async function Ready()
     // 5. One time - the timestamp scroll offset updates on changes
     timestamp_offset_features();
 
-    // 6. is nice to have an option to stop the masterObserver for good
+    // 6.
+    while_running_features();
+
+    // 7. is nice to have an option to stop the masterObserver for good
     what_components_to_observe_and_deploy();
 
     console.log('YT GIF extension activated');
@@ -300,6 +303,101 @@ async function Ready()
         function UpdateRangeValue()
         {
             UI.label.rangeValue.innerHTML = UI.range.wheelOffset.value;
+        }
+        //#endregion
+    }
+
+    function while_running_features()
+    {
+        //ﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠ// UI.deploymentStyle.suspend_yt_gif_deployment
+        const menuDeploy = UI.deploymentStyle.suspend_yt_gif_deployment;
+        menuDeploy.addEventListener('change', handleMenuDeploy);
+
+        const label = menuDeploy.previousElementSibling;
+        const info = {
+            suspend: 'Suspend YT GIF deployment',
+            deploy: 'Deploy with customizations',
+            loading: 'loading',
+        }
+        label.innerHTML = info.suspend;
+        const islabel = (str) => label.innerHTML == str;
+
+        label.setAttribute('for', menuDeploy.id); // link checks
+
+        const submenuSubmit = UI.deploymentStyle.deploy_yt_gifs;
+        submenuSubmit.addEventListener('change', handleSubMenuDeploy);
+
+
+        const hiddenDeploySubMenu = document.querySelector(`.${cssData.yt_gif_style__hidden}.${cssData.yt_gif_deployment_style}`);
+
+        function handleMenuDeploy(e)
+        {
+            if (menuDeploy.checked)
+            {
+                if (islabel(info.suspend))
+                {
+                    isSubMenuHidden(false);
+                    label.innerHTML = info.deploy;
+
+                    console.count('clean observers')
+                }
+                else if (islabel(info.deploy))
+                {
+                    isSubMenuHidden(true);
+                    label.innerHTML = info.suspend;
+
+                    console.count('new observers')
+                }
+            }
+            console.count('clicks');
+
+            isCheckboxDiabled(true); //don't spam it
+            setTimeout(() => isCheckboxDiabled(false), 10000);
+
+            //#region uitl
+            function isCheckboxDiabled(bol)
+            {
+                menuDeploy.disabled = bol;
+                const classNamesCheckbox = [cssData.yt_gif_disabled_input, cssData.yt_gif_forbidden_input_animation]
+                toggleClasses(bol, classNamesCheckbox, menuDeploy.parentElement);
+
+                const classNamesCheckbox = [cssData.yt_gif_disabled_input]
+                togglePlay(bol, classNamesCheckbox, label);
+            }
+
+            //#endregion
+        }
+
+        function handleSubMenuDeploy(e)
+        {
+            if (submenuSubmit.checked && (islabel(info.deploy)))
+            {
+                isSubMenuHidden(true);
+                label.innerHTML = info.suspend;
+                submenuSubmit.checked = false;
+
+                console.log('deploy form submenu' + e);
+            }
+        }
+
+        //#region utils
+        function isSubMenuHidden(bol)
+        {
+            const classNames = [`${cssData.yt_gif_style__hidden}`]
+            toggleClasses(!bol, classNames, hiddenDeploySubMenu);
+        }
+
+        function toggleClasses(bol, classNames, el)
+        {
+            if (bol)
+            {
+                el.classList.add(...classNames);
+            }
+
+            else
+            {
+                el.classList.remove(...classNames);
+            }
         }
         //#endregion
     }
@@ -436,96 +534,8 @@ function ObserveIframesAndDelployYTPlayers(targetClass)
     //#endregion
 }
 
-(function while_running_features()
-{
-    //ﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠ// UI.deploymentStyle.suspend_yt_gif_deployment
-    const menuDeploy = UI.deploymentStyle.suspend_yt_gif_deployment;
-    menuDeploy.addEventListener('change', handleMenuDeploy);
-
-    const label = menuDeploy.previousElementSibling;
-    const info = {
-        suspend: 'Suspend YT GIF deployment',
-        deploy: 'Deploy with customizations',
-        loading: 'loading',
-    }
-    label.innerHTML = info.suspend;
-    const islabel = (str) => label.innerHTML == str;
-
-    label.setAttribute('for', menuDeploy.id); // link checks
-
-    const submenuSubmit = UI.deploymentStyle.deploy_yt_gifs;
-    submenuSubmit.addEventListener('change', handleSubMenuDeploy);
 
 
-    const hiddenDeploySubMenu = document.querySelector(`.${cssData.yt_gif_style__hidden}.${cssData.yt_gif_deployment_style}`);
-
-    function handleMenuDeploy(e)
-    {
-        if (menuDeploy.checked)
-        {
-            if (islabel(info.suspend))
-            {
-                isSubMenuHidden(false);
-                label.innerHTML = info.deploy;
-
-                console.count('clean observers')
-            }
-            if (islabel(info.deploy))
-            {
-                isSubMenuHidden(true);
-                label.innerHTML = info.suspend;
-
-                console.count('new observers')
-            }
-        }
-
-        isCheckboxDiabled(true); //don't spam it
-        setTimeout(() => isCheckboxDiabled(false), 10000);
-
-        //#region uitl
-        function isCheckboxDiabled(bol)
-        {
-            menuDeploy.disabled = bol;
-            const classNames = [cssData.yt_gif_disabled_input, cssData.yt_gif_forbidden_input_animation]
-            toggleClasses(bol, classNames, menuDeploy.parentElement);
-        }
-
-        //#endregion
-    }
-
-    function handleSubMenuDeploy(e)
-    {
-        if (submenuSubmit.checked && (islabel(info.deploy)))
-        {
-            isSubMenuHidden(true);
-            label.innerHTML = info.suspend;
-            submenuSubmit.checked = false;
-
-            console.log('deploy form submenu' + e);
-        }
-    }
-
-    //#region util
-    function isSubMenuHidden(bol)
-    {
-        const classNames = [`${cssData.yt_gif_style__hidden}`]
-        toggleClasses(!bol, classNames, hiddenDeploySubMenu);
-    }
-
-    function toggleClasses(bol, classNames, el)
-    {
-        if (bol)
-        {
-            el.classList.add(...classNames);
-        }
-
-        else
-        {
-            el.classList.remove(...classNames);
-        }
-    }
-    //#endregion
-}());
 
 
 
