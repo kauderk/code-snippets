@@ -84,3 +84,30 @@ Hello? from 7 */
 .yt-gif-invisible-element {
   color: transparent;
 }
+
+/* initialize_yt_gif_on_mouseenter feature */
+.yt-gif-awaiting-for-user-input {
+  background-color: var(--awaiting-player-bg);
+  border-radius: 10px;
+}
+
+.yt-gif-awaiting-palyer--pulse-animation {
+  cursor: pointer;
+  box-shadow: inset 0px 0px 7px 0px var(--awaiting-player-box-shadow);
+  animation: pulse_dropdown_item 10s infinite;
+}
+.yt-gif-awaiting-palyer--pulse-animation:hover {
+  animation: none;
+}
+
+@keyframes pulse_dropdown_awaiting_player {
+  0% {
+    box-shadow: 0 0 0 0 var(--awaiting-player-anim-box-shadow-start);
+  }
+  70% {
+    box-shadow: 0 0 0 10px var(--awaiting-player-anim-box-shadow-mid);
+  }
+  100% {
+    box-shadow: 0 0 0 0 var(--awaiting-player-anim-box-shadow-end);
+  }
+}
