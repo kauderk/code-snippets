@@ -136,7 +136,9 @@ const cssData = {
     ty_gif_custom_player_span_first_usage: 'ty-gif-custom-player-span-first-usage',
 
     dropdown_not_allowed_input: 'dropdown_not-allowed_input',
-    dropdown_fadeIt_bg_animation: 'dropdown_fadeIt-bg_animation dropdown_forbidden-input',
+    dropdown_fadeIt_bg_animation: 'dropdown_fadeIt-bg_animation',
+    dropdown_forbidden_input: 'dropdown_forbidden-input',
+    dropdown_allright_input: 'dropdown_allright-input',
     dropdown__hidden: 'dropdown--hidden',
     dropdown_deployment_style: 'dropdown_deployment-style',
 }
@@ -372,11 +374,13 @@ async function Ready()
         function isMenuCheckboxDisabled(bol)
         {
             menuDeployCheckbox.disabled = bol;
-            const classNamesCheckbox = [cssData.dropdown_not_allowed_input, cssData.dropdown_fadeIt_bg_animation]
+            const classNamesCheckbox = [cssData.dropdown_not_allowed_input, cssData.dropdown_fadeIt_bg_animation, cssData.dropdown_forbidden_input]
             toggleClasses(bol, classNamesCheckbox, menuDeployCheckbox.parentElement);
 
             const classNameslabel = [cssData.dropdown_not_allowed_input]
             toggleClasses(bol, classNameslabel, label);
+
+            console.log({ menuDeployCheckbox: () => menuDeployCheckbox.disabled });
         }
 
         function isSubMenuHidden(bol)
