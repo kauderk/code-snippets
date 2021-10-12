@@ -34,12 +34,6 @@
                             <input type="checkbox" name="" id="referenced_start_timestamp" checked>
                         </span>
                         <span class="dropdown-item">
-                            <label for="" class="dropdown-item-description"
-                                title="Nothing sounds? Probably the provided URL isn't working">Sound when video
-                                loops</label>
-                            <input type="checkbox" name="" id="sound_when_video_loops" checked>
-                        </span>
-                        <span class="dropdown-item">
                             <label for="" class="dropdown-item-description" title="">Suspend YT GIF deployment</label>
                             <input type="checkbox" name="deploy" id="suspend_yt_gif_deployment" checked>
                         </span>
@@ -63,6 +57,33 @@
                                     <label for="" class="dropdown-item-description" title="">Deploy YT
                                         GIFs</label>
                                     <input type="checkbox" name="deploy" id="deploy_yt_gifs">
+                                </span>
+                            </div>
+                        </div>
+                        <div class="dropdown yt-gif-style yt-gif-inactive-style">
+                            <span class="dropdown-info-message">Experience</span>
+                            <div class="dropdown-content dropdown-info-box">
+                                <span class="dropdown-item">
+                                    <label for="" class="dropdown-item-description"
+                                        title="Initialize on mouse enter">Initialize
+                                        on mouse enter</label>
+                                    <input type="checkbox" name="" id="initialize_yt_gif_on_mouseenter" checked>
+                                </span>
+                                <span class="dropdown-item">
+                                    <label for="" class="dropdown-item-description"
+                                        title="Nothing sounds? Probably the provided URL isn't working">Sound when video
+                                        loops</label>
+                                    <input type="checkbox" name="end_loop_sound" id="sound_when_video_loops" checked>
+                                </span>
+                                <span class="dropdown-item rangeOffset sub-dropdown--range" name="end_loop_sound">
+                                    <span class="dropdown-info-message dropdown-item-description">Volume of looping
+                                        sound</span>
+                                    <div class="dropdown-item-contain-two">
+                                        <input type="range" min="1" max="100" value="50" class="slider"
+                                            id="loop_volume">
+                                        <label for="" class="dropdown-item-description" title="Amount | scroll wheel"
+                                            id="loop_volume_displayed">1</label>
+                                    </div>
                                 </span>
                             </div>
                         </div>
