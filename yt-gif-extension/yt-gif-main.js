@@ -141,6 +141,8 @@ const cssData = {
     dropdown_allright_input: 'dropdown_allright-input',
     dropdown__hidden: 'dropdown--hidden',
     dropdown_deployment_style: 'dropdown_deployment-style',
+
+    dwn_pulse_anim: 'drodown_item-pulse-animation',
 }
 /*-----------------------------------*/
 const ytGifAttr = {
@@ -338,9 +340,9 @@ async function Ready()
         submenuSubmit.addEventListener('change', handleSubMenuDeploy);
 
 
-
-        const redAnimationNoInputs = [cssData.dropdown_fadeIt_bg_animation, cssData.dropdown_forbidden_input, cssData.dropdown_input_not_allowed];
-        const greeAnimationInputReady = [cssData.dropdown_fadeIt_bg_animation, cssData.dropdown_allright_input];
+        const baseAnimation = [cssData.dropdown_fadeIt_bg_animation, cssData.dropdown_input_not_allowed];
+        const redAnimationNoInputs = [...baseAnimation, cssData.dropdown_forbidden_input];
+        const greeAnimationInputReady = [...baseAnimation, cssData.dropdown_allright_input];
 
         async function handleOutherMenuDeploy(e)
         {
@@ -396,8 +398,11 @@ async function Ready()
 
         function isSubMenuHidden(bol)
         {
-            const classNames = [`${cssData.dropdown__hidden}`]
-            toggleClasses(bol, classNames, hiddenDeploySubMenu);
+            const hiddenClass = [`${cssData.dropdown__hidden}`]
+            toggleClasses(bol, hiddenClass, hiddenDeploySubMenu);
+
+            const pulseAnim = [cssData.dwn_pulse_anim];
+            toggleClasses(bol, pulseAnim, hiddenDeploySubMenu);
         }
 
 
