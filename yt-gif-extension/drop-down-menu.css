@@ -192,3 +192,6 @@ span.dropdown-info {
 .yt-gif-style--hidden {
   display: none;
 }
+.yt-gif-disabled-input{
+  cursor: not-allowed;
+}
