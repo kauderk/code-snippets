@@ -39,6 +39,33 @@
                                 loops</label>
                             <input type="checkbox" name="" id="sound_when_video_loops" checked>
                         </span>
+                        <span class="dropdown-item">
+                            <label for="" class="dropdown-item-description" title="">Suspend YT GIF deployment</label>
+                            <input type="checkbox" name="deploy" id="suspend_yt_gif_deployment" checked>
+                        </span>
+                        <div class="dropdown yt-gif-style yt-gif-style--hidden yt-gif-deployment-style">
+                            <span class="dropdown-info-message">YT GIFs Deployment Style</span>
+                            <div class="dropdown-content dropdown-info-box">
+                                <span class="dropdown-item">
+                                    <label for="" class="dropdown-item-description" title="">{{[[yt-gif]]}}</label>
+                                    <input type="radio" name="deployment" id="deployment_style_yt_gif">
+                                </span>
+                                <span class="dropdown-item">
+                                    <label for="" class="dropdown-item-description" title="">{{[[video]]}}</label>
+                                    <input type="radio" name="deployment" id="deployment_style_video">
+                                </span>
+                                <span class="dropdown-item">
+                                    <label for="" class="dropdown-item-description" title="">{{[[yt-gif]]}} and
+                                        {{[[video]]}}</label>
+                                    <input type="radio" name="deployment" id="deployment_style_both">
+                                </span>
+                                <span class="dropdown-item">
+                                    <label for="" class="dropdown-item-description" title="">Deploy YT
+                                        GIFs</label>
+                                    <input type="checkbox" name="deploy" id="deploy_yt_gifs">
+                                </span>
+                            </div>
+                        </div>
                         <div class="dropdown yt-gif-style yt-gif-inactive-style">
                             <span class="dropdown-info-message">Inactive Window</span>
                             <div class="dropdown-content dropdown-info-box">
