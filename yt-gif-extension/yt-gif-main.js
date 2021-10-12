@@ -514,7 +514,7 @@ async function Ready()
         {
             const link = document.createElement('link');
             link.rel = 'stylesheet';
-            link.href = cssURL;
+            link.href = NoCash(cssURL);
             document.head.appendChild(link);
 
             link.onload = () => resolve();
@@ -707,7 +707,7 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
         {
             toggleClasses(false, awaitingAnimation, wrapper);
 
-            wrapper.removeEventListener(handleOnMouseenter);
+            wrapper.removeEventListener('mouseenter', handleOnMouseenter);
 
             return new window.YT.Player(newId, playerConfig());
         }
@@ -1563,6 +1563,11 @@ function onStateChange(state)
 
 
 //#region Utilies
+function NoCash(url)
+{
+    return url + "?" + new Date().getTime()
+}
+
 function inViewport(els)
 {
     let matches = [],
@@ -1714,7 +1719,7 @@ async function isValidFetch(url)
 {
     try
     {
-        const response = await fetch(url);
+        const response = await fetch(url, { cache: "no-store" });
         if (!response.ok)
             throw new Error('Request failed.');
         return [response, null];
