@@ -135,10 +135,10 @@ const cssData = {
     yt_gif_audio: 'yt-gif-audio',
     ty_gif_custom_player_span_first_usage: 'ty-gif-custom-player-span-first-usage',
 
-    yt_gif_disabled_input: 'yt-gif-disabled-input',
-    yt_gif_forbidden_input_animation: 'yt-gif-forbidden-input-animation',
-    yt_gif_style__hidden: 'yt-gif-style--hidden',
-    yt_gif_deployment_style: 'yt-gif-deployment-style',
+    dropdown_not_allowed_input: 'dropdown_not-allowed_input',
+    dropdown_fadeIt_bg_animation: 'dropdown_fadeIt-bg_animation dropdown_forbidden-input',
+    dropdown__hidden: 'dropdown--hidden',
+    dropdown_deployment_style: 'dropdown_deployment-style',
 }
 /*-----------------------------------*/
 const ytGifAttr = {
@@ -310,10 +310,10 @@ async function Ready()
     function while_running_features()
     {
         //ﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠ// UI.deploymentStyle.suspend_yt_gif_deployment
-        const menuDeploy = UI.deploymentStyle.suspend_yt_gif_deployment;
-        menuDeploy.addEventListener('change', handleMenuDeploy);
+        const menuDeployCheckbox = UI.deploymentStyle.suspend_yt_gif_deployment;
+        menuDeployCheckbox.addEventListener('change', handleMenuDeploy);
 
-        const label = menuDeploy.previousElementSibling;
+        const label = menuDeployCheckbox.previousElementSibling;
         const info = {
             suspend: 'Suspend YT GIF deployment',
             deploy: 'Deploy with customizations',
@@ -322,17 +322,17 @@ async function Ready()
         label.innerHTML = info.suspend;
         const islabel = (str) => label.innerHTML == str;
 
-        label.setAttribute('for', menuDeploy.id); // link checks
+        label.setAttribute('for', menuDeployCheckbox.id); // link checks
 
         const submenuSubmit = UI.deploymentStyle.deploy_yt_gifs;
         submenuSubmit.addEventListener('change', handleSubMenuDeploy);
 
 
-        const hiddenDeploySubMenu = document.querySelector(`.${cssData.yt_gif_style__hidden}.${cssData.yt_gif_deployment_style}`);
+        const hiddenDeploySubMenu = document.querySelector(`.${cssData.dropdown__hidden}.${cssData.dropdown_deployment_style}`);
 
         function handleMenuDeploy(e)
         {
-            if (menuDeploy.checked)
+            if (menuDeployCheckbox.checked)
             {
                 if (islabel(info.suspend))
                 {
@@ -349,23 +349,11 @@ async function Ready()
                     console.count('new observers')
                 }
             }
+            menuDeployCheckbox.checked = false;
             console.count('clicks');
 
-            isCheckboxDiabled(true); //don't spam it
-            setTimeout(() => isCheckboxDiabled(false), 10000);
-
-            //#region uitl
-            function isCheckboxDiabled(bol)
-            {
-                menuDeploy.disabled = bol;
-                const classNamesCheckbox = [cssData.yt_gif_disabled_input, cssData.yt_gif_forbidden_input_animation]
-                toggleClasses(bol, classNamesCheckbox, menuDeploy.parentElement);
-
-                const classNamesCheckbox = [cssData.yt_gif_disabled_input]
-                togglePlay(bol, classNamesCheckbox, label);
-            }
-
-            //#endregion
+            isMenuCheckboxDisabled(true); //don't spam it
+            setTimeout(() => isMenuCheckboxDisabled(false), 10000);
         }
 
         function handleSubMenuDeploy(e)
@@ -381,10 +369,20 @@ async function Ready()
         }
 
         //#region utils
+        function isMenuCheckboxDisabled(bol)
+        {
+            menuDeployCheckbox.disabled = bol;
+            const classNamesCheckbox = [cssData.dropdown_not_allowed_input, cssData.dropdown_fadeIt_bg_animation]
+            toggleClasses(bol, classNamesCheckbox, menuDeployCheckbox.parentElement);
+
+            const classNameslabel = [cssData.dropdown_not_allowed_input]
+            toggleClasses(bol, classNameslabel, label);
+        }
+
         function isSubMenuHidden(bol)
         {
-            const classNames = [`${cssData.yt_gif_style__hidden}`]
-            toggleClasses(!bol, classNames, hiddenDeploySubMenu);
+            const classNames = [`${cssData.dropdown__hidden}`]
+            toggleClasses(bol, classNames, hiddenDeploySubMenu);
         }
 
         function toggleClasses(bol, classNames, el)
