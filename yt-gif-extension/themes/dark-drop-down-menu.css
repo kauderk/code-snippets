@@ -27,4 +27,8 @@
   --deployment-allright-mid-bg: #176951;
 
   --submenu-message-bg-high: #144b54;
+
+  --dropdown-pulse-anim-box-shadow-start: rgba(204, 169, 44, 0.4);
+  --dropdown-pulse-anim-box-shadow-mid: rgba(204, 169, 44, 0);
+  --dropdown-pulse-anim-box-shadow-end: rgba(204, 169, 44, 0);
 }

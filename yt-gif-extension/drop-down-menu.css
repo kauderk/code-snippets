@@ -204,3 +204,25 @@ span.dropdown-info {
 .dropdown_deployment-style > .dropdown-info-message {
   --submenu-message-bg: var(--submenu-message-bg-high);
 }
+
+/* pusling animation for visible deployiment style*/
+.drodown_item-pulse-animation {
+  cursor: pointer;
+  box-shadow: inset 0px 0px 7px 0px rgb(79 94 107);
+  animation: pulse_dropdown_item 3s infinite;
+}
+.drodown_item-pulse-animation:hover {
+  animation: none;
+}
+
+@keyframes pulse_dropdown_item {
+  0% {
+    box-shadow: 0 0 0 0 var(--dropdown-pulse-anim-box-shadow-start);
+  }
+  70% {
+    box-shadow: 0 0 0 10px var(--dropdown-pulse-anim-box-shadow-mid);
+  }
+  100% {
+    box-shadow: 0 0 0 0 var(--dropdown-pulse-anim-box-shadow-end);
+  }
+}
