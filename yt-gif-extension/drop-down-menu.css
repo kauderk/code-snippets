@@ -187,3 +187,8 @@ span.dropdown-info {
          -o-animation: fadeIt 10s ease-in-out; 
             animation: fadeIt 10s ease-in-out; 
 }
+
+/* should be added and removed through javascript*/
+.yt-gif-style--hidden {
+  display: none;
+}
