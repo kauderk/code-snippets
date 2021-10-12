@@ -6,7 +6,7 @@ window.YTGIF = {
         referenced_start_timestamp: '1',
     },
     experience: {
-        initialize_yt_gif_on_mouseenter: '',
+        awaiting_for_mouseenter_to_initialize: '',
         sound_when_video_loops: '1',
     },
     /* permutations - checkbox */
@@ -137,7 +137,10 @@ const cssData = {
     yt_gif_iframe_wrapper: 'yt-gif-iframe-wrapper',
     yt_gif_timestamp: 'yt-gif-timestamp',
     yt_gif_audio: 'yt-gif-audio',
-    ty_gif_custom_player_span_first_usage: 'ty-gif-custom-player-span-first-usage',
+    yt_gif_custom_player_span_first_usage: 'ty-gif-custom-player-span-first-usage',
+
+    awiting_player_pulse_anim: 'yt-gif-awaiting-palyer--pulse-animation',
+    awaitng_player_user_input: 'yt-gif-awaiting-for-user-input',
 
     dwn_no_input: 'dropdown_not-allowed_input',
     dropdown_fadeIt_bg_animation: 'dropdown_fadeIt-bg_animation',
@@ -481,18 +484,6 @@ async function Ready()
             const pulseAnim = [cssData.dwn_pulse_anim]; // spagguetti
             toggleClasses(!bol, pulseAnim, hiddenDeploySubMenuMessage); // spagguetti
         }
-
-        function toggleClasses(bol, classNames, el)
-        {
-            if (bol)
-            {
-                el.classList.add(...classNames);
-            }
-            else
-            {
-                el.classList.remove(...classNames);
-            }
-        }
         //#endregion
     }
 
@@ -703,14 +694,24 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
 
     //console.count(message);
     // 5. ACTUAL CREATION OF THE EMBEDED YOUTUBE VIDEO PLAYER (target)
-    if (UI.experience.initialize_yt_gif_on_mouseenter.checked)
+    if (UI.experience.awaiting_for_mouseenter_to_initialize.checked)
     {
+        const awaitingAnimation = [cssData.awiting_player_pulse_anim, cssData.awaitng_player_user_input];
+
+        toggleClasses(true, awaitingAnimation, wrapper);
+
         wrapper.addEventListener('mouseenter', handleOnMouseenter);
+
+        //#region handler
         function handleOnMouseenter(e)
         {
+            toggleClasses(false, awaitingAnimation, wrapper);
+
             wrapper.removeEventListener(handleOnMouseenter);
+
             return new window.YT.Player(newId, playerConfig());
         }
+        //#endregion handler
     }
     else
     {
@@ -1618,6 +1619,18 @@ function emptyEl(classList, el)
         el.classList.add(classList);
     return el;
 }
+function toggleClasses(bol, classNames, el)
+{
+    if (bol)
+    {
+        el.classList.add(...classNames);
+    }
+    else
+    {
+        el.classList.remove(...classNames);
+    }
+}
+
 
 function exitFullscreen()
 {
