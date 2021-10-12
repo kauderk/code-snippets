@@ -6,6 +6,7 @@ window.YTGIF = {
         referenced_start_timestamp: '1',
     },
     experience: {
+        initialize_yt_gif_on_mouseenter: '',
         sound_when_video_loops: '1',
     },
     /* permutations - checkbox */
@@ -34,6 +35,8 @@ window.YTGIF = {
     range: {
         /*seconds up to 60*/
         wheelOffset: '5',
+        /* integers from 0 to 100 */
+        scroll_loop_volume: '50',
     },
     InAndOutKeys: {
         /* middle mouse button is on by default */
@@ -67,7 +70,8 @@ firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 const UI = window.YTGIF;
 /* user doesn't need to see this */
 UI.label = {
-    rangeValue: ''
+    rangeValue: '',
+    loop_volume_displayed: '',
 }
 UI.deploymentStyle = {
     suspend_yt_gif_deployment: '',
@@ -698,10 +702,20 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
 
 
     //console.count(message);
-
     // 5. ACTUAL CREATION OF THE EMBEDED YOUTUBE VIDEO PLAYER (target)
-    return new window.YT.Player(newId, playerConfig());
-
+    if (UI.experience.initialize_yt_gif_on_mouseenter.checked)
+    {
+        wrapper.addEventListener('mouseenter', handleOnMouseenter);
+        function handleOnMouseenter(e)
+        {
+            wrapper.removeEventListener(handleOnMouseenter);
+            return new window.YT.Player(newId, playerConfig());
+        }
+    }
+    else
+    {
+        return new window.YT.Player(newId, playerConfig());
+    }
     //#region local utilites
     async function InputBlockVideoParams(tempUID)
     {
@@ -1495,7 +1509,7 @@ function onStateChange(state)
     {
         t.seekTo(map?.start || 0);
 
-        if (UI.default.clip_end_sound != '')
+        if (isValidUrl(UI.default.clip_end_sound))
         {
             if (UI.experience.sound_when_video_loops.checked)
             {
@@ -1671,6 +1685,10 @@ function isTrue(value)
             return false;
     }
 }
+function isValidUrl(value)
+{
+    return /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:[/?#]\S*)?$/i.test(value);
+}
 
 
 async function FetchText(url)
@@ -1770,6 +1788,10 @@ function targetNotTogglePlay(id, bol = false)
 // I want to add ☐ ☑
 // radios : mute pause when document is inactive ☑ ✘
 // click the item checks the btn ☑ ☑
+
+// use only one audio??
+// loop sound adjusment with slider hidden inside sub menu
+// deploy on mouse enter
 
 // play a sound to indicate the current gif makes loop ☑ ☑
 // https://freesound.org/people/candy299p/sounds/250091/          * film ejected *
