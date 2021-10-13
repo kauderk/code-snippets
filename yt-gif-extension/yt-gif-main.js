@@ -245,21 +245,16 @@ async function Ready()
             const all = [...document.querySelectorAll(data_bind_with(value, '*'))];
             const valid = all.filter(el => el != main);
 
-            debugger;
-            valid_clousure(main, valid);
-        }
+            toggleValidItemClasses();
+            main.addEventListener('change', toggleValidItemClasses);
 
-        function valid_clousure(main, valid)
-        {
-            debugger;
-            main.addEventListener('change', () =>
+            function toggleValidItemClasses()
             {
-                debugger;
                 for (const i of valid)
                 {
-                    toggleClasses(main.value, hiddenClass, i);
+                    toggleClasses(!main.checked, hiddenClass, i);
                 }
-            });
+            }
         }
 
         function data_MAIN_with(value, selector = '')
