@@ -212,7 +212,7 @@ async function Ready()
     drop_down_menu_inputs_as_variables();
 
     // 5. One time - the timestamp scroll offset updates on changes
-    timestamp_offset_features();
+    scrollwhell_offset_features();
 
     // 6. is nice to have an option to stop the masterObserver for good
     what_components_to_observe_and_deploy();
@@ -306,22 +306,31 @@ async function Ready()
         }
     }
 
-    function timestamp_offset_features()
+    function scrollwhell_offset_features()
     {
-        UI.range.wheelOffset.addEventListener('change', () => UpdateRangeValue());
-        UI.range.wheelOffset.addEventListener('wheel', (e) =>
-        {
-            const dir = Math.sign(e.deltaY) * -1;
-            const parsed = parseInt(UI.range.wheelOffset.value, 10);
-            UI.range.wheelOffset.value = Number(dir + parsed);
-            UpdateRangeValue();
-        });
-        UpdateRangeValue();
+
+        UpdateScrollUI(UI.range.wheelOffset, UI.label.rangeValue);
+
+        UpdateScrollUI(UI.range.scroll_loop_volume, UI.label.loop_volume_displayed);
 
         //#region  local utils
-        function UpdateRangeValue()
+        function UpdateScrollUI(scrollEl, labelEl)
         {
-            UI.label.rangeValue.innerHTML = UI.range.wheelOffset.value;
+            const UpdateLabel = () => labelEl.innerHTML = scrollEl.value;
+
+            scrollEl.addEventListener('change', () => UpdateLabel());
+            scrollEl.addEventListener('wheel', (e) => HandleWheel);
+
+            function HandleWheel(e)
+            {
+                const dir = Math.sign(e.deltaY) * -1;
+                const parsed = parseInt(scroll.value, 10);
+                scroll.value = Number(dir + parsed);
+
+                UpdateLabel();
+            }
+
+            UpdateLabel();
         }
         //#endregion
     }
