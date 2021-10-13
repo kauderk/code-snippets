@@ -93,8 +93,7 @@ Hello? from 7 */
 
 .yt-gif-awaiting-palyer--pulse-animation {
   cursor: pointer;
-  box-shadow: inset 0px 0px 7px 0px var(--awaiting-player-box-shadow);
-  animation: pulse_dropdown_awaiting_player 10s infinite;
+  animation: pulse_dropdown_awaiting_player 7s infinite;
 }
 .yt-gif-awaiting-palyer--pulse-animation:hover {
   animation: none;
@@ -102,12 +101,15 @@ Hello? from 7 */
 
 @keyframes pulse_dropdown_awaiting_player {
   0% {
-    box-shadow: 0 0 0 0 var(--awaiting-player-anim-box-shadow-start);
+    box-shadow: inset 0 0 2px 1px
+      var(--awaiting-player-pulse-anim-box-shadow-start);
   }
-  70% {
-    box-shadow: 0 0 0 10px var(--awaiting-player-anim-box-shadow-mid);
+  50% {
+    box-shadow: inset 0 0 8px 4px
+      var(--awaiting-player-pulse-anim-box-shadow-mid);
   }
   100% {
-    box-shadow: 0 0 0 0 var(--awaiting-player-anim-box-shadow-end);
+    box-shadow: inset 0 0 2px 1px
+      var(--awaiting-player-pulse-anim-box-shadow-end);
   }
 }
