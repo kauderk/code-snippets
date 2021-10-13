@@ -313,13 +313,14 @@ async function Ready()
     function scrollwhell_offset_features()
     {
 
-        UpdateScrollUI(UI.range.wheelOffset, UI.label.rangeValue);
+        UpdateScrollUI('wheelOffset', UI.label.rangeValue);
 
-        UpdateScrollUI(UI.range.scroll_loop_volume, UI.label.loop_volume_displayed);
+        UpdateScrollUI('scroll_loop_volume', UI.label.loop_volume_displayed);
 
         //#region  local utils
-        function UpdateScrollUI(scrollEl, labelEl)
+        function UpdateScrollUI(key, labelEl)
         {
+            const scrollEl = UI.range[key];
             const UpdateLabel = () => labelEl.innerHTML = scrollEl.value;
 
             scrollEl.addEventListener('change', () => UpdateLabel());
@@ -335,6 +336,7 @@ async function Ready()
             }
 
             UpdateLabel();
+            return scrollEl;
         }
         //#endregion
     }
@@ -1449,7 +1451,7 @@ function onPlayerReady(event)
         {
             if (tick() > updateStartTime + loadingMarginOfError)
             {
-                if (t.__proto__.globalHumanInteraction) // usees is listening, don't interrupt
+                if (t.__proto__.globalHumanInteraction || element_mouse_is_inside(parent, window.event, false, {})) // usees is listening, don't interrupt
                 {
                     videoIsPlayingWithSound(true);
                 }
@@ -1594,6 +1596,7 @@ function onStateChange(state)
                     { // return a promise
                         var audio = new Audio();                     // create audio wo/ src
                         audio.preload = "auto";                      // intend to play through
+                        audio.volume = mapRange(UI.range.scroll_loop_volume.value, 0, 100, 0, 1.0);
                         audio.autoplay = true;                       // autoplay when loaded
                         audio.onerror = reject;                      // on error, reject
                         audio.onended = resolve;                     // when done, resolve
@@ -1662,6 +1665,75 @@ function inViewport(els)
         }
     }
     return matches;
+}
+function handleMyMouseMove(e)
+{
+    //https://stackoverflow.com/questions/5730433/keep-mouse-inside-a-div
+    e = e || window.event;
+    var mouseX = e.clientX;
+    var mouseY = e.clientY;
+    if (mousepressed)
+    {
+        divChild.style.left = mouseX + "px";
+        divChild.style.top = mouseY + "px";
+    }
+}
+function element_mouse_is_inside(elementToBeChecked, mouseEvent, with_margin, offset_object)
+{
+    if (!with_margin)
+    {
+        with_margin = false;
+    }
+    if (typeof offset_object !== 'object')
+    {
+        offset_object = {};
+    }
+    var elm_offset = elementToBeChecked.offset();
+    var element_width = elementToBeChecked.width();
+    element_width += parseInt(elementToBeChecked.css("padding-left").replace("px", ""));
+    element_width += parseInt(elementToBeChecked.css("padding-right").replace("px", ""));
+    var element_height = elementToBeChecked.height();
+    element_height += parseInt(elementToBeChecked.css("padding-top").replace("px", ""));
+    element_height += parseInt(elementToBeChecked.css("padding-bottom").replace("px", ""));
+    if (with_margin)
+    {
+        element_width += parseInt(elementToBeChecked.css("margin-left").replace("px", ""));
+        element_width += parseInt(elementToBeChecked.css("margin-right").replace("px", ""));
+        element_height += parseInt(elementToBeChecked.css("margin-top").replace("px", ""));
+        element_height += parseInt(elementToBeChecked.css("margin-bottom").replace("px", ""));
+    }
+
+    elm_offset.rightBorder = elm_offset.left + element_width;
+    elm_offset.bottomBorder = elm_offset.top + element_height;
+
+    if (offset_object.hasOwnProperty("top"))
+    {
+        elm_offset.top += parseInt(offset_object.top);
+    }
+    if (offset_object.hasOwnProperty("left"))
+    {
+        elm_offset.left += parseInt(offset_object.left);
+    }
+    if (offset_object.hasOwnProperty("bottom"))
+    {
+        elm_offset.bottomBorder += parseInt(offset_object.bottom);
+    }
+    if (offset_object.hasOwnProperty("right"))
+    {
+        elm_offset.rightBorder += parseInt(offset_object.right);
+    }
+    var mouseX = mouseEvent.pageX;
+    var mouseY = mouseEvent.pageY;
+
+    if ((mouseX > elm_offset.left && mouseX < elm_offset.rightBorder)
+        && (mouseY > elm_offset.top && mouseY < elm_offset.bottomBorder))
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 function div(classList)
@@ -1869,6 +1941,15 @@ function targetNotTogglePlay(id, bol = false)
 {
     return recordedIDs.get(id)?.target?.togglePlay(bol);
 }
+
+// linearly maps value from the range (a..b) to (c..d)
+function mapRange(value, a, b, c, d)
+{
+    // first map value from (a..b) to (0..1)
+    value = (value - a) / (b - a);
+    // then map it from (0..1) to (c..d) and return it
+    return c + value * (d - c);
+}
 //#endregion
 
 
@@ -1882,10 +1963,10 @@ function targetNotTogglePlay(id, bol = false)
 // use only one audio??
 // loop sound adjusment with slider hidden inside sub menu
 // deploy on mouse enter
+// scrolwheel is broke, fix
 
-
-// to apply volume on end loop audio ☐
-// http vs https ☐
+// to apply volume on end loop audio ☐ ☐
+// http vs https ☐ ☐
 // coding train shifman mouse inside div, top, left ☐
 
 // play a sound to indicate the current gif makes loop ☑ ☑
