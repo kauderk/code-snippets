@@ -240,22 +240,35 @@ async function Ready()
         const hiddenClass = [`${cssData.dropdown__hidden}`]
         for (const key in attrData)
         {
-            const main = document.querySelector(data_bind_with(key));
-            const all = [...document.querySelectorAll(data_bind_with(key, '*'))];
-            const valid = all.filter(x => all.includes(main));
+            const value = attrData[key];
+            const main = document.querySelector(data_MAIN_with(value));
+            const all = [...document.querySelectorAll(data_bind_with(value, '*'))];
+            const valid = all.filter(el => el != main);
 
+            debugger;
+            valid_clousure(main, valid);
+        }
+
+        function valid_clousure(main, valid)
+        {
+            debugger;
             main.addEventListener('change', () =>
             {
+                debugger;
                 for (const i of valid)
                 {
                     toggleClasses(main.value, hiddenClass, i);
                 }
-            })
+            });
         }
 
-        function data_bind_with(key, selector = '')
+        function data_MAIN_with(value, selector = '')
         {
-            return `data-bind${selector}=$[${attrData[key]}]`;
+            return `[data-main${selector}='${value}']`;
+        }
+        function data_bind_with(value, selector = '')
+        {
+            return `[data-bind${selector}='${value}']`;
         }
         //for each
         //queyy extact attrData
