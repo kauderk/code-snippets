@@ -159,6 +159,10 @@ const cssData = {
 
     dwn_pulse_anim: 'drodown_item-pulse-animation',
 }
+const attrData = {
+    initialize_bg: 'initialize-bg',
+    initialize_loop: 'initialize-loop',
+}
 /*-----------------------------------*/
 const ytGifAttr = {
     sound: {
@@ -221,12 +225,50 @@ async function Ready()
     // 6. is nice to have an option to stop the masterObserver for good
     what_components_to_observe_and_deploy();
 
+    // 8. Bind checkbox items
+    bind_checkbox_items();
+
     // 7.
     await while_running_features();
+
 
     console.log('YT GIF extension activated');
 
     //#region hidden functions
+    function bind_checkbox_items()
+    {
+        const hiddenClass = [`${cssData.dropdown__hidden}`]
+        for (const key in attrData)
+        {
+            const main = document.querySelector(data_bind_with(key));
+            const all = [...document.querySelectorAll(data_bind_with(key, '*'))];
+            const valid = all.filter(x => all.includes(main));
+
+            main.addEventListener('change', () =>
+            {
+                for (const i of valid)
+                {
+                    toggleClasses(main.value, hiddenClass, i);
+                }
+            })
+        }
+
+        function data_bind_with(key, selector = '')
+        {
+            return `data-bind${selector}=$[${attrData[key]}]`;
+        }
+        //for each
+        //queyy extact attrData
+        //query all attrData key
+        //igonore main
+
+        //main on change
+        //for each
+        //toggeleclasses [hidden]
+        //no change on they're actual checkbos though
+        //
+    }
+
     async function deal_with_visual_user_custimizations()
     {
         if (UI.default.yt_gif_drop_down_menu_theme === 'dark')
@@ -320,23 +362,22 @@ async function Ready()
         //#region  local utils
         function UpdateScrollUI(key, labelEl)
         {
-            const scrollEl = UI.range[key];
-            const UpdateLabel = () => labelEl.innerHTML = scrollEl.value;
-
-            scrollEl.addEventListener('change', () => UpdateLabel());
-            scrollEl.addEventListener('wheel', (e) => HandleWheel);
-
-            function HandleWheel(e)
+            function UpdateLabel()
             {
-                const dir = Math.sign(e.deltaY) * -1;
-                const parsed = parseInt(scroll.value, 10);
-                scroll.value = Number(dir + parsed);
-
-                UpdateLabel();
+                labelEl.innerHTML = UI.range[key].value;
             }
 
+            UI.range[key].addEventListener('change', () => UpdateLabel());
+            UI.range[key].addEventListener('wheel', (e) =>
+            {
+                const dir = Math.sign(e.deltaY) * -1;
+                const parsed = parseInt(UI.range[key].value, 10);
+                UI.range[key].value = Number(dir + parsed);
+
+                UpdateLabel();
+            });
+
             UpdateLabel();
-            return scrollEl;
         }
         //#endregion
     }
@@ -1451,7 +1492,8 @@ function onPlayerReady(event)
         {
             if (tick() > updateStartTime + loadingMarginOfError)
             {
-                if (t.__proto__.globalHumanInteraction || element_mouse_is_inside(parent, window.event, false, {})) // usees is listening, don't interrupt
+                // or if mouse is inside parent
+                if (t.__proto__.globalHumanInteraction) // usees is listening, don't interrupt
                 {
                     videoIsPlayingWithSound(true);
                 }
@@ -1960,14 +2002,16 @@ function mapRange(value, a, b, c, d)
 // radios : mute pause when document is inactive ☑ ✘
 // click the item checks the btn ☑ ☑
 
-// use only one audio??
-// loop sound adjusment with slider hidden inside sub menu
-// deploy on mouse enter
-// scrolwheel is broke, fix
+// use only one audio?? ☑ ☑ url so is customizable by nature
+// loop sound adjusment with slider hidden inside sub menu | ohhhh bind main checkbox to hidde it's "for"
+// deploy on mouse enter ☑ ☑
+// scrolwheel is broke, fix ☑ ☑
 
-// to apply volume on end loop audio ☐ ☐
-// http vs https ☐ ☐
+// to apply volume on end loop audio ☑ ☑
+// http vs https ☑ ☑
 // coding train shifman mouse inside div, top, left ☐
+
+// bind thumbnail input element hiddeness to initialize checkbox
 
 // play a sound to indicate the current gif makes loop ☑ ☑
 // https://freesound.org/people/candy299p/sounds/250091/          * film ejected *
