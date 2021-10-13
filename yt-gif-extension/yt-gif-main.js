@@ -65,6 +65,8 @@ const firstScriptTag = document.getElementsByTagName('script')[0];
 firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
 
+
+
 /*-----------------------------------*/
 /* USER SETTINGS  */
 const UI = window.YTGIF;

@@ -94,7 +94,7 @@ Hello? from 7 */
 .yt-gif-awaiting-palyer--pulse-animation {
   cursor: pointer;
   box-shadow: inset 0px 0px 7px 0px var(--awaiting-player-box-shadow);
-  animation: pulse_dropdown_item 10s infinite;
+  animation: pulse_dropdown_awaiting_player 10s infinite;
 }
 .yt-gif-awaiting-palyer--pulse-animation:hover {
   animation: none;
