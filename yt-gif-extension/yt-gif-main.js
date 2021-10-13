@@ -6,8 +6,9 @@ window.YTGIF = {
         referenced_start_timestamp: '1',
     },
     experience: {
-        awaiting_for_mouseenter_to_initialize: '',
         sound_when_video_loops: '1',
+        awaiting_for_mouseenter_to_initialize: '',
+        awaiting_with_video_thumnail_as_bg: '',
     },
     /* permutations - checkbox */
     inactiveStyle: {
@@ -141,8 +142,11 @@ const cssData = {
     yt_gif_audio: 'yt-gif-audio',
     yt_gif_custom_player_span_first_usage: 'ty-gif-custom-player-span-first-usage',
 
+
     awiting_player_pulse_anim: 'yt-gif-awaiting-palyer--pulse-animation',
     awaitng_player_user_input: 'yt-gif-awaiting-for-user-input',
+    awaitng_input_with_thumbnail: 'yt-gif-awaiting-for-user-input-with-thumbnail',
+
 
     dwn_no_input: 'dropdown_not-allowed_input',
     dropdown_fadeIt_bg_animation: 'dropdown_fadeIt-bg_animation',
@@ -708,21 +712,78 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
     if (UI.experience.awaiting_for_mouseenter_to_initialize.checked)
     {
         const awaitingAnimation = [cssData.awiting_player_pulse_anim, cssData.awaitng_player_user_input];
+        const awaitingAnimationThumbnail = [...awaitingAnimation, cssData.awaitng_input_with_thumbnail];
+        let mainAnimation;
 
-        toggleClasses(true, awaitingAnimation, wrapper);
+        if (UI.experience.awaiting_with_video_thumnail_as_bg.checked)
+        {
+            wrapper.style.backgroundImage = `url(${get_youtube_thumbnail(url)})`;
+            mainAnimation = awaitingAnimationThumbnail;
+        }
+        else
+        {
+            mainAnimation = awaitingAnimation;
+        }
+
+        toggleClasses(true, mainAnimation, wrapper);
 
         wrapper.addEventListener('mouseenter', handleOnMouseenter);
 
         //#region handler
         function handleOnMouseenter(e)
         {
-            toggleClasses(false, awaitingAnimation, wrapper);
+            toggleClasses(false, mainAnimation, wrapper);
+
+            wrapper.style.backgroundImage = 'none'; //spaguetti
 
             wrapper.removeEventListener('mouseenter', handleOnMouseenter);
 
             return new window.YT.Player(newId, playerConfig());
         }
         //#endregion handler
+
+        //#region util
+        function get_youtube_thumbnail(url, quality)
+        {
+            //https://stackoverflow.com/questions/18681788/how-to-get-a-youtube-thumbnail-from-a-youtube-iframe
+            if (url)
+            {
+                var video_id, thumbnail, result;
+                if (result = url.match(/youtube\.com.*(\?v=|\/embed\/)(.{11})/))
+                {
+                    video_id = result.pop();
+                }
+                else if (result = url.match(/youtu.be\/(.{11})/))
+                {
+                    video_id = result.pop();
+                }
+
+                if (video_id)
+                {
+                    if (typeof quality == "undefined")
+                    {
+                        quality = 'high';
+                    }
+
+                    var quality_key = 'maxresdefault'; // Max quality
+                    if (quality == 'low')
+                    {
+                        quality_key = 'sddefault';
+                    } else if (quality == 'medium')
+                    {
+                        quality_key = 'mqdefault';
+                    } else if (quality == 'high')
+                    {
+                        quality_key = 'hqdefault';
+                    }
+
+                    var thumbnail = "http://img.youtube.com/vi/" + video_id + "/" + quality_key + ".jpg";
+                    return thumbnail;
+                }
+            }
+            return false;
+        }
+        //#endregion
     }
     else
     {
