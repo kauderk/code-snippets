@@ -7,12 +7,12 @@ window.YTGIF = {
     },
     experience: {
         sound_when_video_loops: '1',
-        awaiting_for_mouseenter_to_initialize: '',
-        awaiting_with_video_thumnail_as_bg: '',
+        awaiting_for_mouseenter_to_initialize: '1',
+        awaiting_with_video_thumnail_as_bg: '1',
     },
     /* permutations - checkbox */
     inactiveStyle: {
-        mute_on_inactive_window: '1',
+        mute_on_inactive_window: '',
         pause_on_inactive_window: '',
     },
     /* permutations - checkbox */
@@ -163,6 +163,9 @@ const attrData = {
     initialize_bg: 'initialize-bg',
     initialize_loop: 'initialize-loop',
 }
+const attrInfo = {
+    videoUrl: 'data-video-url',
+}
 /*-----------------------------------*/
 const ytGifAttr = {
     sound: {
@@ -265,16 +268,6 @@ async function Ready()
         {
             return `[data-bind${selector}='${value}']`;
         }
-        //for each
-        //queyy extact attrData
-        //query all attrData key
-        //igonore main
-
-        //main on change
-        //for each
-        //toggeleclasses [hidden]
-        //no change on they're actual checkbos though
-        //
     }
 
     async function deal_with_visual_user_custimizations()
@@ -290,8 +283,12 @@ async function Ready()
             const css_rule = `.${cssData.yt_gif_wrapper}, .${cssData.yt_gif_iframe_wrapper} {
                 width: ${UI.default.player_span};
             }`;
+
             const id = `${cssData.ty_gif_custom_player_span}-${UI.default.player_span}`
+
             create_css_rule(css_rule, id);
+
+
             //#region util
             function create_css_rule(css_rules = 'starndard css rules', id = `${cssData.yt_gif}-custom`)
             {
@@ -397,9 +394,11 @@ async function Ready()
         menuDeployCheckbox.addEventListener('change', handleOutherMenuDeploy);
 
 
+
         const parent = menuDeployCheckbox.parentElement;
         const hiddenDeploySubMenu = document.querySelector(`.${cssData.dropdown__hidden}.${cssData.dropdown_deployment_style}`);
         const hiddenDeploySubMenuMessage = document.querySelector(`.${cssData.dwp_message}`);
+
 
 
         const label = menuDeployCheckbox.previousElementSibling;
@@ -416,8 +415,10 @@ async function Ready()
         label.setAttribute('for', menuDeployCheckbox.id); // link checks
 
 
+
         const submenuSubmit = UI.deploymentStyle.deploy_yt_gifs;
         submenuSubmit.addEventListener('change', handleSubMenuDeploy);
+
 
 
         const noInputAnimation = [cssData.dwn_no_input]
@@ -431,6 +432,24 @@ async function Ready()
             video: () => UI.deploymentStyle.deployment_style_video.checked,
             both: () => UI.deploymentStyle.deployment_style_both.checked,
         }
+
+        const withThumbnails = UI.experience.awaiting_with_video_thumnail_as_bg;
+        withThumbnails.addEventListener('change', () =>
+        {
+            const awaitingGifs = [...document.querySelectorAll(`.${cssData.awaitng_input_with_thumbnail}`)];
+            for (const i of awaitingGifs)
+            {
+                if (withThumbnails.checked)
+                {
+                    const player = i.querySelector(attrInfo.videoUrl);
+                    i.style.backgroundImage = `url(${get_youtube_thumbnail(player?.videoUrl)})`
+                }
+                else
+                {
+                    i.style.backgroundImage = 'none'; // spaguetti
+                }
+            }
+        });
 
 
         //#region event handelers
@@ -481,7 +500,6 @@ async function Ready()
 
             console.log(`${mutCnt} mutation and ${inscCnt} intersection master observers cleaned`);
         }
-
 
         function ChargeMasterObservers()
         {
@@ -768,7 +786,8 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
 
         if (UI.experience.awaiting_with_video_thumnail_as_bg.checked)
         {
-            wrapper.style.backgroundImage = `url(${get_youtube_thumbnail(url)})`;
+            wrapper.style.backgroundImage = `url(${get_youtube_thumbnail(url)})`; // spaguetti
+            wrapper.setAttribute(attrInfo.videoUrl, url);
             mainAnimation = awaitingAnimationThumbnail;
         }
         else
@@ -793,48 +812,6 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
         }
         //#endregion handler
 
-        //#region util
-        function get_youtube_thumbnail(url, quality)
-        {
-            //https://stackoverflow.com/questions/18681788/how-to-get-a-youtube-thumbnail-from-a-youtube-iframe
-            if (url)
-            {
-                var video_id, thumbnail, result;
-                if (result = url.match(/youtube\.com.*(\?v=|\/embed\/)(.{11})/))
-                {
-                    video_id = result.pop();
-                }
-                else if (result = url.match(/youtu.be\/(.{11})/))
-                {
-                    video_id = result.pop();
-                }
-
-                if (video_id)
-                {
-                    if (typeof quality == "undefined")
-                    {
-                        quality = 'high';
-                    }
-
-                    var quality_key = 'maxresdefault'; // Max quality
-                    if (quality == 'low')
-                    {
-                        quality_key = 'sddefault';
-                    } else if (quality == 'medium')
-                    {
-                        quality_key = 'mqdefault';
-                    } else if (quality == 'high')
-                    {
-                        quality_key = 'hqdefault';
-                    }
-
-                    var thumbnail = "https://img.youtube.com/vi/" + video_id + "/" + quality_key + ".jpg";
-                    return thumbnail;
-                }
-            }
-            return false;
-        }
-        //#endregion
     }
     else
     {
@@ -1693,6 +1670,7 @@ function NoCash(url)
     return url + "?" + new Date().getTime()
 }
 
+
 function inViewport(els)
 {
     let matches = [],
@@ -1786,6 +1764,7 @@ function element_mouse_is_inside(elementToBeChecked, mouseEvent, with_margin, of
     }
 }
 
+
 function div(classList)
 {
     let el = document.createElement('div');
@@ -1811,6 +1790,7 @@ function label(classList)
     let el = document.createElement('label');
     return emptyEl(classList, el);
 }
+
 
 function emptyEl(classList, el)
 {
@@ -1856,6 +1836,7 @@ function allIframeStyle(style)
 {
     return document.querySelectorAll(`[${style}]`);
 }
+
 
 function htmlToElement(html)
 {
@@ -1924,6 +1905,47 @@ async function isValidFetch(url)
         return [null, error];
     };
 }
+function get_youtube_thumbnail(url, quality)
+{
+    //https://stackoverflow.com/questions/18681788/how-to-get-a-youtube-thumbnail-from-a-youtube-iframe
+    if (url)
+    {
+        var video_id, thumbnail, result;
+        if (result = url.match(/youtube\.com.*(\?v=|\/embed\/)(.{11})/))
+        {
+            video_id = result.pop();
+        }
+        else if (result = url.match(/youtu.be\/(.{11})/))
+        {
+            video_id = result.pop();
+        }
+
+        if (video_id)
+        {
+            if (typeof quality == "undefined")
+            {
+                quality = 'high';
+            }
+
+            var quality_key = 'maxresdefault'; // Max quality
+            if (quality == 'low')
+            {
+                quality_key = 'sddefault';
+            } else if (quality == 'medium')
+            {
+                quality_key = 'mqdefault';
+            } else if (quality == 'high')
+            {
+                quality_key = 'hqdefault';
+            }
+
+            var thumbnail = "https://img.youtube.com/vi/" + video_id + "/" + quality_key + ".jpg";
+            return thumbnail;
+        }
+    }
+    return false;
+}
+
 
 function isValidCSSUnit(value)
 {
