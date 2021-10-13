@@ -93,7 +93,7 @@ Hello? from 7 */
 
 .yt-gif-awaiting-palyer--pulse-animation {
   cursor: pointer;
-  animation: pulse_dropdown_awaiting_player 7s infinite;
+  animation: pulse_dropdown_awaiting_player 6s infinite;
 }
 .yt-gif-awaiting-palyer--pulse-animation:hover {
   animation: none;

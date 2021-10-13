@@ -208,7 +208,6 @@ span.dropdown-info {
 /* pusling animation for visible deployiment style*/
 .drodown_item-pulse-animation {
   cursor: pointer;
-  box-shadow: inset 0px 0px 7px 0px rgb(79 94 107);
   animation: pulse_dropdown_item 3s infinite;
 }
 .drodown_item-pulse-animation:hover {
