@@ -777,7 +777,7 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
                         quality_key = 'hqdefault';
                     }
 
-                    var thumbnail = "http://img.youtube.com/vi/" + video_id + "/" + quality_key + ".jpg";
+                    var thumbnail = "https://img.youtube.com/vi/" + video_id + "/" + quality_key + ".jpg";
                     return thumbnail;
                 }
             }
@@ -1882,6 +1882,11 @@ function targetNotTogglePlay(id, bol = false)
 // use only one audio??
 // loop sound adjusment with slider hidden inside sub menu
 // deploy on mouse enter
+
+
+// to apply volume on end loop audio ☐
+// http vs https ☐
+// coding train shifman mouse inside div, top, left ☐
 
 // play a sound to indicate the current gif makes loop ☑ ☑
 // https://freesound.org/people/candy299p/sounds/250091/          * film ejected *
