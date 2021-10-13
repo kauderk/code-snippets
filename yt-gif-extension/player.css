@@ -90,6 +90,12 @@ Hello? from 7 */
   background-color: var(--awaiting-player-bg);
   border-radius: 10px;
 }
+.yt-gif-awaiting-for-user-input-with-thumbnail {
+  background-image: url();
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
 
 .yt-gif-awaiting-palyer--pulse-animation {
   cursor: pointer;
