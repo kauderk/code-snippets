@@ -194,7 +194,7 @@ span.dropdown-info {
 
 /* should be added and removed through javascript*/
 .dropdown--hidden {
-  display: none;
+  display: none !important;
 }
 .dropdown_not-allowed_input *{
   cursor: not-allowed;
