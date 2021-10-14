@@ -441,8 +441,7 @@ async function Ready()
             {
                 if (withThumbnails.checked)
                 {
-                    const player = i.querySelector(attrInfo.videoUrl);
-                    i.style.backgroundImage = `url(${get_youtube_thumbnail(player?.videoUrl)})`
+                    i.style.backgroundImage = `url(${get_youtube_thumbnail(i.dataset.videoUrl)})`
                 }
                 else
                 {
@@ -777,18 +776,18 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
 
 
     //console.count(message);
-    // 5. ACTUAL CREATION OF THE EMBEDED YOUTUBE VIDEO PLAYER (target)
     if (UI.experience.awaiting_for_mouseenter_to_initialize.checked)
     {
         const awaitingAnimation = [cssData.awiting_player_pulse_anim, cssData.awaitng_player_user_input];
         const awaitingAnimationThumbnail = [...awaitingAnimation, cssData.awaitng_input_with_thumbnail];
         let mainAnimation;
 
+        wrapper.setAttribute(attrInfo.videoUrl, url);
+        mainAnimation = awaitingAnimationThumbnail;
+
         if (UI.experience.awaiting_with_video_thumnail_as_bg.checked)
         {
             wrapper.style.backgroundImage = `url(${get_youtube_thumbnail(url)})`; // spaguetti
-            wrapper.setAttribute(attrInfo.videoUrl, url);
-            mainAnimation = awaitingAnimationThumbnail;
         }
         else
         {
@@ -808,6 +807,7 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
 
             wrapper.removeEventListener('mouseenter', handleOnMouseenter);
 
+            // 5. ACTUAL CREATION OF THE EMBEDED YOUTUBE VIDEO PLAYER (target)
             return new window.YT.Player(newId, playerConfig());
         }
         //#endregion handler
@@ -815,6 +815,7 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
     }
     else
     {
+        // 5. ACTUAL CREATION OF THE EMBEDED YOUTUBE VIDEO PLAYER (target)
         return new window.YT.Player(newId, playerConfig());
     }
     //#region local utilites
@@ -1345,7 +1346,7 @@ function onPlayerReady(event)
     {
         currentFullscreenPlayer = t.h.id;
 
-        if (!document.fullscreenElement)
+        if (!document.fullscreenElement && parent.matches(":hover")) //https://stackoverflow.com/questions/36767196/check-if-mouse-is-inside-div#:~:text=if%20(element.parentNode.matches(%22%3Ahover%22))%20%7B
         {
             if (UI.fullscreenStyle.mute_on_exit_fullscreenchange.checked)
             {
@@ -1471,6 +1472,10 @@ function onPlayerReady(event)
 
         t.__proto__.timeDisplayHumanInteraction = false;
     }
+    else if (parent.matches(":hover")) // human wants to hear and watch
+    {
+        videoIsPlayingWithSound(true);
+    }
     else //Freeze
     {
         const OneFrame = setInterval(() =>
@@ -1484,7 +1489,7 @@ function onPlayerReady(event)
                 }
                 else if (inViewport(iframe) && !t.__proto__.globalHumanInteraction)
                 {
-                    togglePlay(UI.playStyle.visible_clips_start_to_play_unmuted.checked);
+                    togglePlay(UI.playStyle.visible_clips_start_to_play_unmuted.checked); // pause
                 }
 
                 clearInterval(OneFrame);
@@ -1763,6 +1768,92 @@ function element_mouse_is_inside(elementToBeChecked, mouseEvent, with_margin, of
         return false;
     }
 }
+function element_mouse_is_inside_mod(elementToBeChecked, mouseEvent, with_margin, offset_object)
+{
+    if (!with_margin)
+    {
+        with_margin = false;
+    }
+    if (typeof offset_object !== 'object')
+    {
+        offset_object = {};
+    }
+    debugger;
+    const elm_offset = elementToBeChecked.offsetTop;
+
+    let element_width = elementToBeChecked.offsetWidth;
+    // element_width += parseInt(elementToBeChecked.style.paddingLeft.replace("px", ""));
+    // element_width += parseInt(elementToBeChecked.style.paddingRight.replace("px", ""));
+
+    debugger;
+    let element_height = elementToBeChecked.offsetHeight;
+    // element_height += parseInt(elementToBeChecked.style.paddingTop.replace("px", ""));
+    // element_height += parseInt(elementToBeChecked.style.paddingBottom.replace("px", ""));
+
+
+    if (with_margin)
+    {
+        element_width += parseInt(elementToBeChecked.marginLeft.replace("px", ""));
+        element_width += parseInt(elementToBeChecked.marginRight.replace("px", ""));
+        element_height += parseInt(elementToBeChecked.marginTop.replace("px", ""));
+        element_height += parseInt(elementToBeChecked.marginBottom.replace("px", ""));
+        debugger;
+    }
+
+
+    // elm_offset.rightBorder = elm_offset.offsetLeft + element_width;
+    // elm_offset.bottomBorder = elm_offset.offsetTop + element_height;
+
+    debugger;
+
+    if (offset_object.hasOwnProperty("top"))
+    {
+        elm_offset.top += parseInt(offset_object.top);
+    }
+    if (offset_object.hasOwnProperty("left"))
+    {
+        elm_offset.left += parseInt(offset_object.left);
+    }
+    if (offset_object.hasOwnProperty("bottom"))
+    {
+        elm_offset.bottomBorder += parseInt(offset_object.bottom);
+    }
+    if (offset_object.hasOwnProperty("right"))
+    {
+        elm_offset.rightBorder += parseInt(offset_object.right);
+    }
+    debugger;
+
+    mouseEvent = mouseEvent || window;
+    const mouseX = mouseEvent?.pageX || mouseEvent?.clientX;
+    const mouseY = mouseEvent?.pageY || mouseEvent?.clientY;
+    debugger;
+
+
+    if ((mouseX > elm_offset.left && mouseX < elm_offset.rightBorder)
+        && (mouseY > elm_offset.top && mouseY < elm_offset.bottomBorder))
+    {
+        debugger;
+        return true;
+    }
+    else
+    {
+        debugger;
+        return false;
+    }
+}
+function is_mouse_inside(el, e)
+{
+    const px = e.clientX;
+    const x = el.width();
+    const py = 0;
+    const y = e.clientY;
+    const horizontal = px > x && px < x
+    if (px > x)
+    {
+
+    }
+}
 
 
 function div(classList)
@@ -2039,7 +2130,7 @@ function mapRange(value, a, b, c, d)
 
 // to apply volume on end loop audio ☑ ☑
 // http vs https ☑ ☑
-// coding train shifman mouse inside div, top, left ☐
+// coding train shifman mouse inside div, top, left ✘ ☑ ☑
 
 // bind thumbnail input element hiddeness to initialize checkbox
 
