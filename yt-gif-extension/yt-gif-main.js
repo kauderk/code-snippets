@@ -1982,7 +1982,7 @@ function isValidUrl(value)
 
 async function FetchText(url)
 {
-    const [response, err] = await isValidFetch(url); // firt time fetching something... This is cool
+    const [response, err] = await isValidFetch(NoCash(url)); // firt time fetching something... This is cool
     if (response)
         return await response.text();
 }
