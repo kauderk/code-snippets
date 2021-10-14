@@ -210,75 +210,41 @@ const almostReady = setInterval(() =>
 
 async function Ready()
 {
-    // 1.
+    // the objects UI, links and cssData are binded to all of these functions
+
     await LoadCSS(links.css.dropDownMenu);
     await LoadCSS(links.css.player);
 
-    // 2.
-    await deal_with_visual_user_custimizations();
-    await load_html_player_attrs();
+    await Css_UCS(); // UCS - user customizations
 
-    // 3. 
-    await load_html_drop_down_menu();
+    await StorePlayerHtml_UCS();
 
-    // 4. assign the User Inputs (UI) to their variables
-    drop_down_menu_inputs_as_variables();
+    await Load_DDM_onTopbar(); // drop down menu
 
-    // 5. One time - the timestamp scroll offset updates on changes
-    scrollwhell_offset_features();
+    DDM_to_UI_variables();
 
-    // 6. is nice to have an option to stop the masterObserver for good
-    what_components_to_observe_and_deploy();
+    DDM_FlipBindedDataAttr([`${cssData.dropdown__hidden}`]);
 
-    // 8. Bind checkbox items
-    bind_checkbox_items();
+    UpdateOnScroll('wheelOffset', UI.label.rangeValue);
+    UpdateOnScroll('scroll_loop_volume', UI.label.loop_volume_displayed);
 
-    // 7.
+    MasterObserver_UCS(); // yt-gifs can efectifly be deployed
+
     await while_running_features();
-
 
     console.log('YT GIF extension activated');
 
     //#region hidden functions
-    function bind_checkbox_items()
-    {
-        const hiddenClass = [`${cssData.dropdown__hidden}`]
-        for (const key in attrData)
-        {
-            const value = attrData[key];
-            const main = document.querySelector(data_MAIN_with(value));
-            const all = [...document.querySelectorAll(data_bind_with(value, '*'))];
-            const valid = all.filter(el => el != main);
-
-            toggleValidItemClasses();
-            main.addEventListener('change', toggleValidItemClasses);
-
-            function toggleValidItemClasses()
-            {
-                for (const i of valid)
-                {
-                    toggleClasses(!main.checked, hiddenClass, i);
-                }
-            }
-        }
-
-        function data_MAIN_with(value, selector = '')
-        {
-            return `[data-main${selector}='${value}']`;
-        }
-        function data_bind_with(value, selector = '')
-        {
-            return `[data-bind${selector}='${value}']`;
-        }
-    }
-
-    async function deal_with_visual_user_custimizations()
+    async function Css_UCS()
     {
         if (UI.default.yt_gif_drop_down_menu_theme === 'dark')
+        {
             await LoadCSS(links.css.themes.dark_dropDownMenu);
-
-        else
+        }
+        else // light
+        {
             await LoadCSS(links.css.themes.light_dropDownMenu);
+        }
 
         if (isValidCSSUnit(UI.default.player_span))
         {
@@ -289,7 +255,6 @@ async function Ready()
             const id = `${cssData.ty_gif_custom_player_span}-${UI.default.player_span}`
 
             create_css_rule(css_rule, id);
-
 
             //#region util
             function create_css_rule(css_rules = 'starndard css rules', id = `${cssData.yt_gif}-custom`)
@@ -304,14 +269,7 @@ async function Ready()
         }
     }
 
-    async function load_html_drop_down_menu()
-    {
-        const moreIcon = document.querySelector('.bp3-icon-more').closest('.rm-topbar .rm-topbar__spacer-sm + .bp3-popover-wrapper');
-        const htmlText = await FetchText(links.html.dropDownMenu);
-        moreIcon.insertAdjacentHTML('afterend', htmlText);
-    }
-
-    async function load_html_player_attrs()
+    async function StorePlayerHtml_UCS()
     {
         let htmlText = await FetchText(links.html.playerControls);
         if (UI.default.clip_end_sound != '')
@@ -322,7 +280,15 @@ async function Ready()
         return htmlText
     }
 
-    function drop_down_menu_inputs_as_variables()
+    async function Load_DDM_onTopbar()
+    {
+        const rm_moreIcon = document.querySelector('.bp3-icon-more').closest('.rm-topbar .rm-topbar__spacer-sm + .bp3-popover-wrapper');
+        const htmlText = await FetchText(links.html.dropDownMenu);
+        rm_moreIcon.insertAdjacentHTML('afterend', htmlText);
+    }
+
+
+    function DDM_to_UI_variables()
     {
         // this took a solid hour. thak you thank you
         for (const parentKey in UI)
@@ -346,7 +312,7 @@ async function Ready()
                     case 'playStyle':
                         const binaryInput = UI[parentKey][childKey];
                         binaryInput.checked = isTrue(userValue);
-                        binaryInput.previousElementSibling.setAttribute('for', binaryInput.id);
+                        linkClickPreviousElement(binaryInput);
                         break;
                     case 'range':
                         UI[parentKey][childKey].value = Number(userValue);
@@ -359,33 +325,55 @@ async function Ready()
         }
     }
 
-    function scrollwhell_offset_features()
+    function MasterObserver_UCS()
     {
-
-        UpdateScrollUI('wheelOffset', UI.label.rangeValue);
-
-        UpdateScrollUI('scroll_loop_volume', UI.label.loop_volume_displayed);
-
-        //#region  local utils
-        function UpdateScrollUI(key, labelEl)
+        if (isTrue(UI.default.override_roam_video_component)) //video
         {
-            function UpdateLabel()
-            {
-                labelEl.innerHTML = UI.range[key].value;
-            }
-
-            UI.range[key].addEventListener('change', () => UpdateLabel());
-            UI.range[key].addEventListener('wheel', (e) =>
-            {
-                const dir = Math.sign(e.deltaY) * -1;
-                const parsed = parseInt(UI.range[key].value, 10);
-                UI.range[key].value = Number(dir + parsed);
-
-                UpdateLabel();
-            });
-
-            UpdateLabel();
+            video_MasterObserver();
         }
+        else if (UI.default.override_roam_video_component === 'both') //observeEls values
+        {
+            both_MasterObserver();
+        }
+        else // yt-gif
+        {
+            yt_gif_MasterObserver();
+        }
+    }
+
+    function DDM_FlipBindedDataAttr(hiddenClass = [])
+    {
+        for (const key in attrData)
+        {
+            const value = attrData[key];
+            const main = document.querySelector(data_MAIN_with(value));
+            const all = [...document.querySelectorAll(data_bind_with(value, '*'))];
+            const valid = all.filter(el => el != main);
+
+            toggleValidItemClasses();
+            main.addEventListener('change', toggleValidItemClasses);
+
+            //#region local utils
+            function toggleValidItemClasses()
+            {
+                for (const i of valid)
+                {
+                    toggleClasses(!main.checked, hiddenClass, i);
+                }
+            }
+            //#endregion
+        }
+
+        //#region local utils
+        function data_MAIN_with(value, selector = '')
+        {
+            return `[data-main${selector}='${value}']`;
+        }
+        function data_bind_with(value, selector = '')
+        {
+            return `[data-bind${selector}='${value}']`;
+        }
+
         //#endregion
     }
 
@@ -421,7 +409,7 @@ async function Ready()
         const islabel = (str) => labelDeploymentState.innerHTML == str;
         const labelTxt = (str) => labelDeploymentState.innerHTML = str;
 
-        labelDeploymentState.setAttribute('for', menuDeployCheckbox.id); // link checks
+        linkClickPreviousElement(menuDeployCheckbox);
         //#endregion
 
 
@@ -582,21 +570,6 @@ async function Ready()
         //#endregion
     }
 
-    function what_components_to_observe_and_deploy()
-    {
-        if (isTrue(UI.default.override_roam_video_component)) //video
-        {
-            video_MasterObserver();
-        }
-        else if (UI.default.override_roam_video_component === 'both') //observeEls values
-        {
-            both_MasterObserver();
-        }
-        else // yt-gif
-        {
-            yt_gif_MasterObserver();
-        }
-    }
     //#endregion
 
 
@@ -614,6 +587,26 @@ async function Ready()
 
             link.onload = () => resolve();
         });
+    }
+
+    function UpdateOnScroll(key, labelEl)
+    {
+        function UpdateLabel()
+        {
+            labelEl.innerHTML = UI.range[key].value;
+        }
+
+        UI.range[key].addEventListener('change', () => UpdateLabel());
+        UI.range[key].addEventListener('wheel', (e) =>
+        {
+            const dir = Math.sign(e.deltaY) * -1;
+            const parsed = parseInt(UI.range[key].value, 10);
+            UI.range[key].value = Number(dir + parsed);
+
+            UpdateLabel();
+        });
+
+        UpdateLabel();
     }
 
     function both_MasterObserver()
@@ -1687,6 +1680,11 @@ function onStateChange(state)
 
 
 //#region Utilies
+function linkClickPreviousElement(el)
+{
+    el.previousElementSibling.setAttribute('for', el.id); // link clicks
+}
+
 function applyIMGbg(wrapper, url)
 {
     wrapper.style.backgroundImage = `url(${get_youtube_thumbnail(url)})`;
@@ -1726,161 +1724,7 @@ function inViewport(els)
     }
     return matches;
 }
-function handleMyMouseMove(e)
-{
-    //https://stackoverflow.com/questions/5730433/keep-mouse-inside-a-div
-    e = e || window.event;
-    var mouseX = e.clientX;
-    var mouseY = e.clientY;
-    if (mousepressed)
-    {
-        divChild.style.left = mouseX + "px";
-        divChild.style.top = mouseY + "px";
-    }
-}
-function element_mouse_is_inside(elementToBeChecked, mouseEvent, with_margin, offset_object)
-{
-    if (!with_margin)
-    {
-        with_margin = false;
-    }
-    if (typeof offset_object !== 'object')
-    {
-        offset_object = {};
-    }
-    var elm_offset = elementToBeChecked.offset();
-    var element_width = elementToBeChecked.width();
-    element_width += parseInt(elementToBeChecked.css("padding-left").replace("px", ""));
-    element_width += parseInt(elementToBeChecked.css("padding-right").replace("px", ""));
-    var element_height = elementToBeChecked.height();
-    element_height += parseInt(elementToBeChecked.css("padding-top").replace("px", ""));
-    element_height += parseInt(elementToBeChecked.css("padding-bottom").replace("px", ""));
-    if (with_margin)
-    {
-        element_width += parseInt(elementToBeChecked.css("margin-left").replace("px", ""));
-        element_width += parseInt(elementToBeChecked.css("margin-right").replace("px", ""));
-        element_height += parseInt(elementToBeChecked.css("margin-top").replace("px", ""));
-        element_height += parseInt(elementToBeChecked.css("margin-bottom").replace("px", ""));
-    }
 
-    elm_offset.rightBorder = elm_offset.left + element_width;
-    elm_offset.bottomBorder = elm_offset.top + element_height;
-
-    if (offset_object.hasOwnProperty("top"))
-    {
-        elm_offset.top += parseInt(offset_object.top);
-    }
-    if (offset_object.hasOwnProperty("left"))
-    {
-        elm_offset.left += parseInt(offset_object.left);
-    }
-    if (offset_object.hasOwnProperty("bottom"))
-    {
-        elm_offset.bottomBorder += parseInt(offset_object.bottom);
-    }
-    if (offset_object.hasOwnProperty("right"))
-    {
-        elm_offset.rightBorder += parseInt(offset_object.right);
-    }
-    var mouseX = mouseEvent.pageX;
-    var mouseY = mouseEvent.pageY;
-
-    if ((mouseX > elm_offset.left && mouseX < elm_offset.rightBorder)
-        && (mouseY > elm_offset.top && mouseY < elm_offset.bottomBorder))
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-function element_mouse_is_inside_mod(elementToBeChecked, mouseEvent, with_margin, offset_object)
-{
-    if (!with_margin)
-    {
-        with_margin = false;
-    }
-    if (typeof offset_object !== 'object')
-    {
-        offset_object = {};
-    }
-    debugger;
-    const elm_offset = elementToBeChecked.offsetTop;
-
-    let element_width = elementToBeChecked.offsetWidth;
-    // element_width += parseInt(elementToBeChecked.style.paddingLeft.replace("px", ""));
-    // element_width += parseInt(elementToBeChecked.style.paddingRight.replace("px", ""));
-
-    debugger;
-    let element_height = elementToBeChecked.offsetHeight;
-    // element_height += parseInt(elementToBeChecked.style.paddingTop.replace("px", ""));
-    // element_height += parseInt(elementToBeChecked.style.paddingBottom.replace("px", ""));
-
-
-    if (with_margin)
-    {
-        element_width += parseInt(elementToBeChecked.marginLeft.replace("px", ""));
-        element_width += parseInt(elementToBeChecked.marginRight.replace("px", ""));
-        element_height += parseInt(elementToBeChecked.marginTop.replace("px", ""));
-        element_height += parseInt(elementToBeChecked.marginBottom.replace("px", ""));
-        debugger;
-    }
-
-
-    // elm_offset.rightBorder = elm_offset.offsetLeft + element_width;
-    // elm_offset.bottomBorder = elm_offset.offsetTop + element_height;
-
-    debugger;
-
-    if (offset_object.hasOwnProperty("top"))
-    {
-        elm_offset.top += parseInt(offset_object.top);
-    }
-    if (offset_object.hasOwnProperty("left"))
-    {
-        elm_offset.left += parseInt(offset_object.left);
-    }
-    if (offset_object.hasOwnProperty("bottom"))
-    {
-        elm_offset.bottomBorder += parseInt(offset_object.bottom);
-    }
-    if (offset_object.hasOwnProperty("right"))
-    {
-        elm_offset.rightBorder += parseInt(offset_object.right);
-    }
-    debugger;
-
-    mouseEvent = mouseEvent || window;
-    const mouseX = mouseEvent?.pageX || mouseEvent?.clientX;
-    const mouseY = mouseEvent?.pageY || mouseEvent?.clientY;
-    debugger;
-
-
-    if ((mouseX > elm_offset.left && mouseX < elm_offset.rightBorder)
-        && (mouseY > elm_offset.top && mouseY < elm_offset.bottomBorder))
-    {
-        debugger;
-        return true;
-    }
-    else
-    {
-        debugger;
-        return false;
-    }
-}
-function is_mouse_inside(el, e)
-{
-    const px = e.clientX;
-    const x = el.width();
-    const py = 0;
-    const y = e.clientY;
-    const horizontal = px > x && px < x
-    if (px > x)
-    {
-
-    }
-}
 
 
 function div(classList)
@@ -2140,8 +1984,167 @@ function mapRange(value, a, b, c, d)
     // then map it from (0..1) to (c..d) and return it
     return c + value * (d - c);
 }
+
+
 //#endregion
 
+//#region 0 refences
+function handleMyMouseMove(e)
+{
+    //https://stackoverflow.com/questions/5730433/keep-mouse-inside-a-div
+    e = e || window.event;
+    var mouseX = e.clientX;
+    var mouseY = e.clientY;
+    if (mousepressed)
+    {
+        divChild.style.left = mouseX + "px";
+        divChild.style.top = mouseY + "px";
+    }
+}
+function element_mouse_is_inside(elementToBeChecked, mouseEvent, with_margin, offset_object)
+{
+    if (!with_margin)
+    {
+        with_margin = false;
+    }
+    if (typeof offset_object !== 'object')
+    {
+        offset_object = {};
+    }
+    var elm_offset = elementToBeChecked.offset();
+    var element_width = elementToBeChecked.width();
+    element_width += parseInt(elementToBeChecked.css("padding-left").replace("px", ""));
+    element_width += parseInt(elementToBeChecked.css("padding-right").replace("px", ""));
+    var element_height = elementToBeChecked.height();
+    element_height += parseInt(elementToBeChecked.css("padding-top").replace("px", ""));
+    element_height += parseInt(elementToBeChecked.css("padding-bottom").replace("px", ""));
+    if (with_margin)
+    {
+        element_width += parseInt(elementToBeChecked.css("margin-left").replace("px", ""));
+        element_width += parseInt(elementToBeChecked.css("margin-right").replace("px", ""));
+        element_height += parseInt(elementToBeChecked.css("margin-top").replace("px", ""));
+        element_height += parseInt(elementToBeChecked.css("margin-bottom").replace("px", ""));
+    }
+
+    elm_offset.rightBorder = elm_offset.left + element_width;
+    elm_offset.bottomBorder = elm_offset.top + element_height;
+
+    if (offset_object.hasOwnProperty("top"))
+    {
+        elm_offset.top += parseInt(offset_object.top);
+    }
+    if (offset_object.hasOwnProperty("left"))
+    {
+        elm_offset.left += parseInt(offset_object.left);
+    }
+    if (offset_object.hasOwnProperty("bottom"))
+    {
+        elm_offset.bottomBorder += parseInt(offset_object.bottom);
+    }
+    if (offset_object.hasOwnProperty("right"))
+    {
+        elm_offset.rightBorder += parseInt(offset_object.right);
+    }
+    var mouseX = mouseEvent.pageX;
+    var mouseY = mouseEvent.pageY;
+
+    if ((mouseX > elm_offset.left && mouseX < elm_offset.rightBorder)
+        && (mouseY > elm_offset.top && mouseY < elm_offset.bottomBorder))
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+function element_mouse_is_inside_mod(elementToBeChecked, mouseEvent, with_margin, offset_object)
+{
+    if (!with_margin)
+    {
+        with_margin = false;
+    }
+    if (typeof offset_object !== 'object')
+    {
+        offset_object = {};
+    }
+    debugger;
+    const elm_offset = elementToBeChecked.offsetTop;
+
+    let element_width = elementToBeChecked.offsetWidth;
+    // element_width += parseInt(elementToBeChecked.style.paddingLeft.replace("px", ""));
+    // element_width += parseInt(elementToBeChecked.style.paddingRight.replace("px", ""));
+
+    debugger;
+    let element_height = elementToBeChecked.offsetHeight;
+    // element_height += parseInt(elementToBeChecked.style.paddingTop.replace("px", ""));
+    // element_height += parseInt(elementToBeChecked.style.paddingBottom.replace("px", ""));
+
+
+    if (with_margin)
+    {
+        element_width += parseInt(elementToBeChecked.marginLeft.replace("px", ""));
+        element_width += parseInt(elementToBeChecked.marginRight.replace("px", ""));
+        element_height += parseInt(elementToBeChecked.marginTop.replace("px", ""));
+        element_height += parseInt(elementToBeChecked.marginBottom.replace("px", ""));
+        debugger;
+    }
+
+
+    // elm_offset.rightBorder = elm_offset.offsetLeft + element_width;
+    // elm_offset.bottomBorder = elm_offset.offsetTop + element_height;
+
+    debugger;
+
+    if (offset_object.hasOwnProperty("top"))
+    {
+        elm_offset.top += parseInt(offset_object.top);
+    }
+    if (offset_object.hasOwnProperty("left"))
+    {
+        elm_offset.left += parseInt(offset_object.left);
+    }
+    if (offset_object.hasOwnProperty("bottom"))
+    {
+        elm_offset.bottomBorder += parseInt(offset_object.bottom);
+    }
+    if (offset_object.hasOwnProperty("right"))
+    {
+        elm_offset.rightBorder += parseInt(offset_object.right);
+    }
+    debugger;
+
+    mouseEvent = mouseEvent || window;
+    const mouseX = mouseEvent?.pageX || mouseEvent?.clientX;
+    const mouseY = mouseEvent?.pageY || mouseEvent?.clientY;
+    debugger;
+
+
+    if ((mouseX > elm_offset.left && mouseX < elm_offset.rightBorder)
+        && (mouseY > elm_offset.top && mouseY < elm_offset.bottomBorder))
+    {
+        debugger;
+        return true;
+    }
+    else
+    {
+        debugger;
+        return false;
+    }
+}
+function is_mouse_inside(el, e)
+{
+    const px = e.clientX;
+    const x = el.width();
+    const py = 0;
+    const y = e.clientY;
+    const horizontal = px > x && px < x
+    if (px > x)
+    {
+
+    }
+}
+//#endregion
 
 
 
