@@ -166,6 +166,12 @@ const attrData = {
 const attrInfo = {
     videoUrl: 'data-video-url',
 }
+const rm_components = {
+    video: '{{[[video]]}}',
+    yt_gif: '{{[[yt-gif]]}}',
+    both: `${this.video} and ${this.yt_gif}`,
+    current,
+}
 /*-----------------------------------*/
 const ytGifAttr = {
     sound: {
@@ -184,10 +190,6 @@ const ytGifAttr = {
 const observeEls = {
     yt_gif: `rm-xparser-default-${cssData.yt_gif}`,
     video: 'rm-video-player__spacing-wrapper',
-}
-const observeElsSpecialCase = {
-    both: '',
-    current: '',
 }
 /*-----------------------------------*/
 
@@ -391,7 +393,7 @@ async function Ready()
     {
         //ﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠ// UI.deploymentStyle.suspend_yt_gif_deployment
         const menuDeployCheckbox = UI.deploymentStyle.suspend_yt_gif_deployment;
-        menuDeployCheckbox.addEventListener('change', handleOutherMenuDeploy);
+        menuDeployCheckbox.addEventListener('change', handleAnimationsInputRestriction);
 
 
 
@@ -401,23 +403,60 @@ async function Ready()
 
 
 
-        const label = menuDeployCheckbox.previousElementSibling;
-        const info = {
-            suspend: 'Suspend YT GIF deployment',
-            deploy: 'Deploy with customizations',
-            discharging: '** Coding and stuff **',
-            loading: '** Loading and stuff **',
+        const deployInfo = {
+            _suspend,
+            get suspend()
+            {
+                return this._suspend;
+            },
+            set suspend(s)
+            {
+                this._suspend = `Suspend ${s} deployment`;
+            },
+
+            _deploy,
+            get deploy()
+            {
+                return this._deploy;
+            },
+            set deploy(s)
+            {
+                this._deploy = `Deploy ${s} players`;
+            },
+
+            _discharging,
+            get discharging()
+            {
+                return this._discharging;
+            },
+            set discharging(s)
+            {
+                this._discharging = `** Unloading ${s} observers **`;
+            },
+
+            _loading,
+            get loading()
+            {
+                return this._loading;
+            },
+            set loading(s)
+            {
+                this._loading = `** Loading ${s} observers **`;
+            },
         }
-        label.innerHTML = info.suspend;
-        const islabel = (str) => label.innerHTML == str;
-        const labelTxt = (str) => label.innerHTML = str;
+        const labelDeploymentState = menuDeployCheckbox.previousElementSibling;
+        labelDeploymentState.innerHTML = deployInfo.suspend(rm_components.current);
 
-        label.setAttribute('for', menuDeployCheckbox.id); // link checks
+        //#region util
+        const islabel = (str) => labelDeploymentState.innerHTML == str;
+        const labelTxt = (str) => labelDeploymentState.innerHTML = str;
 
+        labelDeploymentState.setAttribute('for', menuDeployCheckbox.id); // link checks
+        //#endregion
 
 
         const submenuSubmit = UI.deploymentStyle.deploy_yt_gifs;
-        submenuSubmit.addEventListener('change', handleSubMenuDeploy);
+        submenuSubmit.addEventListener('change', handleSubmitOptional_rm_comp);
 
 
 
@@ -434,53 +473,52 @@ async function Ready()
         }
 
         const withThumbnails = UI.experience.awaiting_with_video_thumnail_as_bg;
-        withThumbnails.addEventListener('change', () =>
+        withThumbnails.addEventListener('change', handleIMGbgSwap);
+        function handleIMGbgSwap(e)
         {
             const awaitingGifs = [...document.querySelectorAll(`.${cssData.awaitng_input_with_thumbnail}`)];
             for (const i of awaitingGifs)
             {
                 if (withThumbnails.checked)
                 {
-                    i.style.backgroundImage = `url(${get_youtube_thumbnail(i.dataset.videoUrl)})`
+                    applyIMGbg(i, i.dataset.videoUrl);
                 }
                 else
                 {
-                    i.style.backgroundImage = 'none'; // spaguetti
+                    removeIMGbg(i); // spaguetti
                 }
             }
-        });
+        }
 
 
         //#region event handelers
-        async function handleOutherMenuDeploy(e)
+        async function handleAnimationsInputRestriction(e)
         {
             if (menuDeployCheckbox.checked)
             {
-                if (islabel(info.suspend))
+                if (islabel(deployInfo.suspend()))
                 {
-                    labelTxt(info.discharging);
-                    isSubMenuHidden(false);
-                    CleanMasterObservers();
-                    await restricInputsfor10SecMeanWhile(redAnimationNoInputs);   //showing the red animation, because you are choosing to suspend
-                    labelTxt(info.deploy); //after the 10 seconds allow inputs again
+                    await redAnimationCombo(); //after the 10 seconds allow inputs again
                 }
-                else if (islabel(info.deploy))
+                else if (islabel(deployInfo.deploy()))
                 {
                     await greenAnimationCombo();
                 }
             }
         }
-        async function handleSubMenuDeploy(e)
+
+
+        async function handleSubmitOptional_rm_comp(e)
         {
-            if (submenuSubmit.checked && (islabel(info.deploy)))
+            if (submenuSubmit.checked && (islabel(deployInfo.deploy())))
             {
                 await greenAnimationCombo();
             }
         }
         //#endregion
 
-        //#region utils
 
+        //#region utils
         function CleanMasterObservers()
         {
             let mutCnt = 0, inscCnt = 0;
@@ -525,11 +563,19 @@ async function Ready()
         async function greenAnimationCombo()
         {
             ChargeMasterObservers();
-
-            labelTxt(info.loading); //change label to suspend
+            labelTxt(deployInfo.loading()); //change label to suspend
             isSubMenuHidden(true);
             await restricInputsfor10SecMeanWhile(greeAnimationInputReady);
-            labelTxt(info.suspend);
+            labelTxt(deployInfo.suspend());
+        }
+
+        async function redAnimationCombo()
+        {
+            labelTxt(deployInfo.discharging());
+            isSubMenuHidden(false);
+            CleanMasterObservers();
+            await restricInputsfor10SecMeanWhile(redAnimationNoInputs); //showing the red animation, because you are choosing to suspend
+            labelTxt(deployInfo.deploy());
         }
 
         function restricInputsfor10SecMeanWhile(animation)
@@ -609,20 +655,20 @@ async function Ready()
         for (const key in observeEls)
         {
             MasterMutationObservers.push(ObserveIframesAndDelployYTPlayers(observeEls[key]));
-            observeElsSpecialCase.current = 'both';
+            rm_components.current = rm_components.both;
         }
     }
 
     function video_MasterObserver()
     {
         MasterMutationObservers.push(ObserveIframesAndDelployYTPlayers(observeEls.video));
-        observeElsSpecialCase.current = 'video';
+        rm_components.current = rm_components.video;
     }
 
     function yt_gif_MasterObserver()
     {
         MasterMutationObservers.push(ObserveIframesAndDelployYTPlayers(observeEls.yt_gif));
-        observeElsSpecialCase.current = 'yt_gif';
+        rm_components.current = rm_components.yt_gif;
     }
 
     //#endregion
@@ -787,7 +833,7 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
 
         if (UI.experience.awaiting_with_video_thumnail_as_bg.checked)
         {
-            wrapper.style.backgroundImage = `url(${get_youtube_thumbnail(url)})`; // spaguetti
+            applyIMGbg(wrapper, url); // spaguetti
         }
         else
         {
@@ -803,7 +849,7 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
         {
             toggleClasses(false, mainAnimation, wrapper);
 
-            wrapper.style.backgroundImage = 'none'; //spaguetti
+            removeIMGbg(wrapper); //spaguetti
 
             wrapper.removeEventListener('mouseenter', handleOnMouseenter);
 
@@ -1675,6 +1721,16 @@ function onStateChange(state)
 
 
 //#region Utilies
+function applyIMGbg(wrapper, url)
+{
+    wrapper.style.backgroundImage = `url(${get_youtube_thumbnail(url)})`;
+}
+function removeIMGbg(wrapper)
+{
+    wrapper.style.backgroundImage = 'none';
+}
+
+
 function NoCash(url)
 {
     return url + "?" + new Date().getTime()
