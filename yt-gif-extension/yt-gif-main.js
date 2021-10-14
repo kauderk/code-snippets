@@ -1346,7 +1346,7 @@ function onPlayerReady(event)
     {
         currentFullscreenPlayer = t.h.id;
 
-        if (!document.fullscreenElement && parent.matches(":hover")) //https://stackoverflow.com/questions/36767196/check-if-mouse-is-inside-div#:~:text=if%20(element.parentNode.matches(%22%3Ahover%22))%20%7B
+        if (!document.fullscreenElement && isParentHover()) //https://stackoverflow.com/questions/36767196/check-if-mouse-is-inside-div#:~:text=if%20(element.parentNode.matches(%22%3Ahover%22))%20%7B
         {
             if (UI.fullscreenStyle.mute_on_exit_fullscreenchange.checked)
             {
@@ -1472,7 +1472,7 @@ function onPlayerReady(event)
 
         t.__proto__.timeDisplayHumanInteraction = false;
     }
-    else if (parent.matches(":hover")) // human wants to hear and watch
+    else if (isParentHover()) // human wants to hear and watch
     {
         videoIsPlayingWithSound(true);
     }
@@ -1566,6 +1566,11 @@ function onPlayerReady(event)
     function AnyPlayOnHover()
     {
         return UI.playStyle.play_on_mouse_over.checked || UI.playStyle.strict_current_play_on_mouse_over.checked
+    }
+
+    function isParentHover()
+    {
+        return parent.matches(":hover");
     }
 
 
