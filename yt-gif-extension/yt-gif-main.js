@@ -170,7 +170,7 @@ const rm_components = {
     video: '{{[[video]]}}',
     yt_gif: '{{[[yt-gif]]}}',
     both: `${this.video} and ${this.yt_gif}`,
-    current,
+    current: '',
 }
 /*-----------------------------------*/
 const ytGifAttr = {
@@ -402,50 +402,20 @@ async function Ready()
         const hiddenDeploySubMenuMessage = document.querySelector(`.${cssData.dwp_message}`);
 
 
-
         const deployInfo = {
-            _suspend,
-            get suspend()
-            {
-                return this._suspend;
-            },
-            set suspend(s)
-            {
-                this._suspend = `Suspend ${s} deployment`;
-            },
-
-            _deploy,
-            get deploy()
-            {
-                return this._deploy;
-            },
-            set deploy(s)
-            {
-                this._deploy = `Deploy ${s} players`;
-            },
-
-            _discharging,
-            get discharging()
-            {
-                return this._discharging;
-            },
-            set discharging(s)
-            {
-                this._discharging = `** Unloading ${s} observers **`;
-            },
-
-            _loading,
-            get loading()
-            {
-                return this._loading;
-            },
-            set loading(s)
-            {
-                this._loading = `** Loading ${s} observers **`;
-            },
+            suspend: `Suspend Observers`,
+            deploy: `Deploy Observers`,
+            discharging: `** Disconecting Observers **`,
+            loading: `** Setting up Observers **`,
         }
+        const deploymentRadioStates = {
+            yt_gif: () => UI.deploymentStyle.deployment_style_yt_gif.checked,
+            video: () => UI.deploymentStyle.deployment_style_video.checked,
+            both: () => UI.deploymentStyle.deployment_style_both.checked,
+        }
+
         const labelDeploymentState = menuDeployCheckbox.previousElementSibling;
-        labelDeploymentState.innerHTML = deployInfo.suspend(rm_components.current);
+        labelDeploymentState.innerHTML = deployInfo.suspend;
 
         //#region util
         const islabel = (str) => labelDeploymentState.innerHTML == str;
@@ -466,11 +436,7 @@ async function Ready()
         const greeAnimationInputReady = [...baseAnimation, cssData.dropdown_allright_input];
 
 
-        const deployment = {
-            yt_gif: () => UI.deploymentStyle.deployment_style_yt_gif.checked,
-            video: () => UI.deploymentStyle.deployment_style_video.checked,
-            both: () => UI.deploymentStyle.deployment_style_both.checked,
-        }
+
 
         const withThumbnails = UI.experience.awaiting_with_video_thumnail_as_bg;
         withThumbnails.addEventListener('change', handleIMGbgSwap);
@@ -496,11 +462,11 @@ async function Ready()
         {
             if (menuDeployCheckbox.checked)
             {
-                if (islabel(deployInfo.suspend()))
+                if (islabel(deployInfo.suspend))
                 {
                     await redAnimationCombo(); //after the 10 seconds allow inputs again
                 }
-                else if (islabel(deployInfo.deploy()))
+                else if (islabel(deployInfo.deploy))
                 {
                     await greenAnimationCombo();
                 }
@@ -510,7 +476,7 @@ async function Ready()
 
         async function handleSubmitOptional_rm_comp(e)
         {
-            if (submenuSubmit.checked && (islabel(deployInfo.deploy())))
+            if (submenuSubmit.checked && (islabel(deployInfo.deploy)))
             {
                 await greenAnimationCombo();
             }
@@ -540,9 +506,9 @@ async function Ready()
 
         function ChargeMasterObservers()
         {
-            for (const key in deployment)
+            for (const key in deploymentRadioStates)
             {
-                if (isTrue(deployment[key]())) // THIS IS CRAZY
+                if (isTrue(deploymentRadioStates[key]())) // THIS IS CRAZY
                 {
                     if (key == 'yt_gif')
                     {
@@ -563,19 +529,19 @@ async function Ready()
         async function greenAnimationCombo()
         {
             ChargeMasterObservers();
-            labelTxt(deployInfo.loading()); //change label to suspend
+            labelTxt(deployInfo.loading); //change label to suspend
             isSubMenuHidden(true);
             await restricInputsfor10SecMeanWhile(greeAnimationInputReady);
-            labelTxt(deployInfo.suspend());
+            labelTxt(deployInfo.suspend);
         }
 
         async function redAnimationCombo()
         {
-            labelTxt(deployInfo.discharging());
+            labelTxt(deployInfo.discharging);
             isSubMenuHidden(false);
             CleanMasterObservers();
             await restricInputsfor10SecMeanWhile(redAnimationNoInputs); //showing the red animation, because you are choosing to suspend
-            labelTxt(deployInfo.deploy());
+            labelTxt(deployInfo.deploy);
         }
 
         function restricInputsfor10SecMeanWhile(animation)
