@@ -29,15 +29,15 @@ window.YTGIF = {
     },
     /* one at a time - radio */
     playStyle: {
-        strict_current_play_on_mouse_over: '1',
+        strict_play_current_on_mouse_over: '1',
         play_on_mouse_over: '',
         visible_clips_start_to_play_unmuted: '',
     },
     range: {
         /*seconds up to 60*/
-        wheelOffset: '5',
+        timestamp_display_scroll_offset: '5',
         /* integers from 0 to 100 */
-        scroll_loop_volume: '50',
+        end_loop_sound_volume: '50',
     },
     InAndOutKeys: {
         /* middle mouse button is on by default */
@@ -48,13 +48,13 @@ window.YTGIF = {
     default: {
         video_volume: 40,
         /* 'dark' or 'light' */
-        yt_gif_drop_down_menu_theme: 'dark',
+        css_theme: 'dark',
         /* empty means 50% - only valid css units like px  %  vw */
         player_span: '50%',
         /* distinguish between {{[[video]]:}} from {{[[yt-gif]]:}} or 'both' which is also valid*/
         override_roam_video_component: '',
         /* src sound when yt gif makes a loop, empty if unwanted */
-        clip_end_sound: 'https://freesound.org/data/previews/256/256113_3263906-lq.mp3',
+        end_loop_sound_src: 'https://freesound.org/data/previews/256/256113_3263906-lq.mp3',
     },
 }
 //- Hello? 10
@@ -77,12 +77,15 @@ UI.label = {
     loop_volume_displayed: '',
 }
 UI.deploymentStyle = {
+    //menu
     suspend_yt_gif_deployment: '',
 
+    // radio hidden submenu
     deployment_style_yt_gif: '1',
     deployment_style_video: '',
     deployment_style_both: '',
 
+    // hidden submenu
     deploy_yt_gifs: '',
 }
 /*-----------------------------------*/
@@ -166,12 +169,6 @@ const attrData = {
 const attrInfo = {
     videoUrl: 'data-video-url',
 }
-const rm_components = {
-    video: '{{[[video]]}}',
-    yt_gif: '{{[[yt-gif]]}}',
-    both: `${this.video} and ${this.yt_gif}`,
-    current: '',
-}
 /*-----------------------------------*/
 const ytGifAttr = {
     sound: {
@@ -187,12 +184,25 @@ const ytGifAttr = {
     }
 }
 /*-----------------------------------*/
-const observeEls = {
-    yt_gif: `rm-xparser-default-${cssData.yt_gif}`,
-    video: 'rm-video-player__spacing-wrapper',
+const rm_components_base = {
+    video: {
+        description: '{{[[video]]}}',
+        classToObserve: 'rm-video-player__spacing-wrapper'
+    },
+    yt_gif: {
+        description: '{{[[yt-gif]]}}',
+        classToObserve: `rm-xparser-default-${cssData.yt_gif}`
+    },
+    current: {
+        key: ''
+    },
+}
+const rm_components = rm_components_base;
+rm_components.both = {
+    description: `${rm_components.video} and ${rm_components.yt_gif}`,
+    classesToObserve: [rm_components.video.classToObserve, rm_components.yt_gif.classToObserve]
 }
 /*-----------------------------------*/
-
 
 
 
@@ -210,34 +220,44 @@ const almostReady = setInterval(() =>
 
 async function Ready()
 {
-    // the objects UI, links and cssData are binded to all of these functions
-
+    // the objects "UI", "links" and "cssData" are binded to all of these functions
+    // 1.
     await LoadCSS(links.css.dropDownMenu);
     await LoadCSS(links.css.player);
 
-    await Css_UCS(); // UCS - user customizations
+    await CssThemes_UCS(); // UCS - user customizations
+    await CssPlayer_UCS();
 
-    await StorePlayerHtml_UCS();
+    links.html.fetched.playerControls = await PlayerHtml_UCS();
 
-    await Load_DDM_onTopbar(); // drop down menu
+    await Load_DDM_onTopbar(); // DDM - drop down menu
 
+
+    // 2.
     DDM_to_UI_variables();
 
-    DDM_FlipBindedDataAttr([`${cssData.dropdown__hidden}`]);
+    //Flip DDM item Visibility Based On Linked Input Value
+    DDM_FlipBindedDataAttr_RTM([`${cssData.dropdown__hidden}`]); // RTM runtime
 
-    UpdateOnScroll('wheelOffset', UI.label.rangeValue);
-    UpdateOnScroll('scroll_loop_volume', UI.label.loop_volume_displayed);
+    UpdateOnScroll_RTM('timestamp_display_scroll_offset', UI.label.rangeValue);
+    UpdateOnScroll_RTM('end_loop_sound_volume', UI.label.loop_volume_displayed);
 
-    MasterObserver_UCS(); // yt-gifs can efectifly be deployed
 
-    await while_running_features();
+    // 3.
+    rm_components.current.key = KeyToObserve_UCS();
+
+    await MasterObserver_UCS_RTM(); // listening for changes
+
+    TogglePlayerThumbnails_DDM_RTM();
+
+    RunMasterObserverWithKey(rm_components.current.key);
 
     console.log('YT GIF extension activated');
 
     //#region hidden functions
-    async function Css_UCS()
+    async function CssThemes_UCS()
     {
-        if (UI.default.yt_gif_drop_down_menu_theme === 'dark')
+        if (UI.default.css_theme === 'dark')
         {
             await LoadCSS(links.css.themes.dark_dropDownMenu);
         }
@@ -245,7 +265,10 @@ async function Ready()
         {
             await LoadCSS(links.css.themes.light_dropDownMenu);
         }
+    }
 
+    function CssPlayer_UCS()
+    {
         if (isValidCSSUnit(UI.default.player_span))
         {
             const css_rule = `.${cssData.yt_gif_wrapper}, .${cssData.yt_gif_iframe_wrapper} {
@@ -259,7 +282,7 @@ async function Ready()
             //#region util
             function create_css_rule(css_rules = 'starndard css rules', id = `${cssData.yt_gif}-custom`)
             {
-                const style = document.createElement('style');
+                const style = document.createElement('style'); // could be it's own function
                 style.id = id;
                 style.setAttribute('type', 'text/css');
                 style.innerHTML = css_rules;
@@ -269,14 +292,13 @@ async function Ready()
         }
     }
 
-    async function StorePlayerHtml_UCS()
+    async function PlayerHtml_UCS()
     {
         let htmlText = await FetchText(links.html.playerControls);
-        if (UI.default.clip_end_sound != '')
+        if (UI.default.end_loop_sound_src != '')
         {
-            htmlText = htmlText.replace(/(?<=<source src=\")(?=")/gm, UI.default.clip_end_sound);
+            htmlText = htmlText.replace(/(?<=<source src=\")(?=")/gm, UI.default.end_loop_sound_src);
         }
-        links.html.fetched.playerControls = htmlText;
         return htmlText
     }
 
@@ -325,23 +347,58 @@ async function Ready()
         }
     }
 
-    function MasterObserver_UCS()
+    function KeyToObserve_UCS()
     {
+        let currentKey; // this can be shorter for sure, how though?
         if (isTrue(UI.default.override_roam_video_component)) //video
         {
-            video_MasterObserver();
+            currentKey = 'video';
         }
-        else if (UI.default.override_roam_video_component === 'both') //observeEls values
+        else if (UI.default.override_roam_video_component === 'both') // both
         {
-            both_MasterObserver();
+            currentKey = 'both';
         }
         else // yt-gif
         {
-            yt_gif_MasterObserver();
+            currentKey = 'yt_gif';
         }
+        return currentKey;
     }
 
-    function DDM_FlipBindedDataAttr(hiddenClass = [])
+    //
+    function RunMasterObserverWithKey(key)
+    {
+        const options = {
+            video: () => video_MasterObserver(),
+            yt_gif: () => yt_gif_MasterObserver(),
+            both: () => both_MasterObserver(),
+        }
+        rm_components.current.key = key;
+
+        options[key]();
+        //#region local utils
+        function both_MasterObserver()
+        {
+            for (const classValue of rm_components.both.classesToObserve)
+            {
+                MasterMutationObservers.push(ObserveIframesAndDelployYTPlayers(classValue));
+            }
+        }
+
+        function video_MasterObserver()
+        {
+            MasterMutationObservers.push(ObserveIframesAndDelployYTPlayers(rm_components.video.classToObserve));
+        }
+
+        function yt_gif_MasterObserver()
+        {
+            MasterMutationObservers.push(ObserveIframesAndDelployYTPlayers(rm_components.yt_gif.classToObserve));
+        }
+        //#endregion
+    }
+    //
+
+    function DDM_FlipBindedDataAttr_RTM(hiddenClass = [])
     {
         for (const key in attrData)
         {
@@ -377,55 +434,8 @@ async function Ready()
         //#endregion
     }
 
-    async function while_running_features()
+    function TogglePlayerThumbnails_DDM_RTM()
     {
-        //ﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠ// UI.deploymentStyle.suspend_yt_gif_deployment
-        const menuDeployCheckbox = UI.deploymentStyle.suspend_yt_gif_deployment;
-        menuDeployCheckbox.addEventListener('change', handleAnimationsInputRestriction);
-
-
-
-        const parent = menuDeployCheckbox.parentElement;
-        const hiddenDeploySubMenu = document.querySelector(`.${cssData.dropdown__hidden}.${cssData.dropdown_deployment_style}`);
-        const hiddenDeploySubMenuMessage = document.querySelector(`.${cssData.dwp_message}`);
-
-
-        const deployInfo = {
-            suspend: `Suspend Observers`,
-            deploy: `Deploy Observers`,
-            discharging: `** Disconecting Observers **`,
-            loading: `** Setting up Observers **`,
-        }
-        const deploymentRadioStates = {
-            yt_gif: () => UI.deploymentStyle.deployment_style_yt_gif.checked,
-            video: () => UI.deploymentStyle.deployment_style_video.checked,
-            both: () => UI.deploymentStyle.deployment_style_both.checked,
-        }
-
-        const labelDeploymentState = menuDeployCheckbox.previousElementSibling;
-        labelDeploymentState.innerHTML = deployInfo.suspend;
-
-        //#region util
-        const islabel = (str) => labelDeploymentState.innerHTML == str;
-        const labelTxt = (str) => labelDeploymentState.innerHTML = str;
-
-        linkClickPreviousElement(menuDeployCheckbox);
-        //#endregion
-
-
-        const submenuSubmit = UI.deploymentStyle.deploy_yt_gifs;
-        submenuSubmit.addEventListener('change', handleSubmitOptional_rm_comp);
-
-
-
-        const noInputAnimation = [cssData.dwn_no_input]
-        const baseAnimation = [cssData.dropdown_fadeIt_bg_animation, cssData.dwn_no_input];
-        const redAnimationNoInputs = [...baseAnimation, cssData.dropdown_forbidden_input];
-        const greeAnimationInputReady = [...baseAnimation, cssData.dropdown_allright_input];
-
-
-
-
         const withThumbnails = UI.experience.awaiting_with_video_thumnail_as_bg;
         withThumbnails.addEventListener('change', handleIMGbgSwap);
         function handleIMGbgSwap(e)
@@ -443,12 +453,60 @@ async function Ready()
                 }
             }
         }
+    }
+
+    async function MasterObserver_UCS_RTM()
+    {
+        const checkMenu = UI.deploymentStyle.suspend_yt_gif_deployment;
+
+        const checkMenuParent = checkMenu.parentElement;
+        const labelCheckMenu = checkMenu.previousElementSibling;
+        //#region labelCheckMenu utils
+        function islabel(str) { return labelCheckMenu.innerHTML == str; }
+        function labelTxt(str) { return labelCheckMenu.innerHTML = str; }
+        //#endregion
+
+        const subHiddenDDM = document.querySelector(`.${cssData.dropdown__hidden}.${cssData.dropdown_deployment_style}`);
+        const subHiddenDDM_message = subHiddenDDM.querySelector(`.${cssData.dwp_message}`);
+
+        const subMenuCheck = UI.deploymentStyle.deploy_yt_gifs;
+        const subMenuCheckParent = subMenuCheck.parentElement;
+
+        //#region checkboxes utils
+        const DeployCheckboxes = [checkMenu, subMenuCheck];
+        function DeployCheckboxesDisabled(b) { DeployCheckboxes.forEach(check => check.disabled = b) }
+        function DeployCheckboxesChecked(b) { DeployCheckboxes.forEach(check => check.checked = b) }
+        //#endregion
+
+
+        //animations css classes
+        const noInputAnimation = [cssData.dwn_no_input]
+        const baseAnimation = [cssData.dropdown_fadeIt_bg_animation, cssData.dwn_no_input];
+        const redAnimationNoInputs = [...baseAnimation, cssData.dropdown_forbidden_input];
+        const greeAnimationInputReady = [...baseAnimation, cssData.dropdown_allright_input];
+
+
+
+
+        const deployInfo = {
+            suspend: `Suspend Observers`,
+            deploy: `Deploy Observers`,
+            discharging: `** Disconecting Observers **`,
+            loading: `** Setting up Observers **`,
+        }
+
+
+
+        labelCheckMenu.innerHTML = deployInfo.suspend;
+
+        checkMenu.addEventListener('change', handleAnimationsInputRestriction);
+        subMenuCheck.addEventListener('change', handleSubmitOptional_rm_comp);
 
 
         //#region event handelers
         async function handleAnimationsInputRestriction(e)
         {
-            if (menuDeployCheckbox.checked)
+            if (checkMenu.checked)
             {
                 if (islabel(deployInfo.suspend))
                 {
@@ -459,114 +517,119 @@ async function Ready()
                     await greenAnimationCombo();
                 }
             }
+            //#region local util
+            async function redAnimationCombo()
+            {
+                labelTxt(deployInfo.discharging);
+                isVisualFeedbackPlaying(false)
+                CleanMasterObservers();
+                await restricInputsfor10SecMeanWhile(redAnimationNoInputs); //showing the red animation, because you are choosing to suspend
+                labelTxt(deployInfo.deploy);
+
+                //#region local utils
+                function CleanMasterObservers()
+                {
+                    let mutCnt = 0, inscCnt = 0;
+                    for (let i = MasterMutationObservers.length - 1; i >= 0; i--)
+                    {
+                        MasterMutationObservers[i].disconnect();
+                        MasterMutationObservers.splice(i, 1);
+                        mutCnt++; // i don't understand why this ins't counting
+                    }
+                    for (let i = MasterIntersectionObservers.length - 1; i >= 0; i--)
+                    {
+                        MasterIntersectionObservers[i].disconnect();
+                        MasterIntersectionObservers.splice(i, 1);
+                        inscCnt++;
+                    }
+
+                    console.log(`${mutCnt} mutation and ${inscCnt} intersection master observers cleaned`);
+                }
+                //#endregion
+            }
+            //#endregion
         }
 
 
         async function handleSubmitOptional_rm_comp(e)
         {
-            if (submenuSubmit.checked && (islabel(deployInfo.deploy)))
+            if (subMenuCheck.checked && (islabel(deployInfo.deploy)))
             {
                 await greenAnimationCombo();
             }
         }
-        //#endregion
 
 
         //#region utils
-        function CleanMasterObservers()
-        {
-            let mutCnt = 0, inscCnt = 0;
-            for (let i = MasterMutationObservers.length - 1; i >= 0; i--)
-            {
-                MasterMutationObservers[i].disconnect();
-                MasterMutationObservers.splice(i, 1);
-                mutCnt++; // i don't understand why this ins't counting
-            }
-            for (let i = MasterIntersectionObservers.length - 1; i >= 0; i--)
-            {
-                MasterIntersectionObservers[i].disconnect();
-                MasterIntersectionObservers.splice(i, 1);
-                inscCnt++;
-            }
-
-            console.log(`${mutCnt} mutation and ${inscCnt} intersection master observers cleaned`);
-        }
-
         function ChargeMasterObservers()
         {
+            const deploymentRadioStates = {
+                video: () => UI.deploymentStyle.deployment_style_video.checked,
+                yt_gif: () => UI.deploymentStyle.deployment_style_yt_gif.checked,
+                both: () => UI.deploymentStyle.deployment_style_both.checked,
+            }
+
             for (const key in deploymentRadioStates)
             {
                 if (isTrue(deploymentRadioStates[key]())) // THIS IS CRAZY
                 {
-                    if (key == 'yt_gif')
-                    {
-                        yt_gif_MasterObserver();
-                    }
-                    else if (key == 'video')
-                    {
-                        video_MasterObserver();
-                    }
-                    else if (key == 'both')
-                    {
-                        both_MasterObserver();
-                    }
+                    RunMasterObserverWithKey(key)
+                    return;
                 }
             }
         }
-
         async function greenAnimationCombo()
         {
             ChargeMasterObservers();
             labelTxt(deployInfo.loading); //change label to suspend
-            isSubMenuHidden(true);
+            isVisualFeedbackPlaying(true)
             await restricInputsfor10SecMeanWhile(greeAnimationInputReady);
             labelTxt(deployInfo.suspend);
         }
-
-        async function redAnimationCombo()
+        function isVisualFeedbackPlaying(bol)
         {
-            labelTxt(deployInfo.discharging);
-            isSubMenuHidden(false);
-            CleanMasterObservers();
-            await restricInputsfor10SecMeanWhile(redAnimationNoInputs); //showing the red animation, because you are choosing to suspend
-            labelTxt(deployInfo.deploy);
+            isSubMenuHidden(bol);
+            isSubDDMpulsing(!bol);
+            //#region local utils
+            function isSubMenuHidden(bol)
+            {
+                const hiddenClass = [`${cssData.dropdown__hidden}`]
+                toggleClasses(bol, hiddenClass, subHiddenDDM);
+            }
+            function isSubDDMpulsing(bol)
+            {
+                const pulseAnim = [cssData.dwn_pulse_anim]; // spagguetti
+                toggleClasses(bol, pulseAnim, subHiddenDDM_message); // spagguetti
+            }
+            //#endregion
         }
-
-        function restricInputsfor10SecMeanWhile(animation)
+        function restricInputsfor10SecMeanWhile(animation, duration = 10000)
         {
             return new Promise(function (resolve, reject)
             {
-                // Hmmm how would this work... say for 100 checkboxes?
-                menuDeployCheckbox.disabled = true;
-                submenuSubmit.disabled = true; // spagguetti
-
-                menuDeployCheckbox.checked = false;
-                submenuSubmit.checked = false;  // spagguetti
-
-                toggleClasses(true, animation, parent);
-                toggleClasses(true, noInputAnimation, submenuSubmit.parentElement); // spagguetti
+                DeployCheckboxesDisabled(true);
+                DeployCheckboxesChecked(false);
+                DeployCheckboxesToggleAnims(true, animation);
 
                 setTimeout(() =>
                 {
-                    menuDeployCheckbox.disabled = false;
-                    submenuSubmit.disabled = false; // spagguetti
-
-                    toggleClasses(false, animation, parent);
-                    toggleClasses(false, noInputAnimation, submenuSubmit.parentElement); // spagguetti
-
+                    DeployCheckboxesDisabled(false);
+                    DeployCheckboxesChecked(false);
+                    DeployCheckboxesToggleAnims(false, animation);
                     resolve();
-                }, 10000);
+
+                }, duration);
             });
         }
 
-        function isSubMenuHidden(bol)
+        function DeployCheckboxesToggleAnims(bol, animation)
         {
-            const hiddenClass = [`${cssData.dropdown__hidden}`]
-            toggleClasses(bol, hiddenClass, hiddenDeploySubMenu);
-
-            const pulseAnim = [cssData.dwn_pulse_anim]; // spagguetti
-            toggleClasses(!bol, pulseAnim, hiddenDeploySubMenuMessage); // spagguetti
+            toggleClasses(bol, animation, checkMenuParent);
+            toggleClasses(bol, noInputAnimation, subMenuCheckParent);
         }
+        //#endregion
+
+
         //#endregion
     }
 
@@ -589,7 +652,7 @@ async function Ready()
         });
     }
 
-    function UpdateOnScroll(key, labelEl)
+    function UpdateOnScroll_RTM(key, labelEl)
     {
         function UpdateLabel()
         {
@@ -609,27 +672,6 @@ async function Ready()
         UpdateLabel();
     }
 
-    function both_MasterObserver()
-    {
-        for (const key in observeEls)
-        {
-            MasterMutationObservers.push(ObserveIframesAndDelployYTPlayers(observeEls[key]));
-            rm_components.current = rm_components.both;
-        }
-    }
-
-    function video_MasterObserver()
-    {
-        MasterMutationObservers.push(ObserveIframesAndDelployYTPlayers(observeEls.video));
-        rm_components.current = rm_components.video;
-    }
-
-    function yt_gif_MasterObserver()
-    {
-        MasterMutationObservers.push(ObserveIframesAndDelployYTPlayers(observeEls.yt_gif));
-        rm_components.current = rm_components.yt_gif;
-    }
-
     //#endregion
 }
 
@@ -642,7 +684,7 @@ function ObserveIframesAndDelployYTPlayers(targetClass)
         onYouTubePlayerAPIReady(component, 'first wave');
     }
 
-    // 2. IntersectionObserver attached to deploy when visible
+    // 2. IntersectionObserver attache, to deploy when visible
     const hidden = AvoidAllZoomChilds();
     for (const component of hidden)
     {
@@ -785,14 +827,13 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
     {
         const awaitingAnimation = [cssData.awiting_player_pulse_anim, cssData.awaitng_player_user_input];
         const awaitingAnimationThumbnail = [...awaitingAnimation, cssData.awaitng_input_with_thumbnail];
-        let mainAnimation;
 
+        let mainAnimation = awaitingAnimationThumbnail
         wrapper.setAttribute(attrInfo.videoUrl, url);
-        mainAnimation = awaitingAnimationThumbnail;
 
         if (UI.experience.awaiting_with_video_thumnail_as_bg.checked)
         {
-            applyIMGbg(wrapper, url); // spaguetti
+            applyIMGbg(wrapper, url);
         }
         else
         {
@@ -800,23 +841,19 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
         }
 
         toggleClasses(true, mainAnimation, wrapper);
-
-        wrapper.addEventListener('mouseenter', handleOnMouseenter);
+        wrapper.addEventListener('mouseenter', CreateYTPlayer);
 
         //#region handler
-        function handleOnMouseenter(e)
+        function CreateYTPlayer(e)
         {
             toggleClasses(false, mainAnimation, wrapper);
-
-            removeIMGbg(wrapper); //spaguetti
-
-            wrapper.removeEventListener('mouseenter', handleOnMouseenter);
+            removeIMGbg(wrapper);
+            wrapper.removeEventListener('mouseenter', CreateYTPlayer);
 
             // 5. ACTUAL CREATION OF THE EMBEDED YOUTUBE VIDEO PLAYER (target)
             return new window.YT.Player(newId, playerConfig());
         }
         //#endregion handler
-
     }
     else
     {
@@ -1126,7 +1163,7 @@ function onPlayerReady(event)
                     LoopTroughVisibleYTGIFs(config);
                 }
             }
-            if (UI.playStyle.strict_current_play_on_mouse_over.checked)
+            if (UI.playStyle.strict_play_current_on_mouse_over.checked)
             {
                 const config = {
                     styleQuery: ytGifAttr.play.playing,
@@ -1286,7 +1323,7 @@ function onPlayerReady(event)
     {
         videoIsPlayingWithSound(false);
 
-        let dir = tick() + (Math.sign(e.deltaY) * Math.round(UI.range.wheelOffset.value) * -1);
+        let dir = tick() + (Math.sign(e.deltaY) * Math.round(UI.range.timestamp_display_scroll_offset.value) * -1);
         if (UI.permutations.clip_life_span_format.checked)
         {
             if (dir <= start)
@@ -1570,7 +1607,7 @@ function onPlayerReady(event)
 
     function AnyPlayOnHover()
     {
-        return UI.playStyle.play_on_mouse_over.checked || UI.playStyle.strict_current_play_on_mouse_over.checked
+        return UI.playStyle.play_on_mouse_over.checked || UI.playStyle.strict_play_current_on_mouse_over.checked
     }
 
     function isParentHover()
@@ -1626,11 +1663,11 @@ function onStateChange(state)
     {
         t.seekTo(map?.start || 0);
 
-        if (isValidUrl(UI.default.clip_end_sound))
+        if (isValidUrl(UI.default.end_loop_sound_src))
         {
             if (UI.experience.sound_when_video_loops.checked)
             {
-                play(UI.default.clip_end_sound);
+                play(UI.default.end_loop_sound_src);
                 //#region util
                 function play(url)
                 {
@@ -1638,7 +1675,7 @@ function onStateChange(state)
                     { // return a promise
                         var audio = new Audio();                     // create audio wo/ src
                         audio.preload = "auto";                      // intend to play through
-                        audio.volume = mapRange(UI.range.scroll_loop_volume.value, 0, 100, 0, 1.0);
+                        audio.volume = mapRange(UI.range.end_loop_sound_volume.value, 0, 100, 0, 1.0);
                         audio.autoplay = true;                       // autoplay when loaded
                         audio.onerror = reject;                      // on error, reject
                         audio.onended = resolve;                     // when done, resolve
