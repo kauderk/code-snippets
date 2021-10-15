@@ -1,64 +1,4 @@
-window.YTGIF = {
-    /* permutations - checkbox */
-    permutations: {
-        start_form_previous_timestamp: '1',
-        clip_life_span_format: '1',
-        referenced_start_timestamp: '1',
-    },
-    experience: {
-        sound_when_video_loops: '1',
-        awaiting_for_mouseenter_to_initialize: '1',
-        awaiting_with_video_thumnail_as_bg: '1',
-    },
-    /* permutations - checkbox */
-    inactiveStyle: {
-        mute_on_inactive_window: '',
-        pause_on_inactive_window: '',
-    },
-    /* permutations - checkbox */
-    fullscreenStyle: {
-        smoll_vid_when_big_ends: '1',
-        mute_on_exit_fullscreenchange: '',
-        pause_on_exit_fullscreenchange: '',
-    },
-    /* one at a time - radio */
-    muteStyle: {
-        strict_mute_everything_except_current: '1',
-        muted_on_mouse_over: '',
-        muted_on_any_mouse_interaction: '',
-    },
-    /* one at a time - radio */
-    playStyle: {
-        strict_play_current_on_mouse_over: '1',
-        play_on_mouse_over: '',
-        visible_clips_start_to_play_unmuted: '',
-    },
-    range: {
-        /*seconds up to 60*/
-        timestamp_display_scroll_offset: '5',
-        /* integers from 0 to 100 */
-        end_loop_sound_volume: '50',
-    },
-    InAndOutKeys: {
-        /* middle mouse button is on by default */
-        ctrlKey: '1',
-        shiftKey: '',
-        altKey: '',
-    },
-    default: {
-        video_volume: 40,
-        /* 'dark' or 'light' */
-        css_theme: 'dark',
-        /* empty means 50% - only valid css units like px  %  vw */
-        player_span: '50%',
-        /* distinguish between {{[[video]]:}} from {{[[yt-gif]]:}} or 'both' which is also valid*/
-        override_roam_video_component: '',
-        /* src sound when yt gif makes a loop, empty if unwanted */
-        end_loop_sound_src: 'https://freesound.org/data/previews/256/256113_3263906-lq.mp3',
-    },
-}
-//- Hello? 10
-// version 27 - semi-refactored
+// version 28 - semi-refactored
 // Load the IFrame Player API.
 const tag = document.createElement('script');
 tag.src = 'https://www.youtube.com/player_api';
@@ -117,18 +57,30 @@ function URLFolder(f)
 {
     return `https://kauderk.github.io/code-snippets/yt-gif-extension/${f}`
 };
+function URLFolderCSS(f)
+{
+    return URLFolder(`css/${f}`)
+};
+function URLFolderHTML(f)
+{
+    return URLFolder(`html/${f}`)
+};
+function URLFolderJS(f)
+{
+    return URLFolder(`js/${f}`)
+};
 const links = {
     css: {
-        dropDownMenu: URLFolder('drop-down-menu.css'),
-        player: URLFolder('player.css'),
+        dropDownMenu: URLFolderCSS('drop-down-menu.css'),
+        player: URLFolderCSS('player.css'),
         themes: {
-            dark_dropDownMenu: URLFolder('themes/dark-drop-down-menu.css'),
-            light_dropDownMenu: URLFolder('themes/light-drop-down-menu.css'),
+            dark_dropDownMenu: URLFolderCSS('themes/dark-drop-down-menu.css'),
+            light_dropDownMenu: URLFolderCSS('themes/light-drop-down-menu.css'),
         }
     },
     html: {
-        dropDownMenu: URLFolder('drop-down-menu.html'),
-        playerControls: URLFolder('player-controls.html'),
+        dropDownMenu: URLFolderHTML('drop-down-menu.html'),
+        playerControls: URLFolderHTML('player-controls.html'),
         fetched: {
             playerControls: '',
         },
@@ -203,6 +155,7 @@ rm_components.both = {
     classesToObserve: [rm_components.video.classToObserve, rm_components.yt_gif.classToObserve]
 }
 /*-----------------------------------*/
+
 
 
 
