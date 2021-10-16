@@ -55,7 +55,7 @@ const sesionIDs = {
 /*-----------------------------------*/
 function URLFolder(f)
 {
-    return `https://kauderk.github.io//code-snippets/yt-gif-extension/${f}`
+    return `https://kauderk.github.io/code-snippets/yt-gif-extension/${f}`
 };
 function URLFolderCSS(f)
 {
@@ -113,6 +113,8 @@ const cssData = {
     dwp_message: 'dropdown-info-message',
 
     dwn_pulse_anim: 'drodown_item-pulse-animation',
+
+    ddm_exist: 'yt-gif-drop-down-menu-toolbar',
 }
 const attrData = {
     initialize_bg: 'initialize-bg',
@@ -173,6 +175,9 @@ const almostReady = setInterval(() =>
 
 async function Ready()
 {
+    if (document.querySelector('.' + cssData.ddm_exist))
+        return console.log('YT Extension was already installed');
+
     // the objects "UI", "links" and "cssData" are binded to all of these functions
     // 1.
     await LoadCSS(links.css.dropDownMenu);
@@ -996,7 +1001,7 @@ function onPlayerReady(event)
     t.__proto__.ClearTimers = ClearTimers;
     t.__proto__.enter = ContinuouslyUpdateTimeDisplay;
     t.__proto__.globalHumanInteraction = undefined;
-    t.__proto__.timeDisplayHumanInteraction = false;
+
 
 
     iframe.removeAttribute('title');
@@ -1223,15 +1228,21 @@ function onPlayerReady(event)
             t.destroy();
             return;
         }
-        //🙋
-        if (t.__proto__.timeDisplayHumanInteraction === false) return;
 
+        if (!isThereAnyTimeDisplayInteraction()) return;
 
         UpdateTimeDisplay();
 
-        t.__proto__.timerID = window.setInterval(() => UpdateTimeDisplay(), tickOffset);
+        t.__proto__.timerID = window.setInterval(() =>
+        {
+            if (isThereAnyTimeDisplayInteraction()) // absolutely necessary because the interval can trigger after the user left the frame
+                UpdateTimeDisplay();
+        }, tickOffset);
         t.__proto__.timers.push(t.__proto__.timerID);
-
+    }
+    function isThereAnyTimeDisplayInteraction()
+    {
+        return isTimeDisplayHover() && isParentHover();
     }
     function UpdateTimeDisplay()
     {
@@ -1279,22 +1290,16 @@ function onPlayerReady(event)
 
         setTimeout(() =>
         {
-            if (t.__proto__.timeDisplayHumanInteraction)
+            if (isThereAnyTimeDisplayInteraction())
             {
                 videoIsPlayingWithSound();
             }
         }, tickOffset); //nice delay to show feedback
     }
 
-    function HumanInteractionHandeler()
-    {
-        t.__proto__.timeDisplayHumanInteraction = true
-    }
-
     // for the parent
     function ResetTrackingValues()
     {
-        t.__proto__.timeDisplayHumanInteraction = false;
         ClearTimers();
     }
     // for the timeDisplay | Utilie
@@ -1319,7 +1324,6 @@ function onPlayerReady(event)
 
     //#region EventListeners | from Elements
     timeDisplay.addEventListener('wheel', BoundWheelValueToSeek);
-    timeDisplay.addEventListener('mouseenter', HumanInteractionHandeler);
     timeDisplay.addEventListener('mouseenter', ContinuouslyUpdateTimeDisplay);
     timeDisplay.addEventListener('mouseleave', ResetTrackingValues);
     // #endregion 
@@ -1452,8 +1456,6 @@ function onPlayerReady(event)
             });
 
         parent.dispatchEvent(simHover);
-
-        t.__proto__.timeDisplayHumanInteraction = false;
     }
     else if (isParentHover()) // human wants to hear and watch
     {
@@ -1554,6 +1556,10 @@ function onPlayerReady(event)
     function isParentHover()
     {
         return parent.matches(":hover");
+    }
+    function isTimeDisplayHover()
+    {
+        return timeDisplay.matches(":hover");
     }
 
 
