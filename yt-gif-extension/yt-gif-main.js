@@ -1294,7 +1294,9 @@ function onPlayerReady(event)
             }
         }, tickOffset); //nice delay to show feedback
     }
-    //#region local utils
+
+
+    //#region utils for the timeDisplay
     function ClearTimers()
     {
         window.clearInterval(t.__proto__.timerID);
