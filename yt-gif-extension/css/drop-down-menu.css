@@ -64,6 +64,9 @@ span.yt-gif-drop-down-menu-toolbar .dropdown:first-child {
 .dropdown:hover .dropbtn {
   background-color: var(--drop-menu-btn-h);
 }
+.ty-gif-icon:focus{
+  background-color: var(--drop-menu-btn-f) !important;
+}
 .ty-gif-icon {
   padding: 0px 0px !important;
 }
@@ -81,7 +84,7 @@ path.yt-gif-svg-bg {
 
 /* DROP DOWN & REVEALING IT's content*/
 .dropdown-focus{
-  display: flex;
+  display: flex !important;
 }
 /*.dropdown-blur{
   
