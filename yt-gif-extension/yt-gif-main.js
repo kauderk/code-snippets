@@ -116,8 +116,7 @@ const cssData = {
 
     ddm_exist: 'yt-gif-drop-down-menu-toolbar',
 
-    icon_focus: 'dropdown-focus',
-    icon_blur: '',
+    ddm_focus: 'dropdown-focus',
 }
 const attrData = {
     initialize_bg: 'initialize-bg',
@@ -314,20 +313,22 @@ async function Ready()
 
     function DDM_IconFocusFlurEvents()
     {
-        const icon = document.querySelector("span.yt-gif-drop-down-menu-toolbar .dropdown:first-child");
-        const classNames = [cssData.icon_focus];
+        const mainDDM = document.querySelector("span.yt-gif-drop-down-menu-toolbar .dropdown > .dropdown-content");
+        const icon = document.querySelector(".ty-gif-icon");
+        const classNames = [cssData.ddm_focus];
 
-        icon.addEventListener("focus", (e) => iconGainFocus(e, this), true);
-        icon.addEventListener("blur", (e) => IconLooseFocus(e, this), true);
+        icon.addEventListener("click", iconGainFocus, true);
+        icon.addEventListener("blur", IconLooseFocus, true);
 
         //#region event handle
-        function iconGainFocus(e, el)
+        function iconGainFocus(e)
         {
-            toggleClasses(true, classNames, el);
+            icon.focus();
+            toggleClasses(true, classNames, mainDDM);
         }
         function IconLooseFocus(e, el)
         {
-            toggleClasses(false, classNames, el);
+            toggleClasses(false, classNames, mainDDM);
         }
         //#endregion
     }
