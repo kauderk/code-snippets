@@ -1,3 +1,68 @@
+window.YTGIF = {
+    /* permutations - checkbox */
+    display: {
+        clip_life_span_format: '1',
+    },
+    previous: {
+        start_timestamp: '1',
+        start_volume: '1',
+    },
+    referenced: {
+        block_timestamp: '1',
+        block_volume: '1',
+    },
+    experience: {
+        sound_when_video_loops: '1',
+        awaiting_for_mouseenter_to_initialize: '',
+        awaiting_with_video_thumnail_as_bg: '1',
+    },
+    inactiveStyle: {
+        mute_on_inactive_window: '',
+        pause_on_inactive_window: '',
+    },
+    fullscreenStyle: {
+        smoll_vid_when_big_ends: '1',
+        mute_on_exit_fullscreenchange: '',
+        pause_on_exit_fullscreenchange: '',
+    },
+    /* one at a time - radio */
+    muteStyle: {
+        strict_mute_everything_except_current: '1',
+        muted_on_mouse_over: '',
+        muted_on_any_mouse_interaction: '',
+    },
+    playStyle: {
+        strict_play_current_on_mouse_over: '1',
+        play_on_mouse_over: '',
+        visible_clips_start_to_play_unmuted: '',
+    },
+    range: {
+        /*seconds up to 60*/
+        timestamp_display_scroll_offset: '5',
+        /* integers from 0 to 100 */
+        end_loop_sound_volume: '50',
+    },
+    InAndOutKeys: {
+        /* middle mouse button is on by default */
+        ctrlKey: '1',
+        shiftKey: '',
+        altKey: '',
+    },
+    default: {
+        video_volume: 40,
+        /* 'dark' or 'light' */
+        css_theme: 'dark',
+        /* empty means 50% - only valid css units like px  %  vw */
+        player_span: '50%',
+        /* distinguish between {{[[video]]:}} from {{[[yt-gif]]:}} or 'both' which is also valid*/
+        override_roam_video_component: '',
+        /* src sound when yt gif makes a loop, empty if unwanted */
+        end_loop_sound_src: 'https://freesound.org/data/previews/256/256113_3263906-lq.mp3',
+    },
+}
+
+
+
 // version 29 - semi-refactored
 // Load the IFrame Player API.
 const tag = document.createElement('script');
@@ -283,7 +348,9 @@ async function Ready()
 
                 switch (parentKey)
                 {
-                    case 'permutations':
+                    case 'display':
+                    case 'previous':
+                    case 'referenced':
                     case 'deploymentStyle':
                     case 'experience':
                     case 'inactiveStyle':
@@ -1017,16 +1084,21 @@ function onPlayerReady(event)
     {
         const sesion = lastBlockIDParameters.get(blockID);
 
-        if (UI.permutations.start_form_previous_timestamp?.checked && bounded(sesion.updateTime))
+        if (UI.previous.start_timestamp?.checked && bounded(sesion.updateTime))
+        {
             seekToUpdatedTime(sesion.updateTime);
+        }
 
-        t.setVolume(sesion.volume);
+        if (UI.previous.start_volume?.checked)
+        {
+            t.setVolume(sesion.volume);
+        }
     }
     // load referenced values
     else
     {
         //Future Brand new adition to 'lastBlockIDParameters' map
-        if (UI.permutations.referenced_start_timestamp.checked)
+        if (UI.referenced.block_timestamp.checked)
         {
             const ytGifs = allIframeIDprfx();
             for (const i of ytGifs)
@@ -1042,14 +1114,22 @@ function onPlayerReady(event)
                     const desiredTime = tick(desiredTarget) || start;
                     const desiredVolume = desiredTarget?.getVolume() || validVolume();
 
-                    seekToUpdatedTime(desiredTime)
+                    if (UI.referenced.block_timestamp?.checked)
+                    {
+                        seekToUpdatedTime(desiredTime)
+                    }
 
-                    if ((typeof (desiredTarget.__proto__.globalHumanInteraction) != 'undefined'))
+                    if (UI.referenced.block_volume?.check && (typeof (desiredTarget.__proto__.globalHumanInteraction) != 'undefined'))
                     {
                         t.setVolume(desiredVolume);
                     }
-                    const saveMessage = stringWithNoEmail(desiredBlockID);
-                    console.count(`${key} referenced from ${saveMessage}`);
+
+                    // don't sweat it if there are no valid user checks
+                    if (UI.referenced.block_timestamp?.checked || UI.referenced.block_volume?.check)
+                    {
+                        const saveMessage = stringWithNoEmail(desiredBlockID);
+                        console.count(`${key} referenced from ${saveMessage}`);
+                    }
                     break;
                     //#region local util
                     function stringWithNoEmail(myString)
@@ -1245,7 +1325,7 @@ function onPlayerReady(event)
         const sec = Math.abs(clipSpan - (end - tick()));
 
         //timeDisplay.innerHTML = '00:00/00:00'
-        if (UI.permutations.clip_life_span_format.checked) 
+        if (UI.display.clip_life_span_format?.checked) 
         {
             timeDisplay.innerHTML = `${fmtMSS(sec)}/${fmtMSS(clipSpan)}`; //'sec':'clip end'
         }
@@ -1273,7 +1353,7 @@ function onPlayerReady(event)
 
         let dir = tick() + (Math.sign(e.deltaY) * Math.round(UI.range.timestamp_display_scroll_offset.value) * -1);
 
-        if (UI.permutations.clip_life_span_format.checked)
+        if (UI.previous.clip_life_span_format.checked)
         {
             if (dir <= start)
                 dir = end - 1; //can go beyond that
@@ -1381,7 +1461,7 @@ function onPlayerReady(event)
                 //🚧
                 const media = Object.create(videoParams);
                 media.updateTime = bounded(tick()) ? tick() : start;
-                media.volume = t.getVolume();
+                media.volume = t.getVolume() || validVolume();
                 if (blockID != null)
                     lastBlockIDParameters.set(blockID, media);
 
