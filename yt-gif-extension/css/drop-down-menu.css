@@ -40,7 +40,7 @@
 .dropdown :is([data-tooltip]):hover::after {
   --ddm-scale-tooltip: 1;
 }
-/* broke - down arrow - for two or more lines F 
+/* broken - down arrow - for two or more lines F 
 :is(label.dropdown-item-description)::after {
   content: '';
   --ddm-tooltip-traslate-y: calc(-1 * var(--ddm-tooltip-arrow-size));
@@ -80,6 +80,12 @@ path.yt-gif-svg-bg {
 }
 
 /* DROP DOWN & REVEALING IT's content*/
+.dropdown-focus{
+  display: flex;
+}
+/*.dropdown-blur{
+  
+}*/
 .dropdown {
   display: inline-block;
   position: relative;
@@ -87,7 +93,6 @@ path.yt-gif-svg-bg {
 }
 .dropdown:hover > .dropdown-content {
   display: flex;
-  /*align-items: center;*/
 }
 .dropdown-content {
   display: none;
