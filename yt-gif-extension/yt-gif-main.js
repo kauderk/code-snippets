@@ -115,6 +115,9 @@ const cssData = {
     dwn_pulse_anim: 'drodown_item-pulse-animation',
 
     ddm_exist: 'yt-gif-drop-down-menu-toolbar',
+
+    icon_focus: 'dropdown-focus',
+    icon_blur: '',
 }
 const attrData = {
     initialize_bg: 'initialize-bg',
@@ -193,6 +196,8 @@ async function Ready()
 
     // 2.
     DDM_to_UI_variables();
+
+    DDM_IconFocusFlurEvents();
 
     //Flip DDM item Visibility Based On Linked Input Value
     DDM_FlipBindedDataAttr_RTM([`${cssData.dropdown__hidden}`]); // RTM runtime
@@ -305,6 +310,26 @@ async function Ready()
                 }
             }
         }
+    }
+
+    function DDM_IconFocusFlurEvents()
+    {
+        const icon = document.querySelector("span.yt-gif-drop-down-menu-toolbar .dropdown:first-child");
+        const classNames = [cssData.icon_focus];
+
+        icon.addEventListener("focus", (e) => iconGainFocus(e, this), true);
+        icon.addEventListener("blur", (e) => IconLooseFocus(e, this), true);
+
+        //#region event handle
+        function iconGainFocus(e, el)
+        {
+            toggleClasses(true, classNames, el);
+        }
+        function IconLooseFocus(e, el)
+        {
+            toggleClasses(false, classNames, el);
+        }
+        //#endregion
     }
 
     function KeyToObserve_UCS()
