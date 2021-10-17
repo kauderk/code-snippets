@@ -5,8 +5,8 @@
   /*https://youtu.be/ujlpzTyJp-M*/
 }
 
-.dropdown :is(span[data-tooltip], label[data-tooltip])::before,
-.dropdown :is(span[data-tooltip], label[data-tooltip])::after {
+.dropdown :is([data-tooltip])::before,
+.dropdown :is([data-tooltip])::after {
   color: var(--ddm-tooltip-c);
 
   font-size: .8em;
@@ -26,7 +26,7 @@
   transform-origin: bottom center;
 }
 
-.dropdown :is(span[data-tooltip], label[data-tooltip])::before {
+.dropdown :is([data-tooltip])::before {
   content: attr(data-tooltip);
   background-color: var(--ddm-tooltip-bg);
   border-radius: .7em;
@@ -36,8 +36,8 @@
   
 }
 
-.dropdown :is(span[data-tooltip], label[data-tooltip]):hover::before,
-.dropdown :is(span[data-tooltip], label[data-tooltip]):hover::after {
+.dropdown :is([data-tooltip]):hover::before,
+.dropdown :is([data-tooltip]):hover::after {
   --ddm-scale-tooltip: 1;
 }
 /* broke - down arrow - for two or more lines F 
