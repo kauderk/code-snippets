@@ -1,4 +1,4 @@
-const Utils = await ImportUtilies();
+const Utils = ImportUtilies();
 async function ImportUtilies()
 {
     if (typeof kauderk !== 'undefined' && typeof kauderk.util !== 'undefined')
