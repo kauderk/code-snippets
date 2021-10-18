@@ -80,7 +80,7 @@ async function ImportUtilies()
     {
         const utilsScript = document.createElement("script");
         utilsScript.type = "text/javascript";
-        utilsScript.src = URLFolder(`js/utils.js`);
+        utilsScript.src = URLFolder(`js/utils.js`) + "?" + new Date().getTime();
         utilsScript.id = 'yt-gif-utils';
 
         document.getElementsByTagName('head')[0].appendChild(utilsScript);
@@ -289,7 +289,8 @@ const almostReady = setInterval(() =>
     {
         return;
     }
-    Utils.print();
+    debugger;
+
     clearInterval(almostReady);
     Ready(); // load dropdown menu and deploy iframes
 

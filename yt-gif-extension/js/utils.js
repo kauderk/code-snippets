@@ -1,7 +1,7 @@
 let kauderk = window.kauderk || {};
 kauderk.util = ((newUtil) =>
 {
-    newUtil.print = (str) =>
+    newUtil.print = (str = 'hi') =>
     {
         console.log(str);
     }
