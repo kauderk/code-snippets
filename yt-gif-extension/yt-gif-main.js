@@ -1,3 +1,44 @@
+const Utils = await ImportUtilies();
+function ImportUtilies()
+{
+    if (typeof kauderk !== 'undefined' && typeof kauderk.util !== 'undefined')
+    {
+        // Somebody has already loaded the utility 
+        // HI CCC, I plagariezed the heck of your method,
+        // but : import * as utils from ${URLFolder('js/utils.js')}; 
+        // wasn't working for me
+        const kauderk = window.kauderk || {};
+        debugger;
+        return kauderk.util;
+    }
+    else
+    {
+        const utilsScript = document.createElement("script");
+        utilsScript.type = "text/javascript";
+        utilsScript.src = URLFolder(`js/utils.js`);
+        utilsScript.id = 'yt-gif-utils';
+
+        document.getElementsByTagName('head')[0].appendChild(utilsScript);
+
+        await scriptLoaded(utilsScript);
+        const kauderk = window.kauderk || {};
+        debugger;
+        return kauderk.util;
+
+        //#region local util
+        async function scriptLoaded(script)
+        {
+            return new Promise((resolve, reject) =>
+            {
+                script.onload = () => resolve(script)
+            })
+        }
+        //#endregion
+    }
+}
+Utils.print('Hello world!');
+
+
 // version 31 - semi-refactored
 // Load the IFrame Player API.
 const tag = document.createElement('script');
@@ -2237,6 +2278,9 @@ function is_mouse_inside(el, e)
 // I want to add ☐ ☑
 // radios : mute pause when document is inactive ☑ ✘
 // click the item checks the btn ☑ ☑
+// an util class ☐
+// focus & blus for sub ddm ☐
+// features on hold btn at the bottom ☐
 
 // use only one audio?? ☑ ☑ url so is customizable by nature
 // loop sound adjusment with slider hidden inside sub menu | ohhhh bind main checkbox to hidde it's "for"
