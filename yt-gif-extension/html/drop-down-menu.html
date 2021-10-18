@@ -59,10 +59,23 @@
                             <div class="dropdown-content dropdown-info-box">
                                 <span class="dropdown-item">
                                     <label for="" class="dropdown-item-description"
+                                        data-tooltip="Changes on the URL will be used">Strict - start from
+                                        previous timestamp</label>
+                                    <input type="checkbox" name="start_timestamp" id="strict_start_timestamp" checked>
+                                </span>
+                                <span class="dropdown-item">
+                                    <label for="" class="dropdown-item-description"
                                         data-tooltip="Remember timestamp or rely on default">Start from previous
                                         timestamp</label>
-                                    <input type="checkbox" name="" id="start_timestamp" checked>
+                                    <input type="checkbox" name="start_timestamp" id="start_timestamp" checked>
                                 </span>
+                                <span class="dropdown-item">
+                                    <label for="" class="dropdown-item-description"
+                                        data-tooltip="Don't use update timestamp">Always from URL start or
+                                        default</label>
+                                    <input type="checkbox" name="start_timestamp" id="fixed_start_timestamp" checked>
+                                </span>
+                                <!-- ----------------------------------------------------------------------- -->
                                 <span class="dropdown-item">
                                     <label for="" class="dropdown-item-description"
                                         data-tooltip="Changes on the URL will be used">Strict - set previous
@@ -73,6 +86,12 @@
                                     <label for="" class="dropdown-item-description"
                                         data-tooltip="Remember volume or rely on default">Set previous volume</label>
                                     <input type="radio" name="start_volume" id="start_volume" checked>
+                                </span>
+                                <span class="dropdown-item">
+                                    <label for="" class="dropdown-item-description"
+                                        data-tooltip="Don't use update volume">Always from URL volume or
+                                        default</label>
+                                    <input type="checkbox" name="start_volume" id="fixed_start_volume" checked>
                                 </span>
                             </div>
                         </div>
