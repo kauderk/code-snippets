@@ -4,10 +4,14 @@ window.YTGIF = {
         clip_life_span_format: '1',
     },
     previous: {
-        start_timestamp: '1',
+        /* one a time */
+        strict_start_timestamp: '1',
+        start_timestamp: '',
+        fixed_start_timestamp: '',
         /* one a time */
         strict_start_volume: '1',
         start_volume: '',
+        fixed_start_volume: '',
     },
     referenced: {
         block_timestamp: '1',
@@ -53,7 +57,7 @@ window.YTGIF = {
     default: {
         video_volume: 40,
         /* 'dark' or 'light' */
-        css_theme: 'light',
+        css_theme: 'dark',
         /* empty means 50% - only valid css units like px  %  vw */
         player_span: '50%',
         /* distinguish between {{[[video]]:}} from {{[[yt-gif]]:}} or 'both' which is also valid*/
@@ -105,13 +109,17 @@ const lastBlockIDParameters = new Map();
 const videoParams = {
     src: 'https://www.youtube.com/embed/---------?',
     id: '---------',
+
     start: 0,
     updateTime: 0,
+    timeURLmapHistory: [],
 
     end: 0,
+
     speed: 1,
 
     volume: UI.default.video_volume,
+    updateVolume: UI.default.video_volume,
     volumeURLmapHistory: [],
 };
 //
@@ -123,7 +131,7 @@ const sesionIDs = {
 /*-----------------------------------*/
 function URLFolder(f)
 {
-    return `https://kauderk.github.io/yt-gif-extension/${f}`
+    return `https://kauderk.github.io/code-snippets/yt-gif-extension/${f}`
 };
 function URLFolderCSS(f)
 {
@@ -1079,7 +1087,7 @@ async function onPlayerReady(event)
     const end = map?.end || t.getDuration();
     const clipSpan = end - start;
     const speed = map?.speed || 1;
-    const volume = validVolume();
+    const entryVolume = validUpdateVolume();
     const tickOffset = 1000 / speed;
     //
     const blockID = closestBlockID(iframe);
@@ -1099,7 +1107,7 @@ async function onPlayerReady(event)
     // javascript is crazy
     t.__proto__.changedVolumeOnce = false;
     t.__proto__.readyToChangeVolumeOnce = readyToChangeVolumeOnce;
-    t.__proto__.newVol = volume;
+    t.__proto__.newVol = entryVolume;
 
     t.__proto__.timers = [];
     t.__proto__.timerID;
@@ -1128,24 +1136,45 @@ async function onPlayerReady(event)
     {
         const sesion = lastBlockIDParameters.get(blockID);
 
-        if (UI.previous.start_timestamp?.checked && bounded(sesion.updateTime))
+        if (UI.previous.start_timestamp.checked && bounded(sesion.updateTime))
         {
             seekToUpdatedTime(sesion.updateTime);
         }
+        else if (UI.previous.strict_start_timestamp.checked)
+        {
+            const timeHis = sesion.timeURLmapHistory;
+            if (timeHis[timeHis.length - 1] != start) // new entry is valid ≡ user updated "&vl="
+            {
+                timeHis.push(start);
+                seekToUpdatedTime(start); // updateStartTime is modified here
+            } // this is bad bad bad also this wont work - man...
+            if (updateStartTime != start) // ok ok what? ---- so down here it's a different thing and thus can pass
+            {
+                seekToUpdatedTime(sesion.updateTime);
+            }
+        } else if (UI.previous.fixed_start_timestamp.checked)
+        {
+            // don't seek you are already there, it's just semantics and a null option
+        }
+
+        /* ------------------------------------------------------- */
 
         if (UI.previous.start_volume.checked)
         {
-            t.__proto__.newVol = sesion.volume;
+            t.__proto__.newVol = sesion.updateVolume;
         }
         else if (UI.previous.strict_start_volume.checked)
         {
-            const vlHis = lastBlockIDParameters.volumeURLmapHistory;
-            if (vlHis[vlHis.length - 1] != volume) // new entry is valid ≡ user updated "&vl="
+            const vlHis = sesion.volumeURLmapHistory;
+            if (vlHis[vlHis.length - 1] != entryVolume) // new entry is valid ≡ user updated "&vl="
             {
-                lastBlockIDParameters.push(volume);
-                debugger;
-                t.__proto__.newVol = volume;
+                vlHis.push(entryVolume);
+                t.__proto__.newVol = entryVolume;
             }
+        }
+        else if (UI.previous.fixed_start_volume.checked)
+        {
+            t.__proto__.newVol = validVolume(); // distiguish between volume and updatevolume
         }
     }
     // load referenced values
@@ -1166,20 +1195,20 @@ async function onPlayerReady(event)
 
                     const desiredTarget = recordedIDs.get(desiredBlockID)?.target || t;
                     const desiredTime = tick(desiredTarget) || start;
-                    const desiredVolume = desiredTarget?.getVolume() || validVolume();
+                    const desiredVolume = desiredTarget?.getVolume() || validUpdateVolume();
 
-                    if (UI.referenced.block_timestamp?.checked)
+                    if (UI.referenced.block_timestamp.checked)
                     {
                         seekToUpdatedTime(desiredTime)
                     }
 
-                    if (UI.referenced.block_volume?.check && (typeof (desiredTarget.__proto__.globalHumanInteraction) != 'undefined'))
+                    if (UI.referenced.block_volume.checked && (typeof (desiredTarget.__proto__.globalHumanInteraction) != 'undefined'))
                     {
                         t.__proto__.newVol = desiredVolume;
                     }
 
                     // don't sweat it if there are no valid user checks
-                    if (UI.referenced.block_timestamp?.checked || UI.referenced.block_volume?.check)
+                    if (UI.referenced.block_timestamp.checked || UI.referenced.block_volume.checked)
                     {
                         const saveMessage = stringWithNoEmail(desiredBlockID);
                         console.count(`${key} referenced from ${saveMessage}`);
@@ -1380,7 +1409,7 @@ async function onPlayerReady(event)
         const sec = Math.abs(clipSpan - (end - tick()));
 
         //timeDisplay.innerHTML = '00:00/00:00'
-        if (UI.display.clip_life_span_format?.checked) 
+        if (UI.display.clip_life_span_format.checked) 
         {
             timeDisplay.innerHTML = `${fmtMSS(sec)}/${fmtMSS(clipSpan)}`; //'sec':'clip end'
         }
@@ -1517,7 +1546,7 @@ async function onPlayerReady(event)
                 //🚧
                 const media = Object.create(videoParams);
                 media.updateTime = bounded(tick()) ? tick() : start;
-                media.volume = t.getVolume() || validVolume();
+                media.updateVolume = t.getVolume() || validUpdateVolume();
                 if (blockID != null)
                     lastBlockIDParameters.set(blockID, media);
 
@@ -1628,6 +1657,14 @@ async function onPlayerReady(event)
     function bounded(x)
     {
         return start < x && x < end;
+    }
+    function validUpdateVolume()
+    {
+        const newVl = map?.updateVolume;
+        if (typeof newVl == 'number')
+            return newVl;
+
+        return videoParams.volume || 40;
     }
     function validVolume()
     {
