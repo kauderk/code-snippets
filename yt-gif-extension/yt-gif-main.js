@@ -1,5 +1,5 @@
 const Utils = await ImportUtilies();
-function ImportUtilies()
+async function ImportUtilies()
 {
     if (typeof kauderk !== 'undefined' && typeof kauderk.util !== 'undefined')
     {
