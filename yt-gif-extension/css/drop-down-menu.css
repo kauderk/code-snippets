@@ -206,6 +206,12 @@ span.dropdown-info-message {
   align-self: center;
   cursor: default;
 }
+.dropdown-item-separator {
+  width: 100%;
+  height: .5ch;
+  background-color: var(--submenu-message-bg);
+  border-radius: 100%;
+}
 /*YT GIF SYTLE SUB DROP DOWN */
 .yt-gif-style {
   align-self: center;
