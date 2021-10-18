@@ -1124,7 +1124,6 @@ async function onPlayerReady(event)
         {
             t.__proto__.changedVolumeOnce = true;
             t.setVolume(t.__proto__.newVol);
-            printVol();
         }
     }
     //#endregion
