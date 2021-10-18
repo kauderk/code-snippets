@@ -1,3 +1,68 @@
+window.YTGIF = {
+    /* permutations - checkbox */
+    display: {
+        clip_life_span_format: '1',
+    },
+    previous: {
+        start_timestamp: '1',
+        /* one a time */
+        strict_start_volume: '1',
+        start_volume: '',
+    },
+    referenced: {
+        block_timestamp: '1',
+        block_volume: '1',
+    },
+    experience: {
+        sound_when_video_loops: '1',
+        awaiting_for_mouseenter_to_initialize: '',
+        awaiting_with_video_thumnail_as_bg: '1',
+    },
+    inactiveStyle: {
+        mute_on_inactive_window: '',
+        pause_on_inactive_window: '',
+    },
+    fullscreenStyle: {
+        smoll_vid_when_big_ends: '1',
+        mute_on_exit_fullscreenchange: '',
+        pause_on_exit_fullscreenchange: '',
+    },
+    /* one at a time - radio */
+    muteStyle: {
+        strict_mute_everything_except_current: '1',
+        muted_on_mouse_over: '',
+        muted_on_any_mouse_interaction: '',
+    },
+    playStyle: {
+        strict_play_current_on_mouse_over: '1',
+        play_on_mouse_over: '',
+        visible_clips_start_to_play_unmuted: '',
+    },
+    range: {
+        /*seconds up to 60*/
+        timestamp_display_scroll_offset: '5',
+        /* integers from 0 to 100 */
+        end_loop_sound_volume: '50',
+    },
+    InAndOutKeys: {
+        /* middle mouse button is on by default */
+        ctrlKey: '1',
+        shiftKey: '',
+        altKey: '',
+    },
+    default: {
+        video_volume: 40,
+        /* 'dark' or 'light' */
+        css_theme: 'light',
+        /* empty means 50% - only valid css units like px  %  vw */
+        player_span: '50%',
+        /* distinguish between {{[[video]]:}} from {{[[yt-gif]]:}} or 'both' which is also valid*/
+        override_roam_video_component: '',
+        /* src sound when yt gif makes a loop, empty if unwanted */
+        end_loop_sound_src: 'https://freesound.org/data/previews/256/256113_3263906-lq.mp3',
+    },
+}
+
 // version 30 - semi-refactored
 // Load the IFrame Player API.
 const tag = document.createElement('script');
@@ -41,10 +106,13 @@ const videoParams = {
     src: 'https://www.youtube.com/embed/---------?',
     id: '---------',
     start: 0,
+    updateTime: 0,
+
     end: 0,
     speed: 1,
-    updateTime: 0,
-    volume: UI.default.video_volume
+
+    volume: UI.default.video_volume,
+    volumeURLmapHistory: [],
 };
 //
 const recordedIDs = new Map();
@@ -55,7 +123,7 @@ const sesionIDs = {
 /*-----------------------------------*/
 function URLFolder(f)
 {
-    return `https://kauderk.github.io/code-snippets/yt-gif-extension/${f}`
+    return `https://kauderk.github.io/yt-gif-extension/${f}`
 };
 function URLFolderCSS(f)
 {
@@ -809,6 +877,7 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
 
 
     //console.count(message);
+    //🌿
     if (UI.experience.awaiting_for_mouseenter_to_initialize.checked)
     {
         const awaitingAnimation = [cssData.awiting_player_pulse_anim, cssData.awaitng_player_user_input];
@@ -998,7 +1067,7 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
 //
-function onPlayerReady(event)
+async function onPlayerReady(event)
 {
     const t = event.target;
     const iframe = document.querySelector('#' + t.h.id) || t.getIframe();
@@ -1023,7 +1092,15 @@ function onPlayerReady(event)
     const loadingMarginOfError = 1; //seconds
     let updateStartTime = start;
 
+    iframe.removeAttribute('title');
+    t.setVolume(t.__proto__.newVol);
+    t.setPlaybackRate(speed);
+
     // javascript is crazy
+    t.__proto__.changedVolumeOnce = false;
+    t.__proto__.readyToChangeVolumeOnce = readyToChangeVolumeOnce;
+    t.__proto__.newVol = volume;
+
     t.__proto__.timers = [];
     t.__proto__.timerID;
     t.__proto__.ClearTimers = ClearTimers;
@@ -1031,10 +1108,16 @@ function onPlayerReady(event)
     t.__proto__.globalHumanInteraction = undefined;
 
 
-
-    iframe.removeAttribute('title');
-    t.setVolume(volume);
-    t.setPlaybackRate(speed);
+    //#region __proto__
+    function readyToChangeVolumeOnce()
+    {
+        if (!t.__proto__.changedVolumeOnce)
+        {
+            t.__proto__.changedVolumeOnce = true;
+            t.setVolume(t.__proto__.newVol);
+        }
+    }
+    //#endregion
 
 
     const timeDisplay = parent.querySelector('div.' + cssData.yt_gif_timestamp);
@@ -1050,9 +1133,19 @@ function onPlayerReady(event)
             seekToUpdatedTime(sesion.updateTime);
         }
 
-        if (UI.previous.start_volume?.checked)
+        if (UI.previous.start_volume.checked)
         {
-            t.setVolume(sesion.volume);
+            t.__proto__.newVol = sesion.volume;
+        }
+        else if (UI.previous.strict_start_volume.checked)
+        {
+            const vlHis = lastBlockIDParameters.volumeURLmapHistory;
+            if (vlHis[vlHis.length - 1] != volume) // new entry is valid ≡ user updated "&vl="
+            {
+                lastBlockIDParameters.push(volume);
+                debugger;
+                t.__proto__.newVol = volume;
+            }
         }
     }
     // load referenced values
@@ -1082,7 +1175,7 @@ function onPlayerReady(event)
 
                     if (UI.referenced.block_volume?.check && (typeof (desiredTarget.__proto__.globalHumanInteraction) != 'undefined'))
                     {
-                        t.setVolume(desiredVolume);
+                        t.__proto__.newVol = desiredVolume;
                     }
 
                     // don't sweat it if there are no valid user checks
@@ -1196,6 +1289,7 @@ function onPlayerReady(event)
         }
         else if (e.type == 'mouseleave')
         {
+            t.__proto__.newVol = t.getVolume(); // spaguetti isSoundingFine unMute
             t.__proto__.globalHumanInteraction = false;
 
             //ﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠﾠ//the same as: if it's true, then the other posibilities are false
@@ -1314,7 +1408,7 @@ function onPlayerReady(event)
 
         let dir = tick() + (Math.sign(e.deltaY) * Math.round(UI.range.timestamp_display_scroll_offset.value) * -1);
 
-        if (UI.previous.clip_life_span_format.checked)
+        if (UI.display.clip_life_span_format.checked)
         {
             if (dir <= start)
                 dir = end - 1; //can go beyond that
@@ -1335,6 +1429,7 @@ function onPlayerReady(event)
             }
         }, tickOffset); //nice delay to show feedback
     }
+    //#endregion
 
 
     //#region utils for the timeDisplay
@@ -1536,7 +1631,11 @@ function onPlayerReady(event)
     }
     function validVolume()
     {
-        return map?.volume || videoParams.volume || 40;
+        const newVl = map?.volume;
+        if (typeof newVl == 'number')
+            return newVl;
+
+        return videoParams.volume || 40;
     }
 
 
@@ -1567,6 +1666,7 @@ function onPlayerReady(event)
         {
             SoundIs(ytGifAttr.sound.unMute, el);
             t.unMute();
+            t.setVolume(t.__proto__.newVol); // spaguetti InAndOutHoverStatesDDMO mouseleave
         }
         else
         {
@@ -1686,6 +1786,8 @@ function onStateChange(state)
 
     if (state.data === YT.PlayerState.PLAYING)
     {
+        t.__proto__.readyToChangeVolumeOnce(); //man...
+
         if (t.__proto__.timerID === null) // NON ContinuouslyUpdateTimeDisplay
         {
             t.__proto__.enter();
