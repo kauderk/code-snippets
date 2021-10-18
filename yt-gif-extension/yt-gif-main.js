@@ -1036,7 +1036,7 @@ async function onPlayerReady(event)
     let updateStartTime = start;
 
     iframe.removeAttribute('title');
-    t.setVolume(t.__proto__.newVol);
+    t.setVolume(entryVolume);
     t.setPlaybackRate(speed);
 
 
