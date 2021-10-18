@@ -244,6 +244,12 @@ div.dropdown-show-info:hover > span.dropdown-info-message{
   --submenu-message-bg: var(--submenu-info-btn-bg-h);
   --message-opacity: 1.0:
 }
+.dropdown-info-box > .dropdown-info-message--aditional {
+  display: flex;
+  max-width: 40ch;
+  flex-direction: column;
+  text-align: center;
+}
 
 span.dropdown-info {
   color: var(--dropdown-c);
