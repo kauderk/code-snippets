@@ -36,7 +36,6 @@ async function ImportUtilies()
         //#endregion
     }
 }
-Utils.print('Hello world!');
 
 
 // version 31 - semi-refactored
