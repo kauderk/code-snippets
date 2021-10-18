@@ -1,3 +1,68 @@
+window.YTGIF = {
+    /* permutations - checkbox */
+    display: {
+        clip_life_span_format: '1',
+    },
+    previous: {
+        /* one a time */
+        strict_start_timestamp: '1',
+        start_timestamp: '',
+        fixed_start_timestamp: '',
+        /* one a time */
+        strict_start_volume: '1',
+        start_volume: '',
+        fixed_start_volume: '',
+    },
+    experience: {
+        sound_when_video_loops: '1',
+        awaiting_for_mouseenter_to_initialize: '',
+        awaiting_with_video_thumnail_as_bg: '1',
+    },
+    inactiveStyle: {
+        mute_on_inactive_window: '',
+        pause_on_inactive_window: '',
+    },
+    fullscreenStyle: {
+        smoll_vid_when_big_ends: '1',
+        mute_on_exit_fullscreenchange: '',
+        pause_on_exit_fullscreenchange: '',
+    },
+    /* one at a time - radio */
+    muteStyle: {
+        strict_mute_everything_except_current: '1',
+        muted_on_mouse_over: '',
+        muted_on_any_mouse_interaction: '',
+    },
+    playStyle: {
+        strict_play_current_on_mouse_over: '1',
+        play_on_mouse_over: '',
+        visible_clips_start_to_play_unmuted: '',
+    },
+    range: {
+        /*seconds up to 60*/
+        timestamp_display_scroll_offset: '5',
+        /* integers from 0 to 100 */
+        end_loop_sound_volume: '50',
+    },
+    InAndOutKeys: {
+        /* middle mouse button is on by default */
+        ctrlKey: '1',
+        shiftKey: '',
+        altKey: '',
+    },
+    default: {
+        video_volume: 40,
+        /* 'dark' or 'light' */
+        css_theme: 'dark',
+        /* empty means 50% - only valid css units like px  %  vw */
+        player_span: '50%',
+        /* distinguish between {{[[video]]:}} from {{[[yt-gif]]:}} or 'both' which is also valid*/
+        override_roam_video_component: '',
+        /* src sound when yt gif makes a loop, empty if unwanted */
+        end_loop_sound_src: 'https://freesound.org/data/previews/256/256113_3263906-lq.mp3',
+    },
+}
+
 const Utils = ImportUtilies();
 // hi?
 async function ImportUtilies()
@@ -9,7 +74,6 @@ async function ImportUtilies()
         // but : import * as utils from ${URLFolder('js/utils.js')}; 
         // wasn't working for me
         const kauderk = window.kauderk || {};
-        debugger;
         return kauderk.util;
     }
     else
@@ -23,7 +87,6 @@ async function ImportUtilies()
 
         await scriptLoaded(utilsScript);
         const kauderk = window.kauderk || {};
-        debugger;
         return kauderk.util;
 
         //#region local util
@@ -215,13 +278,18 @@ rm_components.both = {
 
 
 
-// wait for APIs to exist
+// wait for APIs and Utils to exist
 const almostReady = setInterval(() =>
 {
     if ((typeof (YT) == 'undefined'))
     {
         return;
     }
+    if ((typeof (Utils) == 'undefined'))
+    {
+        return;
+    }
+    Utils.print();
     clearInterval(almostReady);
     Ready(); // load dropdown menu and deploy iframes
 
