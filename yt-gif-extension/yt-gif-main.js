@@ -355,7 +355,7 @@ async function Ready()
 
     function CssPlayer_UCS()
     {
-        if (Utils.isValidCSSUnit(UI.default.player_span))
+        if (Utils.isValidCSSUnit(UI.default.player_span)) // i could've use a css variable. fuck! jaja
         {
             const css_rule = `.${cssData.yt_gif_wrapper}, .${cssData.yt_gif_iframe_wrapper} {
                 width: ${UI.default.player_span};
