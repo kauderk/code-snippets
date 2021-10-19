@@ -63,8 +63,10 @@ window.YTGIF = {
     },
 }
 
-const Utils = ImportUtilies();
-// hi?
+let Utils = ImportUtilies().then(val =>
+{
+    Utils = kauderk.util; // I'm trying to return val, isnside and outside the async func and nothing
+});
 async function ImportUtilies()
 {
     if (typeof kauderk !== 'undefined' && typeof kauderk.util !== 'undefined')
@@ -74,20 +76,20 @@ async function ImportUtilies()
         // but : import * as utils from ${URLFolder('js/utils.js')}; 
         // wasn't working for me
         const kauderk = window.kauderk || {};
-        return kauderk.util;
+        return kauderk.util; //returns undefined, Why?
     }
     else
     {
         const utilsScript = document.createElement("script");
-        utilsScript.type = "text/javascript";
         utilsScript.src = URLFolder(`js/utils.js`) + "?" + new Date().getTime();
         utilsScript.id = 'yt-gif-utils';
+        utilsScript.type = "text/javascript";
 
         document.getElementsByTagName('head')[0].appendChild(utilsScript);
 
         await scriptLoaded(utilsScript);
         const kauderk = window.kauderk || {};
-        return kauderk.util;
+        return kauderk.util; //returns undefined, Why?
 
         //#region local util
         async function scriptLoaded(script)
@@ -97,8 +99,13 @@ async function ImportUtilies()
                 script.onload = () => resolve(script)
             })
         }
+        function URLFolder(f)
+        {
+            return `https://kauderk.github.io/code-snippets/yt-gif-extension/${f}`
+        };
         //#endregion
     }
+
 }
 
 
@@ -285,11 +292,11 @@ const almostReady = setInterval(() =>
     {
         return;
     }
-    if ((typeof (Utils) == 'undefined'))
+    if (typeof Utils != 'object')
     {
         return;
     }
-    debugger;
+    console.log(Utils);
 
     clearInterval(almostReady);
     Ready(); // load dropdown menu and deploy iframes
@@ -1930,31 +1937,6 @@ function inViewport(els)
 
 
 
-function div(classList)
-{
-    let el = document.createElement('div');
-    return emptyEl(classList, el);
-}
-function checkbox(classList)
-{
-    let el = document.createElement('input');
-    return emptyEl(classList, el);
-}
-function radio(classList)
-{
-    let el = document.createElement('input');
-    return emptyEl(classList, el);
-}
-function range(classList)
-{
-    let el = document.createElement('label');
-    return emptyEl(classList, el);
-}
-function label(classList)
-{
-    let el = document.createElement('label');
-    return emptyEl(classList, el);
-}
 
 
 function emptyEl(classList, el)
@@ -2003,28 +1985,7 @@ function allIframeStyle(style)
 }
 
 
-function htmlToElement(html)
-{
-    var template = document.createElement('template');
-    html = html.trim(); // Never return a text node of whitespace as the result
-    template.innerHTML = html;
-    return template.content.firstChild;
-}
 
-function cleanUpHTML(content)
-{
-    var dom = document.createElement('div');
-    dom.innerHTML = content;
-    var elems = dom.getElementsByTagName('*');
-    for (var i = 0; i < elems.length; i++)
-    {
-        if (elems[i].innerHTML)
-        {
-            elems[i].innerHTML = elems[i].innerHTML.trim();
-        }
-    }
-    return dom.innerHTML;
-}
 function isTrue(value)
 {
     if (typeof (value) === 'string')
@@ -2153,6 +2114,74 @@ function ChangeElementType(element, newtype)
     return newelement;
 }
 
+
+
+// linearly maps value from the range (a..b) to (c..d)
+function mapRange(value, a, b, c, d)
+{
+    // first map value from (a..b) to (0..1)
+    value = (value - a) / (b - a);
+    // then map it from (0..1) to (c..d) and return it
+    return c + value * (d - c);
+}
+
+
+//#endregion
+
+
+
+//#region 0 refences
+
+function div(classList)
+{
+    let el = document.createElement('div');
+    return emptyEl(classList, el);
+}
+function checkbox(classList)
+{
+    let el = document.createElement('input');
+    return emptyEl(classList, el);
+}
+function radio(classList)
+{
+    let el = document.createElement('input');
+    return emptyEl(classList, el);
+}
+function range(classList)
+{
+    let el = document.createElement('label');
+    return emptyEl(classList, el);
+}
+function label(classList)
+{
+    let el = document.createElement('label');
+    return emptyEl(classList, el);
+}
+
+
+
+function htmlToElement(html)
+{
+    var template = document.createElement('template');
+    html = html.trim(); // Never return a text node of whitespace as the result
+    template.innerHTML = html;
+    return template.content.firstChild;
+}
+
+function cleanUpHTML(content)
+{
+    var dom = document.createElement('div');
+    dom.innerHTML = content;
+    var elems = dom.getElementsByTagName('*');
+    for (var i = 0; i < elems.length; i++)
+    {
+        if (elems[i].innerHTML)
+        {
+            elems[i].innerHTML = elems[i].innerHTML.trim();
+        }
+    }
+    return dom.innerHTML;
+}
 function LoopTroughVisibleYTGIFsGlobal(config = { styleQuery: ytGifAttr, self: iframe, others_callback: () => { }, self_callback: () => { } })
 {
     const ytGifs = inViewport(allIframeStyle(config?.styleQuery));
@@ -2178,20 +2207,6 @@ function targetNotTogglePlay(id, bol = false)
 {
     return recordedIDs.get(id)?.target?.togglePlay(bol);
 }
-
-// linearly maps value from the range (a..b) to (c..d)
-function mapRange(value, a, b, c, d)
-{
-    // first map value from (a..b) to (0..1)
-    value = (value - a) / (b - a);
-    // then map it from (0..1) to (c..d) and return it
-    return c + value * (d - c);
-}
-
-
-//#endregion
-
-//#region 0 refences
 function handleMyMouseMove(e)
 {
     //https://stackoverflow.com/questions/5730433/keep-mouse-inside-a-div
