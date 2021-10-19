@@ -359,7 +359,7 @@ async function Ready()
 
     function CssPlayer_UCS()
     {
-        if (isValidCSSUnit(UI.default.player_span))
+        if (Utils.isValidCSSUnit(UI.default.player_span))
         {
             const css_rule = `.${cssData.yt_gif_wrapper}, .${cssData.yt_gif_iframe_wrapper} {
                 width: ${UI.default.player_span};
@@ -384,7 +384,7 @@ async function Ready()
 
     async function PlayerHtml_UCS()
     {
-        let htmlText = await FetchText(links.html.playerControls);
+        let htmlText = await Utils.FetchText(links.html.playerControls);
         if (UI.default.end_loop_sound_src != '')
         {
             htmlText = htmlText.replace(/(?<=<source src=\")(?=")/gm, UI.default.end_loop_sound_src);
@@ -395,7 +395,7 @@ async function Ready()
     async function Load_DDM_onTopbar()
     {
         const rm_moreIcon = document.querySelector('.bp3-icon-more').closest('.rm-topbar .rm-topbar__spacer-sm + .bp3-popover-wrapper');
-        const htmlText = await FetchText(links.html.dropDownMenu);
+        const htmlText = await Utils.FetchText(links.html.dropDownMenu);
         rm_moreIcon.insertAdjacentHTML('afterend', htmlText);
     }
 
@@ -425,8 +425,8 @@ async function Ready()
                     case 'muteStyle':
                     case 'playStyle':
                         const binaryInput = UI[parentKey][childKey];
-                        binaryInput.checked = isTrue(userValue);
-                        linkClickPreviousElement(binaryInput);
+                        binaryInput.checked = Utils.isTrue(userValue);
+                        Utils.linkClickPreviousElement(binaryInput);
                         break;
                     case 'range':
                         UI[parentKey][childKey].value = Number(userValue);
@@ -452,11 +452,11 @@ async function Ready()
         function iconGainFocus(e)
         {
             icon.focus();
-            toggleClasses(true, classNames, mainDDM);
+            Utils.toggleClasses(true, classNames, mainDDM);
         }
         function IconLooseFocus(e, el)
         {
-            toggleClasses(false, classNames, mainDDM);
+            Utils.toggleClasses(false, classNames, mainDDM);
         }
         //#endregion
     }
@@ -464,7 +464,7 @@ async function Ready()
     function KeyToObserve_UCS()
     {
         let currentKey; // this can be shorter for sure, how though?
-        if (isTrue(UI.default.override_roam_video_component)) //video
+        if (Utils.isTrue(UI.default.override_roam_video_component)) //video
         {
             currentKey = 'video';
         }
@@ -529,7 +529,7 @@ async function Ready()
             {
                 for (const i of valid)
                 {
-                    toggleClasses(!main.checked, hiddenClass, i);
+                    Utils.toggleClasses(!main.checked, hiddenClass, i);
                 }
             }
             //#endregion
@@ -559,11 +559,11 @@ async function Ready()
             {
                 if (withThumbnails.checked)
                 {
-                    applyIMGbg(i, i.dataset.videoUrl);
+                    Utils.applyIMGbg(i, i.dataset.videoUrl);
                 }
                 else
                 {
-                    removeIMGbg(i); // spaguetti
+                    Utils.removeIMGbg(i); // spaguetti
                 }
             }
         }
@@ -685,7 +685,7 @@ async function Ready()
 
             for (const key in deploymentRadioStates)
             {
-                if (isTrue(deploymentRadioStates[key]())) // THIS IS CRAZY
+                if (Utils.isTrue(deploymentRadioStates[key]())) // THIS IS CRAZY
                 {
                     RunMasterObserverWithKey(key)
                     return;
@@ -708,12 +708,12 @@ async function Ready()
             function isSubMenuHidden(bol)
             {
                 const hiddenClass = [`${cssData.dropdown__hidden}`]
-                toggleClasses(bol, hiddenClass, subHiddenDDM);
+                Utils.toggleClasses(bol, hiddenClass, subHiddenDDM);
             }
             function isSubDDMpulsing(bol)
             {
                 const pulseAnim = [cssData.dwn_pulse_anim]; // spagguetti
-                toggleClasses(bol, pulseAnim, subHiddenDDM_message); // spagguetti
+                Utils.toggleClasses(bol, pulseAnim, subHiddenDDM_message); // spagguetti
             }
             //#endregion
         }
@@ -738,8 +738,8 @@ async function Ready()
 
         function DeployCheckboxesToggleAnims(bol, animation)
         {
-            toggleClasses(bol, animation, checkMenuParent);
-            toggleClasses(bol, noInputAnimation, subMenuCheckParent);
+            Utils.toggleClasses(bol, animation, checkMenuParent);
+            Utils.toggleClasses(bol, noInputAnimation, subMenuCheckParent);
         }
         //#endregion
 
@@ -753,13 +753,13 @@ async function Ready()
     //#region uitils
     async function LoadCSS(cssURL) // 'cssURL' is the stylesheet's URL, i.e. /css/styles.css
     {
-        if (await !isValidFetch(cssURL)) return;
+        if (await !Utils.isValidFetch(cssURL)) return;
 
         return new Promise(function (resolve, reject)
         {
             const link = document.createElement('link');
             link.rel = 'stylesheet';
-            link.href = NoCash(cssURL);
+            link.href = Utils.NoCash(cssURL);
             document.head.appendChild(link);
 
             link.onload = () => resolve();
@@ -792,7 +792,7 @@ async function Ready()
 function ObserveIframesAndDelployYTPlayers(targetClass)
 {
     // 1. set up all visible YT GIFs
-    const visible = inViewport(AvoidAllZoomChilds());
+    const visible = Utils.inViewport(AvoidAllZoomChilds());
     for (const component of visible)
     {
         onYouTubePlayerAPIReady(component, 'first wave');
@@ -886,10 +886,6 @@ function ObserveIframesAndDelployYTPlayers(targetClass)
 
 
 
-
-
-
-
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
 //
 async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
@@ -898,8 +894,8 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
 
     // 1. last 9 letter form the closest blockID
     const uid = wrapper.closest('span[data-uid]')?.getAttribute('data-uid') ||
-        closestBlockID(wrapper)?.slice(-9) ||
-        closestBlockID(document.querySelector('.bp3-popover-open'))?.slice(-9);
+        Utils.closestBlockID(wrapper)?.slice(-9) ||
+        Utils.closestBlockID(document.querySelector('.bp3-popover-open'))?.slice(-9);
 
     if (!uid) return; // don't add up false positives
     const newId = iframeIDprfx + Number(++creationCounter);
@@ -930,7 +926,7 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
     // 4. to record a target's point of reference
     const record = Object.create(sesionIDs);
     sesionIDs.uid = uid;
-    const blockID = closestBlockID(wrapper);
+    const blockID = Utils.closestBlockID(wrapper);
     if (blockID != null)
         recordedIDs.set(blockID, record);
 
@@ -948,21 +944,21 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
 
         if (UI.experience.awaiting_with_video_thumnail_as_bg.checked)
         {
-            applyIMGbg(wrapper, url);
+            Utils.applyIMGbg(wrapper, url);
         }
         else
         {
             mainAnimation = awaitingAnimation;
         }
 
-        toggleClasses(true, mainAnimation, wrapper);
+        Utils.toggleClasses(true, mainAnimation, wrapper);
         wrapper.addEventListener('mouseenter', CreateYTPlayer);
 
         //#region handler
         function CreateYTPlayer(e)
         {
-            toggleClasses(false, mainAnimation, wrapper);
-            removeIMGbg(wrapper);
+            Utils.toggleClasses(false, mainAnimation, wrapper);
+            Utils.removeIMGbg(wrapper);
             wrapper.removeEventListener('mouseenter', CreateYTPlayer);
 
             // 5. ACTUAL CREATION OF THE EMBEDED YOUTUBE VIDEO PLAYER (target)
@@ -1114,7 +1110,7 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
             },
             events: {
                 'onReady': onPlayerReady,
-                'onStateChange': onStateChange
+                'Utils.onStateChange': Utils.onStateChange
             }
         };
     }
@@ -1142,7 +1138,7 @@ async function onPlayerReady(event)
     const entryVolume = validVolumeURL();
     const tickOffset = 1000 / speed;
     //
-    const blockID = closestBlockID(iframe);
+    const blockID = Utils.closestBlockID(iframe);
     const rocording = recordedIDs.get(blockID);
     // 🚧?
     if (rocording != null)
@@ -1333,10 +1329,10 @@ async function onPlayerReady(event)
             //#region local utils
             function LoopTroughVisibleYTGIFs(config = { styleQuery, others_callback: () => { }, self_callback: () => { } })
             {
-                const ytGifs = inViewport(allIframeStyle(config?.styleQuery));
+                const ytGifs = Utils.inViewport(Utils.allIframeStyle(config?.styleQuery));
                 for (const i of ytGifs)
                 {
-                    const blockID = closestBlockID(i);
+                    const blockID = Utils.closestBlockID(i);
                     if (i != iframe)
                     {
                         config?.others_callback(blockID, i);
@@ -1372,7 +1368,7 @@ async function onPlayerReady(event)
 
     function playStyleDDMO()
     {
-        if (!inViewport(iframe)) return; //play all VISIBLE Players, this will be called on all visible iframes
+        if (!Utils.inViewport(iframe)) return; //play all VISIBLE Players, this will be called on all visible iframes
 
         if (UI.playStyle.visible_clips_start_to_play_unmuted.checked)
         {
@@ -1387,7 +1383,7 @@ async function onPlayerReady(event)
 
     function muteStyleDDMO()
     {
-        if (!inViewport(iframe)) return; //mute all VISIBLE Players, this will be called on all visible iframes
+        if (!Utils.inViewport(iframe)) return; //mute all VISIBLE Players, this will be called on all visible iframes
 
         if (UI.muteStyle.strict_mute_everything_except_current.checked || UI.muteStyle.muted_on_any_mouse_interaction.checked)
         {
@@ -1675,7 +1671,7 @@ async function onPlayerReady(event)
                 {
                     videoIsPlayingWithSound(true);
                 }
-                else if (inViewport(iframe) && !t.__proto__.globalHumanInteraction)
+                else if (Utils.inViewport(iframe) && !t.__proto__.globalHumanInteraction)
                 {
                     togglePlay(UI.playStyle.visible_clips_start_to_play_unmuted.checked); // pause
                 }
@@ -1765,7 +1761,7 @@ async function onPlayerReady(event)
         if (e.buttons == 4) return true;
 
         for (const name in UI.InAndOutKeys)
-            if (e[name] && isTrue(UI.InAndOutKeys[name]))
+            if (e[name] && Utils.isTrue(UI.InAndOutKeys[name]))
                 return true;
 
         return false;
@@ -1834,7 +1830,7 @@ function onStateChange(state)
     {
         t.seekTo(map?.start || 0);
 
-        if (isValidUrl(UI.default.end_loop_sound_src))
+        if (Utils.isValidUrl(UI.default.end_loop_sound_src))
         {
             if (UI.experience.sound_when_video_loops.checked)
             {
@@ -1862,7 +1858,7 @@ function onStateChange(state)
         {
             if (document.fullscreenElement)
             {
-                exitFullscreen();
+                Utils.exitFullscreen();
                 currentFullscreenPlayer = '';
             }
         }
@@ -1885,477 +1881,6 @@ function onStateChange(state)
         t.__proto__.ClearTimers();
     }
 }
-
-
-
-
-//#region Utilies
-function linkClickPreviousElement(el)
-{
-    el.previousElementSibling.setAttribute('for', el.id); // link clicks
-}
-
-function applyIMGbg(wrapper, url)
-{
-    wrapper.style.backgroundImage = `url(${get_youtube_thumbnail(url)})`;
-}
-function removeIMGbg(wrapper)
-{
-    wrapper.style.backgroundImage = 'none';
-}
-
-
-function NoCash(url)
-{
-    return url + "?" + new Date().getTime()
-}
-
-
-function inViewport(els)
-{
-    let matches = [],
-        elCt = els.length;
-
-    for (let i = 0; i < elCt; ++i)
-    {
-        let el = els[i],
-            b = el.getBoundingClientRect(),
-            c;
-
-        if (b.width > 0 && b.height > 0 &&
-            b.left + b.width > 0 && b.right - b.width < window.outerWidth &&
-            b.top + b.height > 0 && b.bottom - b.width < window.outerHeight &&
-            (c = window.getComputedStyle(el)) &&
-            c.getPropertyValue('visibility') === 'visible' &&
-            c.getPropertyValue('opacity') !== 'none')
-        {
-            matches.push(el);
-        }
-    }
-    return matches;
-}
-
-
-
-
-
-function emptyEl(classList, el)
-{
-    if (classList)
-        el.classList.add(classList);
-    return el;
-}
-function toggleClasses(bol, classNames, el)
-{
-    if (bol)
-    {
-        el.classList.add(...classNames);
-    }
-    else
-    {
-        el.classList.remove(...classNames);
-    }
-}
-
-
-function exitFullscreen()
-{
-    if (document.exitFullscreen)
-    {
-        document.exitFullscreen();
-    } else if (document.mozCancelFullScreen)
-    {
-        document.mozCancelFullScreen();
-    } else if (document.webkitExitFullscreen)
-    {
-        document.webkitExitFullscreen();
-    }
-}
-function closestBlockID(el)
-{
-    return el?.closest('.rm-block__input')?.id
-}
-function allIframeIDprfx()
-{
-    return document.querySelectorAll(`[id*=${iframeIDprfx}]`);
-}
-function allIframeStyle(style)
-{
-    return document.querySelectorAll(`[${style}]`);
-}
-
-
-
-function isTrue(value)
-{
-    if (typeof (value) === 'string')
-        value = value.trim().toLowerCase();
-
-    switch (value)
-    {
-        case true:
-        case 'true':
-        case 1:
-        case '1':
-        case 'on':
-        case 'yes':
-            return true;
-        default:
-            return false;
-    }
-}
-function isValidUrl(value)
-{
-    return /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:[/?#]\S*)?$/i.test(value);
-}
-
-
-async function FetchText(url)
-{
-    const [response, err] = await isValidFetch(NoCash(url)); // firt time fetching something... This is cool
-    if (response)
-        return await response.text();
-}
-async function isValidFetch(url)
-{
-    try
-    {
-        const response = await fetch(url, { cache: "no-store" });
-        if (!response.ok)
-            throw new Error('Request failed.');
-        return [response, null];
-    }
-    catch (error)
-    {
-        console.log(`Your custom link ${url} is corrupt. ;c`);
-        return [null, error];
-    };
-}
-function get_youtube_thumbnail(url, quality)
-{
-    //https://stackoverflow.com/questions/18681788/how-to-get-a-youtube-thumbnail-from-a-youtube-iframe
-    if (url)
-    {
-        var video_id, thumbnail, result;
-        if (result = url.match(/youtube\.com.*(\?v=|\/embed\/)(.{11})/))
-        {
-            video_id = result.pop();
-        }
-        else if (result = url.match(/youtu.be\/(.{11})/))
-        {
-            video_id = result.pop();
-        }
-
-        if (video_id)
-        {
-            if (typeof quality == "undefined")
-            {
-                quality = 'high';
-            }
-
-            var quality_key = 'maxresdefault'; // Max quality
-            if (quality == 'low')
-            {
-                quality_key = 'sddefault';
-            } else if (quality == 'medium')
-            {
-                quality_key = 'mqdefault';
-            } else if (quality == 'high')
-            {
-                quality_key = 'hqdefault';
-            }
-
-            var thumbnail = "https://img.youtube.com/vi/" + video_id + "/" + quality_key + ".jpg";
-            return thumbnail;
-        }
-    }
-    return false;
-}
-
-
-function isValidCSSUnit(value)
-{
-    //  valid CSS unit types
-    const CssUnitTypes = ['em', 'ex', 'ch', 'rem', 'vw', 'vh', 'vmin',
-        'vmax', '%', 'cm', 'mm', 'in', 'px', 'pt', 'pc'];
-
-    // create a set of regexps that will validate the CSS unit value
-    const regexps = CssUnitTypes.map((unit) =>
-    {
-        // creates a regexp that matches '#unit' or '#.#unit' for every unit type
-        return new RegExp(`^[0-9]+${unit}$|^[0-9]+\\.[0-9]+${unit}$`, 'i');
-    });
-
-    // attempt to find a regexp that tests true for the CSS value
-    const isValid = regexps.find((regexp) => regexp.test(value)) !== undefined;
-
-    return isValid;
-}
-
-function ChangeElementType(element, newtype)
-{
-    let newelement = document.createElement(newtype);
-
-    // move children
-    while (element.firstChild) newelement.appendChild(element.firstChild);
-
-    // copy attributes
-    for (var i = 0, a = element.attributes, l = a.length; i < l; i++)
-    {
-        newelement.attributes[a[i].name] = a[i].value;
-    }
-
-    // event handlers on children will be kept. Unfortunately, there is
-    // no easy way to transfer event handlers on the element itself,
-    // this would require a full management system for events, which is
-    // beyond the scope of this answer. If you figure it out, do it here.
-
-    element.parentNode.replaceChild(newelement, element);
-    return newelement;
-}
-
-
-
-// linearly maps value from the range (a..b) to (c..d)
-function mapRange(value, a, b, c, d)
-{
-    // first map value from (a..b) to (0..1)
-    value = (value - a) / (b - a);
-    // then map it from (0..1) to (c..d) and return it
-    return c + value * (d - c);
-}
-
-
-//#endregion
-
-
-
-//#region 0 refences
-
-function div(classList)
-{
-    let el = document.createElement('div');
-    return emptyEl(classList, el);
-}
-function checkbox(classList)
-{
-    let el = document.createElement('input');
-    return emptyEl(classList, el);
-}
-function radio(classList)
-{
-    let el = document.createElement('input');
-    return emptyEl(classList, el);
-}
-function range(classList)
-{
-    let el = document.createElement('label');
-    return emptyEl(classList, el);
-}
-function label(classList)
-{
-    let el = document.createElement('label');
-    return emptyEl(classList, el);
-}
-
-
-
-function htmlToElement(html)
-{
-    var template = document.createElement('template');
-    html = html.trim(); // Never return a text node of whitespace as the result
-    template.innerHTML = html;
-    return template.content.firstChild;
-}
-
-function cleanUpHTML(content)
-{
-    var dom = document.createElement('div');
-    dom.innerHTML = content;
-    var elems = dom.getElementsByTagName('*');
-    for (var i = 0; i < elems.length; i++)
-    {
-        if (elems[i].innerHTML)
-        {
-            elems[i].innerHTML = elems[i].innerHTML.trim();
-        }
-    }
-    return dom.innerHTML;
-}
-function LoopTroughVisibleYTGIFsGlobal(config = { styleQuery: ytGifAttr, self: iframe, others_callback: () => { }, self_callback: () => { } })
-{
-    const ytGifs = inViewport(allIframeStyle(config?.styleQuery));
-    for (const i of ytGifs)
-    {
-        const blockID = closestBlockID(i);
-        if (i != self)
-        {
-            config?.others_callback(blockID, i);
-        }
-        else if (config.BlockID_self_callback)
-        {
-            config?.self_callback(blockID, i);
-        }
-    }
-}
-
-function targetIsSoundingFine(id, bol = true)
-{
-    return recordedIDs.get(id)?.target?.isSoundingFine(bol);
-}
-function targetNotTogglePlay(id, bol = false)
-{
-    return recordedIDs.get(id)?.target?.togglePlay(bol);
-}
-function handleMyMouseMove(e)
-{
-    //https://stackoverflow.com/questions/5730433/keep-mouse-inside-a-div
-    e = e || window.event;
-    var mouseX = e.clientX;
-    var mouseY = e.clientY;
-    if (mousepressed)
-    {
-        divChild.style.left = mouseX + "px";
-        divChild.style.top = mouseY + "px";
-    }
-}
-function element_mouse_is_inside(elementToBeChecked, mouseEvent, with_margin, offset_object)
-{
-    if (!with_margin)
-    {
-        with_margin = false;
-    }
-    if (typeof offset_object !== 'object')
-    {
-        offset_object = {};
-    }
-    var elm_offset = elementToBeChecked.offset();
-    var element_width = elementToBeChecked.width();
-    element_width += parseInt(elementToBeChecked.css("padding-left").replace("px", ""));
-    element_width += parseInt(elementToBeChecked.css("padding-right").replace("px", ""));
-    var element_height = elementToBeChecked.height();
-    element_height += parseInt(elementToBeChecked.css("padding-top").replace("px", ""));
-    element_height += parseInt(elementToBeChecked.css("padding-bottom").replace("px", ""));
-    if (with_margin)
-    {
-        element_width += parseInt(elementToBeChecked.css("margin-left").replace("px", ""));
-        element_width += parseInt(elementToBeChecked.css("margin-right").replace("px", ""));
-        element_height += parseInt(elementToBeChecked.css("margin-top").replace("px", ""));
-        element_height += parseInt(elementToBeChecked.css("margin-bottom").replace("px", ""));
-    }
-
-    elm_offset.rightBorder = elm_offset.left + element_width;
-    elm_offset.bottomBorder = elm_offset.top + element_height;
-
-    if (offset_object.hasOwnProperty("top"))
-    {
-        elm_offset.top += parseInt(offset_object.top);
-    }
-    if (offset_object.hasOwnProperty("left"))
-    {
-        elm_offset.left += parseInt(offset_object.left);
-    }
-    if (offset_object.hasOwnProperty("bottom"))
-    {
-        elm_offset.bottomBorder += parseInt(offset_object.bottom);
-    }
-    if (offset_object.hasOwnProperty("right"))
-    {
-        elm_offset.rightBorder += parseInt(offset_object.right);
-    }
-    var mouseX = mouseEvent.pageX;
-    var mouseY = mouseEvent.pageY;
-
-    if ((mouseX > elm_offset.left && mouseX < elm_offset.rightBorder)
-        && (mouseY > elm_offset.top && mouseY < elm_offset.bottomBorder))
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-function element_mouse_is_inside_mod(elementToBeChecked, mouseEvent, with_margin, offset_object)
-{
-    if (!with_margin)
-    {
-        with_margin = false;
-    }
-    if (typeof offset_object !== 'object')
-    {
-        offset_object = {};
-    }
-    const elm_offset = elementToBeChecked.offsetTop;
-
-    let element_width = elementToBeChecked.offsetWidth;
-    // element_width += parseInt(elementToBeChecked.style.paddingLeft.replace("px", ""));
-    // element_width += parseInt(elementToBeChecked.style.paddingRight.replace("px", ""));
-
-    let element_height = elementToBeChecked.offsetHeight;
-    // element_height += parseInt(elementToBeChecked.style.paddingTop.replace("px", ""));
-    // element_height += parseInt(elementToBeChecked.style.paddingBottom.replace("px", ""));
-
-
-    if (with_margin)
-    {
-        element_width += parseInt(elementToBeChecked.marginLeft.replace("px", ""));
-        element_width += parseInt(elementToBeChecked.marginRight.replace("px", ""));
-        element_height += parseInt(elementToBeChecked.marginTop.replace("px", ""));
-        element_height += parseInt(elementToBeChecked.marginBottom.replace("px", ""));
-    }
-
-
-    // elm_offset.rightBorder = elm_offset.offsetLeft + element_width;
-    // elm_offset.bottomBorder = elm_offset.offsetTop + element_height;
-
-
-    if (offset_object.hasOwnProperty("top"))
-    {
-        elm_offset.top += parseInt(offset_object.top);
-    }
-    if (offset_object.hasOwnProperty("left"))
-    {
-        elm_offset.left += parseInt(offset_object.left);
-    }
-    if (offset_object.hasOwnProperty("bottom"))
-    {
-        elm_offset.bottomBorder += parseInt(offset_object.bottom);
-    }
-    if (offset_object.hasOwnProperty("right"))
-    {
-        elm_offset.rightBorder += parseInt(offset_object.right);
-    }
-
-    mouseEvent = mouseEvent || window;
-    const mouseX = mouseEvent?.pageX || mouseEvent?.clientX;
-    const mouseY = mouseEvent?.pageY || mouseEvent?.clientY;
-
-
-    if ((mouseX > elm_offset.left && mouseX < elm_offset.rightBorder)
-        && (mouseY > elm_offset.top && mouseY < elm_offset.bottomBorder))
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-function is_mouse_inside(el, e)
-{
-    const px = e.clientX;
-    const x = el.width();
-    const py = 0;
-    const y = e.clientY;
-    const horizontal = px > x && px < x
-    if (px > x)
-    {
-
-    }
-}
-//#endregion
-
 
 
 
