@@ -438,7 +438,10 @@ async function Ready()
     function DDM_IconFocusFlurEvents()
     {
         const mainDDM = document.querySelector("span.yt-gif-drop-down-menu-toolbar .dropdown > .dropdown-content");
+
         const icon = document.querySelector(".ty-gif-icon");
+        negativeTabIndex(icon);
+
         const classNames = [cssData.ddm_focus];
 
         icon.addEventListener("click", function (e) { GainFocus(e, this, mainDDM) }, true);
@@ -452,6 +455,7 @@ async function Ready()
             const possibleSubDdm = i.nextElementSibling;
             if (possibleSubDdm.classList.contains('dropdown-content'))
             {
+                negativeTabIndex(i);
                 validFocusMessage.set(i, possibleSubDdm);
             }
         }
@@ -472,6 +476,12 @@ async function Ready()
         {
             Utils.toggleClasses(false, classNames, targetEl);
         }
+        function negativeTabIndex(el)
+        {
+            if (!el.tagName) debugger;
+            el.setAttribute('tabindex', '-1'); // because they are "span"
+        }
+
         //#endregion
     }
 
