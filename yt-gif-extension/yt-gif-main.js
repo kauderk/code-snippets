@@ -99,17 +99,13 @@ async function ImportUtilies()
                 script.onload = () => resolve(script)
             })
         }
-        function URLFolder(f)
-        {
-            return `https://kauderk.github.io/code-snippets/yt-gif-extension/${f}`
-        };
         //#endregion
     }
 
 }
 
 
-// version 31 - semi-refactored
+// version 32 - semi-refactored
 // Load the IFrame Player API.
 const tag = document.createElement('script');
 tag.src = 'https://www.youtube.com/player_api';
@@ -445,18 +441,36 @@ async function Ready()
         const icon = document.querySelector(".ty-gif-icon");
         const classNames = [cssData.ddm_focus];
 
-        icon.addEventListener("click", iconGainFocus, true);
-        icon.addEventListener("blur", IconLooseFocus, true);
+        icon.addEventListener("click", function () { iconGainFocus(e, this, mainDDM) }, true);
+        icon.addEventListener("blur", function () { IconLooseFocus(e, this, mainDDM) }, true);
+
+
+        const infoMessages = document.querySelectorAll('.dropdown .dropdown-info-message');
+        let validFocusMessage = new Map();
+        for (const i of infoMessages)
+        {
+            const possibleSubDdm = i.nextElementSibling;
+            if (possibleSubDdm.classList.contains('dropdown-content'))
+            {
+                validFocusMessage.set(i, possibleSubDdm);
+            }
+        }
+        for (const [keyMessageEl, valueEltarget] of validFocusMessage.entries())
+        {
+            keyMessageEl.addEventListener("click", function () { iconGainFocus(e, this, valueEltarget) }, true);
+            keyMessageEl.addEventListener("blur", function () { IconLooseFocus(e, this, valueEltarget) }, true);
+        }
+
 
         //#region event handle
-        function iconGainFocus(e)
+        function iconGainFocus(e, el, targetEl)
         {
-            icon.focus();
-            Utils.toggleClasses(true, classNames, mainDDM);
+            el.focus();
+            Utils.toggleClasses(true, classNames, targetEl);
         }
-        function IconLooseFocus(e, el)
+        function IconLooseFocus(e, el, targetEl)
         {
-            Utils.toggleClasses(false, classNames, mainDDM);
+            Utils.toggleClasses(false, classNames, targetEl);
         }
         //#endregion
     }
@@ -768,22 +782,24 @@ async function Ready()
 
     function UpdateOnScroll_RTM(key, labelEl)
     {
-        function UpdateLabel()
+        const scroll = UI.range[key];
+        function UpdateLabel(e, elScroll)
         {
-            labelEl.innerHTML = UI.range[key].value;
+            labelEl.innerHTML = elScroll.value;
         }
 
-        UI.range[key].addEventListener('change', () => UpdateLabel());
-        UI.range[key].addEventListener('wheel', (e) =>
+        scroll.addEventListener('change', function (e) { UpdateLabel(e, this) }, true);
+        scroll.addEventListener('wheel', function (e) { volumeOnWheel(e, this) }, true);
+        function volumeOnWheel(e, elScroll)
         {
             const dir = Math.sign(e.deltaY) * -1;
-            const parsed = parseInt(UI.range[key].value, 10);
-            UI.range[key].value = Number(dir + parsed);
+            const parsed = parseInt(elScroll.value, 10);
+            elScroll.value = Number(dir + parsed);
 
-            UpdateLabel();
-        });
+            UpdateLabel(e, elScroll);
+        }
 
-        UpdateLabel();
+        UpdateLabel(e, scroll);
     }
 
     //#endregion
@@ -905,7 +921,7 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
     // 2. the div that the YTiframe will replace
     if (wrapper.tagName != 'DIV')
     {
-        wrapper = ChangeElementType(wrapper, 'div');
+        wrapper = Utils.ChangeElementType(wrapper, 'div');
     }
     wrapper.parentElement.classList.add(`${cssData.yt_gif_wrapper}-parent`);
     wrapper.className = `${cssData.yt_gif_wrapper} dont-focus-block`;
@@ -1128,7 +1144,7 @@ async function onPlayerReady(event)
     const t = event.target;
     const iframe = document.querySelector('#' + t.h.id) || t.getIframe();
     const parent = iframe.closest('.' + cssData.yt_gif_wrapper) || iframe.parentElement;
-    //
+
     const key = t.h.id;
     const map = allVideoParameters.get(key); //videoParams
     const start = map?.start || 0;
@@ -1137,20 +1153,15 @@ async function onPlayerReady(event)
     const speed = map?.speed || 1;
     const entryVolume = validVolumeURL();
     const tickOffset = 1000 / speed;
-    //
+
     const blockID = Utils.closestBlockID(iframe);
     const rocording = recordedIDs.get(blockID);
     // 🚧?
     if (rocording != null)
         rocording.target = t;
 
-    //autostop 🚧
     const loadingMarginOfError = 1; //seconds
     let updateStartTime = start;
-
-    iframe.removeAttribute('title');
-    t.setVolume(entryVolume);
-    t.setPlaybackRate(speed);
 
 
     // javascript is crazy
@@ -1165,22 +1176,15 @@ async function onPlayerReady(event)
     t.__proto__.globalHumanInteraction = undefined;
 
 
-    //#region __proto__
-    function readyToChangeVolumeOnce()
-    {
-        if (!t.__proto__.changedVolumeOnce)
-        {
-            t.__proto__.changedVolumeOnce = true;
-            t.setVolume(t.__proto__.newVol);
-        }
-    }
-    //#endregion
+    iframe.removeAttribute('title');
+    t.setVolume(entryVolume);
+    t.setPlaybackRate(speed);
 
 
     const timeDisplay = parent.querySelector('div.' + cssData.yt_gif_timestamp);
 
-    //#region Loading values 🌿
-    // load last sesion values
+
+    // 🚧? because this object is only relevant when a block with the same id has been destroyed... Hmmmm?
     if (lastBlockIDParameters.has(blockID))
     {
         const sesion = lastBlockIDParameters.get(blockID);
@@ -1209,7 +1213,7 @@ async function onPlayerReady(event)
 
         /* ------------------------------------------------------- */
 
-        if (UI.previous.strict_start_volume.checked) // FOCUS ON HERE NOW
+        if (UI.previous.strict_start_volume.checked)
         {
             const vlHis = sesion.volumeURLmapHistory;
             if (vlHis[vlHis.length - 1] != entryVolume) // new entry is valid ≡ user updated "&vl="
@@ -1231,45 +1235,234 @@ async function onPlayerReady(event)
             t.__proto__.newVol = validVolumeURL(); // distiguish between volume and updatevolume
         }
     }
-    /*load referenced values
-        //Future Brand new adition to 'lastBlockIDParameters' map
-        
-        //slice at least 'widgetid=··' so they reconize each other
-
-        //closest referecnce key
-        
-        
-        if (UI.referenced.block_timestamp.checked == "F")
-        {
-            //ignore itself
-
-            // desiredTarget = recordedIDs.get(closest referecnce key)
-
-            // desiredTime = isValidVolNumber(tTime) ? tTime : updateStartTime;
-
-            // seekToUpdatedTime(desiredTime);
-        }
-        if (UI.referenced.block_volume.checked)
-        {
-            // tVol = desiredTarget?.__proto__.newVol;
-
-            // desiredVolume = isValidVolNumber(tVol) ? tVol : t.__proto__.newVol;
-
-            //t.__proto__.newVol = desiredVolume;
-        }
-    */
 
 
-    function seekToUpdatedTime(desiredTime)
+
+    // play style | pause style
+    for (const p in UI.playStyle)
     {
-        updateStartTime = desiredTime;
-        t.seekTo(updateStartTime);
+        UI.playStyle[p].addEventListener('change', playStyleDDMO);
     }
-    // #endregion
+    for (const m in UI.muteStyle)
+    {
+        UI.muteStyle[m].addEventListener('change', muteStyleDDMO);
+    }
+
+    parent.addEventListener('mouseenter', InAndOutHoverStatesDDMO);
+    parent.addEventListener('mouseleave', InAndOutHoverStatesDDMO);
 
 
 
-    //#region Event Handelers | DDMO stands for 'Drop Down Menu Option'
+
+    // scroll wheel feature
+    timeDisplay.addEventListener('wheel', BoundWheelValueToSeek);
+    timeDisplay.addEventListener('mouseenter', ContinuouslyUpdateTimeDisplay);
+    timeDisplay.addEventListener('mouseleave', ClearTimers);
+
+
+
+    // fullscreenStyle
+    iframe.addEventListener('fullscreenchange', fullscreenStyle_Handler);
+
+
+
+
+    const withEventListeners = [parent, parent.parentNode, timeDisplay, iframe]; // ready to be cleaned
+
+
+
+
+    const config = { subtree: true, childList: true };
+    const RemovedObserver = new MutationObserver(IframeMutationRemoval_callback); //IframeRemmovedFromDom_callback acutal logic
+    RemovedObserver.observe(document.body, config);
+    function IframeRemmovedFromDom_callback(observer)
+    {
+        // expensive for sure 🙋 removeEventListeners
+        for (const el of withEventListeners)
+        {
+            el.replaceWith(el.cloneNode(true));
+        }
+        for (const p in UI.playStyle)
+        {
+            UI.playStyle[p].removeEventListener('change', playStyleDDMO); // all valid, toggle play state
+        }
+        for (const m in UI.muteStyle)
+        {
+            UI.muteStyle[m].removeEventListener('change', muteStyleDDMO); // all valid, toggle play state
+        }
+
+
+
+
+        //🚧 UpdateNextSesionValues
+        const media = Object.create(videoParams);
+        media.updateTime = bounded(tick()) ? tick() : start;
+        media.updateVolume = isValidVolNumber(t.__proto__.newVol) ? t.__proto__.newVol : validUpdateVolume();
+        if (media.timeURLmapHistory.length == 0) // kinda spaguetti, but it's super necesary - This will not ignore the first block editing - stack change
+        {
+            media.timeURLmapHistory.push(start);
+        }
+        if (blockID != null)
+        {
+            lastBlockIDParameters.set(blockID, media);
+        }
+
+
+
+
+        // clean... video maps
+        ClearTimers();
+        recordedIDs.delete(blockID);
+        allVideoParameters.delete(key);
+        observer.disconnect();
+        t.__proto__.enter = () => { };
+
+
+
+
+        // either save the target
+        const targetExist = document.querySelector('#' + key) == iframe;
+        if (targetExist)
+        {
+            return console.log(`${key} is displaced, not removed, thus is not destroyed.`);
+        }
+
+        // or destroy it
+        const afterT = setTimeout(() => destroyTarget(afterT), 1000);
+        function destroyTarget()
+        {
+            if (!targetExist)
+            {
+                t.destroy();
+                console.count('Destroyed! ' + key);
+            }
+        }
+    }
+
+
+
+
+    const yConfig = { threshold: [0] };
+    const ViewportObserver = new IntersectionObserver(PauseOffscreen_callback, yConfig);
+    ViewportObserver.observe(iframe);
+
+
+
+
+    HumanInteraction_AutopalyFreeze(); // this being the last one, does matter
+
+
+
+    //#region hidden functions
+    function HumanInteraction_AutopalyFreeze()
+    {
+        const autoplayParent = iframe.closest('.rm-alias-tooltip__content') || //tooltip
+            iframe.closest('.bp3-card') || //card
+            iframe.closest('.myPortal'); //myPortal
+
+        if (autoplayParent) //simulate hover
+        {
+            const simHover = new MouseEvent('mouseenter',
+                {
+                    'view': window,
+                    'bubbles': true,
+                    'cancelable': true
+                });
+
+            parent.dispatchEvent(simHover);
+        }
+        else if (isParentHover()) // human wants to hear and watch
+        {
+            videoIsPlayingWithSound(true);
+        }
+        else //Freeze
+        {
+            const OneFrame = setInterval(() =>
+            {
+                if (tick() > updateStartTime + loadingMarginOfError)
+                {
+                    // or if mouse is inside parent
+                    if (t.__proto__.globalHumanInteraction) // usees is listening, don't interrupt
+                    {
+                        videoIsPlayingWithSound(true);
+                    }
+                    else if (Utils.inViewport(iframe) && !t.__proto__.globalHumanInteraction)
+                    {
+                        togglePlay(UI.playStyle.visible_clips_start_to_play_unmuted.checked); // pause
+                    }
+
+                    clearInterval(OneFrame);
+                }
+            }, 200);
+        }
+    }
+    function IframeMutationRemoval_callback(mutationsList, observer)
+    {
+        mutationsList.forEach(function (mutation)
+        {
+            const nodes = Array.from(mutation.removedNodes);
+            const directMatch = nodes.indexOf(iframe) > -1
+            const parentMatch = nodes.some(parentEl => parentEl.contains(iframe));
+
+            if (directMatch)
+            {
+                observer.disconnect();
+                console.log(`node ${iframe} was directly removed!`);
+            }
+            else if (parentMatch)
+            {
+                IframeRemmovedFromDom_callback(observer);
+            }
+        });
+    };
+    function PauseOffscreen_callback(entries)
+    {
+        if (!entries[0])
+        {
+            ViewportObserver.disconnect();
+        }
+
+        if (tick() > updateStartTime + loadingMarginOfError && !t.__proto__.globalHumanInteraction) // and the interval function 'OneFrame' to prevent the loading black screen
+        {
+            if (UI.playStyle.visible_clips_start_to_play_unmuted.checked)
+            {
+                togglePlay(entries[0]?.isIntersecting);
+            }
+            else
+            {
+                togglePlay(false);
+            }
+        }
+    }
+    function fullscreenStyle_Handler(params)
+    {
+        currentFullscreenPlayer = t.h.id;
+
+        if (!document.fullscreenElement && isParentHover()) //https://stackoverflow.com/questions/36767196/check-if-mouse-is-inside-div#:~:text=if%20(element.parentNode.matches(%22%3Ahover%22))%20%7B
+        {
+            if (UI.fullscreenStyle.mute_on_exit_fullscreenchange.checked)
+            {
+                isSoundingFine(false);
+            }
+            if (UI.fullscreenStyle.pause_on_exit_fullscreenchange.checked)
+            {
+                togglePlay(false);
+            }
+        }
+    }
+    function readyToChangeVolumeOnce()
+    {
+        if (!t.__proto__.changedVolumeOnce)
+        {
+            t.__proto__.changedVolumeOnce = true;
+            t.setVolume(t.__proto__.newVol);
+        }
+    }
+    //#endregion
+
+
+
+    //#region hidden play and puse styles functions
     function InAndOutHoverStatesDDMO(e)
     {
         //🌿
@@ -1365,7 +1558,6 @@ async function onPlayerReady(event)
         }
     }
 
-
     function playStyleDDMO()
     {
         if (!Utils.inViewport(iframe)) return; //play all VISIBLE Players, this will be called on all visible iframes
@@ -1393,24 +1585,8 @@ async function onPlayerReady(event)
     //#endregion
 
 
-    // #region EventListeners | from DDMO
-    for (const p in UI.playStyle)
-    {
-        UI.playStyle[p].addEventListener('change', playStyleDDMO); // all valid, toggle play state
-    }
-    for (const m in UI.muteStyle)
-    {
-        UI.muteStyle[m].addEventListener('change', muteStyleDDMO); // all valid, toggle play state
-    }
-    //toggle visuals or sound on hover
-    parent.addEventListener('mouseenter', InAndOutHoverStatesDDMO);
-    parent.addEventListener('mouseleave', InAndOutHoverStatesDDMO);
-    //#endregion
 
-
-
-
-    //#region Event Handelers | Instantiance Interactive Elements
+    //#region Control UI hideen functions
     // for the timeDisplay
     function ContinuouslyUpdateTimeDisplay()
     {
@@ -1487,10 +1663,8 @@ async function onPlayerReady(event)
             }
         }, tickOffset); //nice delay to show feedback
     }
-    //#endregion
 
-
-    //#region utils for the timeDisplay
+    //utils for the timeDisplay
     function ClearTimers()
     {
         window.clearInterval(t.__proto__.timerID);
@@ -1510,182 +1684,16 @@ async function onPlayerReady(event)
     {
         return isTimeDisplayHover() && isParentHover();
     }
-
-    //#endregion
-
-
-    //#region EventListeners | from Elements
-    timeDisplay.addEventListener('wheel', BoundWheelValueToSeek);
-    timeDisplay.addEventListener('mouseenter', ContinuouslyUpdateTimeDisplay);
-    timeDisplay.addEventListener('mouseleave', ClearTimers);
-    // #endregion 
-
-    //#region detect fullscreen mode
-    iframe.addEventListener('fullscreenchange', () =>
-    {
-        currentFullscreenPlayer = t.h.id;
-
-        if (!document.fullscreenElement && isParentHover()) //https://stackoverflow.com/questions/36767196/check-if-mouse-is-inside-div#:~:text=if%20(element.parentNode.matches(%22%3Ahover%22))%20%7B
-        {
-            if (UI.fullscreenStyle.mute_on_exit_fullscreenchange.checked)
-            {
-                isSoundingFine(false);
-            }
-            if (UI.fullscreenStyle.pause_on_exit_fullscreenchange.checked)
-            {
-                togglePlay(false);
-            }
-        }
-    });
-    //#endregion
-
-
-    const withEventListeners = [parent, parent.parentNode, timeDisplay, iframe];
-
-    //#region OnDestroyed | UpdateNextSesionValues | Delete allVideoParameters | removeEventListeners
-    const OnDestroyedObserver = new MutationObserver(function (mutationsList)
-    {
-        // check for removed target
-        mutationsList.forEach(function (mutation)
-        {
-            const nodes = Array.from(mutation.removedNodes);
-            const directMatch = nodes.indexOf(iframe) > -1
-            const parentMatch = nodes.some(parent => parent.contains(iframe));
-
-            if (directMatch)
-            {
-                console.log('node', iframe, 'was directly removed!');
-            }
-            else if (parentMatch)
-            {
-                // expensive for sure 🙋
-                for (const el of withEventListeners)
-                {
-                    el.replaceWith(el.cloneNode(true));
-                }
-                for (const p in UI.playStyle)
-                {
-                    UI.playStyle[p].removeEventListener('change', playStyleDDMO); // all valid, toggle play state
-                }
-                for (const m in UI.muteStyle)
-                {
-                    UI.muteStyle[m].removeEventListener('change', muteStyleDDMO); // all valid, toggle play state
-                }
-
-                //🚧
-                const media = Object.create(videoParams);
-                media.updateTime = bounded(tick()) ? tick() : start;
-                media.updateVolume = isValidVolNumber(t.__proto__.newVol) ? t.__proto__.newVol : validUpdateVolume();
-                if (media.timeURLmapHistory.length == 0) // kinda spaguetti, but it's super necesary, so it will not ignore the first block editing - stack change
-                {
-                    media.timeURLmapHistory.push(start);
-                }
-                if (blockID != null)
-                {
-                    lastBlockIDParameters.set(blockID, media);
-                }
-
-                // clean...
-                ClearTimers();
-                recordedIDs.delete(blockID);
-                allVideoParameters.delete(key);
-                OnDestroyedObserver.disconnect();
-                t.__proto__.enter = () => { };
-
-                // either keep target
-                const targetExist = document.querySelector('#' + key) == iframe;
-                if (targetExist)
-                    return console.log(`${key} is displaced, not removed, thus is not destroyed.`);
-
-                //or destroy it after 1000ms
-                setTimeout(() =>
-                {
-                    //this is too uggly
-                    if (!targetExist)
-                    {
-                        t.destroy();
-                        //lastBlockIDParameters.delete(blockID);
-                        console.count('Destroyed! ' + key);
-                    }
-                }, 1000);
-            }
-
-        });
-    });
-
-    const config = { subtree: true, childList: true };
-
-    OnDestroyedObserver.observe(document.body, config);
-    //#endregion
-
-
-    // #region pause onOffScreen
-    const YscrollObserver = new IntersectionObserver(function (entries)
-    {
-        if (!entries[0])
-            YscrollObserver.disconnect();
-
-        if (tick() > updateStartTime + loadingMarginOfError && !t.__proto__.globalHumanInteraction) // and the interval function 'OneFrame' to prevent the loading black screen
-        {
-            if (UI.playStyle.visible_clips_start_to_play_unmuted.checked)
-                togglePlay(entries[0]?.isIntersecting);
-            else
-                togglePlay(false);
-        }
-    }, { threshold: [0] });
-    YscrollObserver.observe(iframe);
     //#endregion
 
 
 
-    //🚧 🌿
-    //#region unMute if referenced |OR| Pause and Avoid black screen loading bar
-    const autoplayParent = iframe.closest('.rm-alias-tooltip__content') || //tooltip
-        iframe.closest('.bp3-card') || //card
-        iframe.closest('.myPortal'); //myPortal
-
-    //simulate hover
-    if (autoplayParent)
+    //#region local utils
+    function seekToUpdatedTime(desiredTime)
     {
-        const simHover = new MouseEvent('mouseenter',
-            {
-                'view': window,
-                'bubbles': true,
-                'cancelable': true
-            });
-
-        parent.dispatchEvent(simHover);
+        updateStartTime = desiredTime;
+        t.seekTo(updateStartTime);
     }
-    else if (isParentHover()) // human wants to hear and watch
-    {
-        videoIsPlayingWithSound(true);
-    }
-    else //Freeze
-    {
-        const OneFrame = setInterval(() =>
-        {
-            if (tick() > updateStartTime + loadingMarginOfError)
-            {
-                // or if mouse is inside parent
-                if (t.__proto__.globalHumanInteraction) // usees is listening, don't interrupt
-                {
-                    videoIsPlayingWithSound(true);
-                }
-                else if (Utils.inViewport(iframe) && !t.__proto__.globalHumanInteraction)
-                {
-                    togglePlay(UI.playStyle.visible_clips_start_to_play_unmuted.checked); // pause
-                }
-
-                clearInterval(OneFrame);
-            }
-        }, 200);
-    }
-    //#endregion
-
-
-
-
-    //#region Utils
     function tick(target = t)
     {
         const crrTime = target?.getCurrentTime();
@@ -1807,14 +1815,39 @@ async function onPlayerReady(event)
 
     //#endregion
 
+
+
+    //#region load referenced values | feature on hold
+    /*
+        //Future Brand new adition to 'lastBlockIDParameters' map
+        
+        //slice at least 'widgetid=··' so they reconize each other
+
+        //closest referecnce key
+        
+        
+        if (UI.referenced.block_timestamp.checked == "F")
+        {
+            //ignore itself
+
+            // desiredTarget = recordedIDs.get(closest referecnce key)
+
+            // desiredTime = isValidVolNumber(tTime) ? tTime : updateStartTime;
+
+            // seekToUpdatedTime(desiredTime);
+        }
+        if (UI.referenced.block_volume.checked)
+        {
+            // tVol = desiredTarget?.__proto__.newVol;
+
+            // desiredVolume = isValidVolNumber(tVol) ? tVol : t.__proto__.newVol;
+
+            //t.__proto__.newVol = desiredVolume;
+        }
+    */
+    //#endregion
+
 }
-
-// UI InactiveStyles .... man...
-//visibilityChange
-
-
-
-
 //
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -1887,9 +1920,9 @@ function onStateChange(state)
 // I want to add ☐ ☑
 // radios : mute pause when document is inactive ☑ ✘
 // click the item checks the btn ☑ ☑
-// an util class ☐
-// focus & blus for sub ddm ☐
-// features on hold btn at the bottom ☐
+// an util class ☑ ☑
+// focus & blus for sub ddm ☐ ☐
+// features on hold btn at the bottom ☐ ☐
 
 // use only one audio?? ☑ ☑ url so is customizable by nature
 // loop sound adjusment with slider hidden inside sub menu | ohhhh bind main checkbox to hidde it's "for"
@@ -1900,7 +1933,7 @@ function onStateChange(state)
 // http vs https ☑ ☑
 // coding train shifman mouse inside div, top, left ✘ ☑ ☑
 
-// bind thumbnail input element hiddeness to initialize checkbox
+// bind thumbnail input element hiddeness to initialize checkbox ☑ . what? jaja
 
 // play a sound to indicate the current gif makes loop ☑ ☑
 // https://freesound.org/people/candy299p/sounds/250091/          * film ejected *
