@@ -13,7 +13,7 @@ kauderk.util = ((newUtil) =>
 
     newUtil.applyIMGbg = (wrapper, url) =>
     {
-        wrapper.style.backgroundImage = `url(${get_youtube_thumbnail(url)})`;
+        wrapper.style.backgroundImage = `url(${newUtil.get_youtube_thumbnail(url)})`;
     }
     newUtil.removeIMGbg = (wrapper) =>
     {
@@ -141,7 +141,7 @@ kauderk.util = ((newUtil) =>
     }
     newUtil.FetchText = async (url) =>
     {
-        const [response, err] = await newUtil.isValidFetch(NoCash(url)); // firt time fetching something... This is cool
+        const [response, err] = await newUtil.isValidFetch(newUtil.NoCash(url)); // firt time fetching something... This is cool
         if (response)
             return await response.text();
     }
