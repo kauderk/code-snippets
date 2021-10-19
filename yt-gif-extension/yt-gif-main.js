@@ -441,8 +441,8 @@ async function Ready()
         const icon = document.querySelector(".ty-gif-icon");
         const classNames = [cssData.ddm_focus];
 
-        icon.addEventListener("click", function () { iconGainFocus(e, this, mainDDM) }, true);
-        icon.addEventListener("blur", function () { IconLooseFocus(e, this, mainDDM) }, true);
+        icon.addEventListener("click", function (e) { GainFocus(e, this, mainDDM) }, true);
+        icon.addEventListener("blur", function (e) { LoosedFocus(e, this, mainDDM) }, true);
 
 
         const infoMessages = document.querySelectorAll('.dropdown .dropdown-info-message');
@@ -457,18 +457,18 @@ async function Ready()
         }
         for (const [keyMessageEl, valueEltarget] of validFocusMessage.entries())
         {
-            keyMessageEl.addEventListener("click", function () { iconGainFocus(e, this, valueEltarget) }, true);
-            keyMessageEl.addEventListener("blur", function () { IconLooseFocus(e, this, valueEltarget) }, true);
+            keyMessageEl.addEventListener("click", function (e) { GainFocus(e, this, valueEltarget) });
+            keyMessageEl.addEventListener("blur", function (e) { LoosedFocus(e, this, valueEltarget) });
         }
 
 
         //#region event handle
-        function iconGainFocus(e, el, targetEl)
+        function GainFocus(e, el, targetEl)
         {
             el.focus();
             Utils.toggleClasses(true, classNames, targetEl);
         }
-        function IconLooseFocus(e, el, targetEl)
+        function LoosedFocus(e, el, targetEl)
         {
             Utils.toggleClasses(false, classNames, targetEl);
         }
@@ -799,7 +799,7 @@ async function Ready()
             UpdateLabel(e, elScroll);
         }
 
-        UpdateLabel(e, scroll);
+        UpdateLabel("e", scroll); // javascript?
     }
 
     //#endregion

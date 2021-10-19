@@ -204,7 +204,7 @@ span.rangeOffset input {
 }
 span.dropdown-info-message {
   align-self: center;
-  cursor: default;
+  cursor: pointer;
 }
 .dropdown-item-separator {
   width: 100%;
