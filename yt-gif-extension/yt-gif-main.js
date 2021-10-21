@@ -1,8 +1,17 @@
+// version 33 - semi-refactored
+// Load the IFrame Player API.
+const tag = document.createElement('script');
+tag.src = 'https://www.youtube.com/player_api';
+const firstScriptTag = document.getElementsByTagName('script')[0];
+firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+
+
 
 //#region This is super weird - loading Utils variable
 let Utils = ImportUtilies().then(val =>
 {
-    Utils = GetKauDerKutils();
+    Utils = kauderk.util;
 });
 async function ImportUtilies()
 {
@@ -12,7 +21,7 @@ async function ImportUtilies()
         // HI CCC, I plagariezed the heck of your method,
         // but : import * as utils from ${URLFolder('js/utils.js')}; 
         // wasn't working for me
-        return GetKauDerKutils(); //returns undefined, Why?
+        return null;// kauderk.util returns undefined, Why? SO I just don't bother on trying
     }
     else
     {
@@ -24,7 +33,7 @@ async function ImportUtilies()
         document.getElementsByTagName('head')[0].appendChild(utilsScript);
 
         await scriptLoaded(utilsScript);
-        return GetKauDerKutils(); //returns undefined, Why?
+        return null;// kauderk.util returns undefined, Why? SO I just don't bother on trying
 
         //#region local util
         async function scriptLoaded(script)
@@ -37,19 +46,7 @@ async function ImportUtilies()
         //#endregion
     }
 }
-function GetKauDerKutils()
-{
-    return window.kauderk.util;
-}
 //#endregion
-
-
-// version 33 - semi-refactored
-// Load the IFrame Player API.
-const tag = document.createElement('script');
-tag.src = 'https://www.youtube.com/player_api';
-const firstScriptTag = document.getElementsByTagName('script')[0];
-firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
 
 
@@ -99,8 +96,8 @@ const videoParams = {
 
     speed: 1,
 
-    volume: UI.default.video_volume,
-    updateVolume: UI.default.video_volume,
+    volume: UI.defaultValues.video_volume,
+    updateVolume: UI.defaultValues.video_volume,
     volumeURLmapHistory: [],
 };
 //
@@ -128,8 +125,8 @@ function URLFolderJS(f)
 };
 const links = {
     css: {
-        dropDownMenu: URLFolderCSS('drop-down-menu.css'),
-        player: URLFolderCSS('player.css'),
+        dropDownMenuStyle: URLFolderCSS('drop-down-menu.css'),
+        playerStyle: URLFolderCSS('player.css'),
         themes: {
             dark_dropDownMenu: URLFolderCSS('themes/dark-drop-down-menu.css'),
             light_dropDownMenu: URLFolderCSS('themes/light-drop-down-menu.css'),
@@ -243,71 +240,107 @@ const almostReady = setInterval(() =>
 
 async function Ready()
 {
-    if (document.querySelector('.' + cssData.ddm_exist))
+    // the objects "UI", "links", "attrData" and "cssData" are binded to all of these functions
+
+    const { ddm_exist } = cssData
+
+    if (document.querySelector('.' + ddm_exist))
+    {
         return console.log('YT Extension was already installed');
-
-    // the objects "UI", "links" and "cssData" are binded to all of these functions
-    // 1.
-    await LoadCSS(links.css.dropDownMenu);
-    await LoadCSS(links.css.player);
-
-    await CssThemes_UCS(); // UCS - user customizations // UI - links
-    await CssPlayer_UCS();                              // UI default - cssData
-
-    links.html.fetched.playerControls = await PlayerHtml_UCS(); // links html UI default
-
-    await Load_DDM_onTopbar(); // DDM - drop down menu          // links html
+    }
 
 
-    // 2.
-    DDM_to_UI_variables();                                      // UI (binary user inputs)
 
-    DDM_IconFocusBlurEvents();                                  // cssData
+    // 1. set up looks
+    //#region relevant variables
+    const { css_theme, player_span, end_loop_sound_src } = UI.defaultValues;
+    const { themes, playerStyle, dropDownMenuStyle } = links.css;
+    const { playerControls, dropDownMenu } = links.html;
 
-    //Flip DDM item Visibility Based On Linked Input Value
-    DDM_FlipBindedDataAttr_RTM([`${cssData.dropdown__hidden}`]); // RTM runtime     // attrData
+    //#endregion
 
-    UpdateOnScroll_RTM(UI.range.timestamp_display_scroll_offset, UI.label.rangeValue);
-    UpdateOnScroll_RTM(UI.range.end_loop_sound_volume, UI.label.loop_volume_displayed);
+    await LoadCSS(dropDownMenuStyle);
+    await LoadCSS(playerStyle);
+
+    await CssThemes_UCS(css_theme, themes); // UCS - user customizations
+    await CssPlayer_UCS(player_span, cssData);
+
+    links.html.fetched.playerControls = await PlayerHtml_UCS(playerControls, end_loop_sound_src);
+
+    await Load_DDM_onTopbar(dropDownMenu); // DDM - drop down menu
 
 
-    // 3.
-    rm_components.current.key = KeyToObserve_UCS(UI.default.override_roam_video_component);
 
-    await MasterObserver_UCS_RTM(); // listening for changes
+    // 2. assign variables and events
+    DDM_to_UI_variables(); // the 'UI' variables are HIGHLY dependent on this, because they will change from //string to //Element - cringe I know, but how else?
+    //#region relevant variables
+    const { ddm_icon, ddm_focus, ddm_info_message_selector, dropdown__hidden } = cssData
+    const { timestamp_display_scroll_offset, end_loop_sound_volume } = UI.range;
+    const { rangeValue, loop_volume_displayed } = UI.label;
 
-    TogglePlayerThumbnails_DDM_RTM();
+    //#endregion
 
-    RunMasterObserverWithKey(rm_components.current.key);
+
+    DDM_IconFocusBlurEvents(ddm_icon, ddm_focus, ddm_info_message_selector);
+
+    DDM_FlipBindedDataAttr_RTM([dropdown__hidden], attrData); // RTM runtime
+
+    UpdateOnScroll_RTM(timestamp_display_scroll_offset, rangeValue);
+    UpdateOnScroll_RTM(end_loop_sound_volume, loop_volume_displayed);
+
+
+
+    // 3. run extension and events after set up
+    //#region relevant variables
+    const { override_roam_video_component } = UI.defaultValues;
+    const { awaiting_with_video_thumnail_as_bg } = UI.experience;
+    const { awaitng_input_with_thumbnail } = cssData;
+    let { key } = rm_components.current;
+
+    //#endregion
+
+    key = KeyToObserve_UCS(override_roam_video_component);
+
+    await MasterObserver_UCS_RTM(); // listening for changes // BIG BOI FUNCTION
+
+    TogglePlayerThumbnails_DDM_RTM(awaiting_with_video_thumnail_as_bg, awaitng_input_with_thumbnail);
+
+    RunMasterObserverWithKey(key);
+
+
 
     console.log('YT GIF extension activated');
 
+
+
     //#region hidden functions
-    async function CssThemes_UCS()
+    async function CssThemes_UCS(currentTheme, CSSThemes)
     {
-        const themToLoad = (UI.default.css_theme === 'dark') ?
+        const themToLoad = (currentTheme === 'dark') ?
             'dark_dropDownMenu' : 'light_dropDownMenu';
 
-        await LoadCSS(links.css.themes[themToLoad]);
+        await LoadCSS(CSSThemes[themToLoad]);
     }
 
-    function CssPlayer_UCS()
+    function CssPlayer_UCS(player_span, cssData)
     {
-        if (!Utils.isValidCSSUnit(UI.default.player_span)) 
+        const { yt_gif_wrapper, yt_gif_iframe_wrapper, ty_gif_custom_player_span, yt_gif } = cssData;
+
+        if (!Utils.isValidCSSUnit(player_span)) 
         {
             return null;
         }
 
-        const css_rule = `.${cssData.yt_gif_wrapper}, .${cssData.yt_gif_iframe_wrapper} {
-                    width: ${UI.default.player_span};
+        const css_rule = `.${yt_gif_wrapper}, .${yt_gif_iframe_wrapper} {
+                    width: ${player_span};
                 }`;
 
-        const id = `${cssData.ty_gif_custom_player_span}-${UI.default.player_span}`
+        const id = `${ty_gif_custom_player_span}-${player_span}`
 
         create_css_rule(css_rule, id); // i could've used a css variable. fuck! jaja
 
         //#region util
-        function create_css_rule(css_rules = 'starndard css rules', id = `${cssData.yt_gif}-custom`)
+        function create_css_rule(css_rules = 'starndard css rules', id = `${yt_gif}-custom`)
         {
             const style = document.createElement('style'); // could be it's own function
             style.id = id;
@@ -319,21 +352,21 @@ async function Ready()
 
     }
 
-    async function PlayerHtml_UCS()
+    async function PlayerHtml_UCS(playerControls, end_loop_sound_src)
     {
-        let htmlText = await Utils.FetchText(links.html.playerControls);
-        if (UI.default.end_loop_sound_src != '')
+        let htmlText = await Utils.FetchText(playerControls);
+        if (end_loop_sound_src != '')
         {
-            htmlText = htmlText.replace(/(?<=<source src=\")(?=")/gm, UI.default.end_loop_sound_src);
+            htmlText = htmlText.replace(/(?<=<source src=\")(?=")/gm, end_loop_sound_src);
         }
         return htmlText
     }
 
-    async function Load_DDM_onTopbar()
+    async function Load_DDM_onTopbar(dropDownMenu)
     {
         //⚠️
         const rm_moreIcon = document.querySelector('.bp3-icon-more').closest('.rm-topbar .rm-topbar__spacer-sm + .bp3-popover-wrapper');
-        const htmlText = await Utils.FetchText(links.html.dropDownMenu);
+        const htmlText = await Utils.FetchText(dropDownMenu);
         rm_moreIcon.insertAdjacentHTML('afterend', htmlText);
     }
 
@@ -347,6 +380,7 @@ async function Ready()
             for (const childKey in UI[parentKey])
             {
                 const userValue = UI[parentKey][childKey];
+
                 const domEl = document.getElementById(childKey);
 
                 if (domEl) //don't mess up any other variable
@@ -380,22 +414,22 @@ async function Ready()
         }
     }
 
-    function DDM_IconFocusBlurEvents()
+    function DDM_IconFocusBlurEvents(ddm_icon, ddm_focus, ddm_info_message_selector)
     {
         // 1. special case
         //⚠️
         const mainDDM = document.querySelector('span.yt-gif-drop-down-menu-toolbar .dropdown > .dropdown-content');
-        const icon = document.querySelector('.' + cssData.ddm_icon);
+        const icon = document.querySelector('.' + ddm_icon);
         spanNegativeTabIndex(icon);
 
-        const classNames = [cssData.ddm_focus]; // used inside two local func
+        const classNames = [ddm_focus]; // used inside two local func
 
         icon.addEventListener('click', function (e) { GainFocus(e, this, mainDDM) }, true);
         icon.addEventListener('blur', function (e) { LoosedFocus(e, this, mainDDM) }, true);
 
 
         // 2. for all infoMessages in html
-        const infoMessages = document.querySelectorAll(cssData.ddm_info_message_selector);
+        const infoMessages = document.querySelectorAll(ddm_info_message_selector);
         let validFocusMessage = new Map();
 
         for (const i of infoMessages)
@@ -436,15 +470,15 @@ async function Ready()
         //#endregion
     }
 
-    function KeyToObserve_UCS()
+    function KeyToObserve_UCS(override_roam_video_component)
     {
         // this can be shorter for sure, how though?
 
-        if (Utils.isTrue(check)) //video
+        if (Utils.isTrue(override_roam_video_component)) //video
         {
             return 'video';
         }
-        else if (check === 'both') // both
+        else if (override_roam_video_component === 'both') // both
         {
             return 'both';
         }
@@ -490,7 +524,7 @@ async function Ready()
      * And On the [data-main] element changes, toogle the binded classes on the [data-bind] elements
      * @param {Array<String>} toggleClassArr 
      */
-    function DDM_FlipBindedDataAttr_RTM(toggleClassArr = [])
+    function DDM_FlipBindedDataAttr_RTM(toggleClassArr = [], attrData)
     {
         for (const key in attrData)
         {
@@ -526,13 +560,14 @@ async function Ready()
         //#endregion
     }
 
-    function TogglePlayerThumbnails_DDM_RTM()
+    function TogglePlayerThumbnails_DDM_RTM(awaiting_with_video_thumnail_as_bg, awaitng_input_with_thumbnail)
     {
-        const withThumbnails = UI.experience.awaiting_with_video_thumnail_as_bg;
+        const withThumbnails = awaiting_with_video_thumnail_as_bg;
+
         withThumbnails.addEventListener('change', handleIMGbgSwap);
         function handleIMGbgSwap(e)
         {
-            const awaitingGifs = [...document.querySelectorAll(`.${cssData.awaitng_input_with_thumbnail}`)];
+            const awaitingGifs = [...document.querySelectorAll(`.${awaitng_input_with_thumbnail}`)];
             for (const i of awaitingGifs)
             {
                 if (withThumbnails.checked)
@@ -549,7 +584,8 @@ async function Ready()
 
     async function MasterObserver_UCS_RTM()
     {
-        const checkMenu = UI.deploymentStyle.suspend_yt_gif_deployment;
+        // 1. chekMenu and it's relevant nodes
+        const { suspend_yt_gif_deployment: checkMenu, deploy_yt_gifs: subMenuCheck } = UI.deploymentStyle;
 
         const checkMenuParent = checkMenu.parentElement;
         const labelCheckMenu = checkMenu.previousElementSibling;
@@ -558,11 +594,15 @@ async function Ready()
         function labelTxt(str) { return labelCheckMenu.innerHTML = str; }
         //#endregion
 
-        const subHiddenDDM = document.querySelector(`.${cssData.dropdown__hidden}.${cssData.dropdown_deployment_style}`);
-        const subHiddenDDM_message = subHiddenDDM.querySelector(`.${cssData.dwp_message}`);
+        // 2. sub DDM to toggle hide/unhide later
+        const { dropdown__hidden, dropdown_deployment_style, dwp_message } = cssData;
 
-        const subMenuCheck = UI.deploymentStyle.deploy_yt_gifs;
+        const subHiddenDDM = document.querySelector(`.${dropdown__hidden}.${dropdown_deployment_style}`);
+        const subHiddenDDM_message = subHiddenDDM.querySelector(`.${dwp_message}`);
+
+        // 3. subcheckMenu inside the sub DDM to submit settings
         const subMenuCheckParent = subMenuCheck.parentElement;
+
 
         //#region checkboxes utils
         const DeployCheckboxes = [checkMenu, subMenuCheck];
@@ -571,11 +611,13 @@ async function Ready()
         //#endregion
 
 
-        //animations css classes
-        const noInputAnimation = [cssData.dwn_no_input]
-        const baseAnimation = [cssData.dropdown_fadeIt_bg_animation, cssData.dwn_no_input];
-        const redAnimationNoInputs = [...baseAnimation, cssData.dropdown_forbidden_input];
-        const greeAnimationInputReady = [...baseAnimation, cssData.dropdown_allright_input];
+        // 4. CSS animations ready
+        const { dwn_no_input, dropdown_fadeIt_bg_animation, dropdown_forbidden_input, dropdown_allright_input } = cssData;
+
+        const noInputAnimation = [dwn_no_input]
+        const baseAnimation = [dropdown_fadeIt_bg_animation, ...noInputAnimation];
+        const redAnimationNoInputs = [...baseAnimation, dropdown_forbidden_input];
+        const greeAnimationInputReady = [...baseAnimation, dropdown_allright_input];
 
 
 
@@ -589,7 +631,7 @@ async function Ready()
 
 
 
-        labelCheckMenu.innerHTML = deployInfo.suspend;
+        labelCheckMenu.innerHTML = deployInfo.suspend; // default state, meaning the extension was running
 
         checkMenu.addEventListener('change', handleAnimationsInputRestriction);
         subMenuCheck.addEventListener('change', handleSubmitOptional_rm_comp);
@@ -618,7 +660,7 @@ async function Ready()
                 await restricInputsfor10SecMeanWhile(redAnimationNoInputs); //showing the red animation, because you are choosing to suspend
                 labelTxt(deployInfo.deploy);
 
-                //#region local utils
+                //#region local util
                 function CleanMasterObservers()
                 {
                     let mutCnt = 0, inscCnt = 0;
@@ -747,23 +789,27 @@ async function Ready()
     function UpdateOnScroll_RTM(scroll, labelEl)
     {
         // 📦
-        scroll.addEventListener('change', function (e) { UpdateLabel(e, this) }, true);
-        scroll.addEventListener('wheel', function (e) { volumeOnWheel(e, this) }, true);
-        function volumeOnWheel(e, elScroll)
+        scroll.addEventListener('change', UpdateLabelWithEvent, true);
+        scroll.addEventListener('wheel', ValueOnWheel, true);
+        function ValueOnWheel(e)
         {
+            elScroll = e.currentTarget;
             const dir = Math.sign(e.deltaY) * -1;
             const parsed = parseInt(elScroll.value, 10);
             elScroll.value = Number(dir + parsed);
 
-            UpdateLabel(elScroll);
+            UpdateLabelWithEvent(e);
         }
-        function UpdateLabel(elScroll)
+        function UpdateLabelWithEvent(e)
         {
-            labelEl.innerHTML = elScroll.value;
-            // don't worry about overflowing the counter, html range takes care of it
+            UptLabel(e.currentTarget);
+        }
+        function UptLabel(elScroll)
+        {
+            labelEl.innerHTML = elScroll.value; // don't worry about overflowing the counter, html range takes care of it
         }
 
-        UpdateLabel(scroll);
+        UptLabel(scroll);
     }
 
     //#endregion
@@ -795,14 +841,16 @@ function ObserveIframesAndDelployYTPlayers(targetClass)
     return observer
 
     //#region observer utils
-    function ObserveIntersectToSetUpPlayer(iterator, message = 'YscrollObserver')
+    function ObserveIntersectToSetUpPlayer(iterator, message = 'deployed for YscrollObserver')
     {
         const yobs = new IntersectionObserver(Intersection_callback, { threshold: [0] });
 
         function Intersection_callback(entries)
         {
             if (!entries[0])
+            {
                 yobs.disconnect();
+            }
 
             for (const entry of entries)
             {
@@ -859,7 +907,7 @@ function ObserveIframesAndDelployYTPlayers(targetClass)
     }
     function isNotZoomPath(el)
     {
-        return !el.closest("[class*='rm-zoom']");
+        return !el.closest("[class*='rm-zoom']"); //⚠️
     }
     //#endregion
 }
@@ -1106,10 +1154,10 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
 async function onPlayerReady(event)
 {
     const t = event.target;
-    const iframe = document.querySelector('#' + t.h.id) || t.getIframe();
+    const key = t.h.id;
+    const iframe = document.querySelector('#' + key) || t.getIframe();
     const parent = iframe.closest('.' + cssData.yt_gif_wrapper) || iframe.parentElement;
 
-    const key = t.h.id;
     const map = allVideoParameters.get(key); //videoParams
     const start = map?.start || 0;
     const end = map?.end || t.getDuration();
@@ -1128,7 +1176,7 @@ async function onPlayerReady(event)
     let updateStartTime = start;
 
 
-    // javascript is crazy
+    // javascript is crazy // I'm treating this variables as 'let'
     t.__proto__.changedVolumeOnce = false;
     t.__proto__.readyToChangeVolumeOnce = readyToChangeVolumeOnce;
     t.__proto__.newVol = entryVolume;
@@ -1827,11 +1875,11 @@ function onStateChange(state)
     {
         t.seekTo(map?.start || 0);
 
-        if (Utils.isValidUrl(UI.default.end_loop_sound_src))
+        if (Utils.isValidUrl(UI.defaultValues.end_loop_sound_src))
         {
             if (UI.experience.sound_when_video_loops.checked)
             {
-                play(UI.default.end_loop_sound_src);
+                play(UI.defaultValues.end_loop_sound_src);
                 //#region util
                 function play(url)
                 {
