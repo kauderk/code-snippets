@@ -51,6 +51,10 @@ Hello? from 7 */
 }
 /* main feature 00:00/00:00 */
 .yt-gif-timestamp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   position: relative;
   margin: 0px 5px;
 
@@ -63,9 +67,13 @@ Hello? from 7 */
   --h: 1.5em;
   height: calc(var(--h) + 0.1em);
   font-size: 1.5em; /* everyone's font size varies */
+
+  cursor: row-resize;
 }
 .yt-gif-timestamp.yt-gif-invisible-element:hover {
   color: white;
+  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000,
+    1px 1px 0 #000;
 }
 
 /*---------------------------------------------*/
