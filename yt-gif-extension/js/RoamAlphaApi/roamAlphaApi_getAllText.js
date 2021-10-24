@@ -1,108 +1,138 @@
 
-const targetPage = 'Test/02';
-const TargetUID = await ccc.util.getPageUid(targetPage);
+/* 
+add 
+notice if property doesn't exist
+    then create it
+
+alert the user that some settings values could cause trouble
+
+*/
+
+const targetPage = 'roam/js/kauderk/yt-gif/settings';
+let TargetUID = await ccc.util.getPageUid(targetPage);
+
+let orderCounter = 0; // with initSettingsPageMessage = 0 | without = -1
+
+window.UISettings = {
+    /* permutations - checkbox */
+    display: {
+        baseKey: base(addOrder()),
+        clip_life_span_format: dom('1'),
+    },
+    previous: {
+        baseKey: base(addOrder()),
+        /* one a time */
+        strict_start_timestamp: dom('1'),
+        start_timestamp: dom(),
+        fixed_start_timestamp: dom(),
+        /* one a time */
+        strict_start_volume: dom('1'),
+        start_volume: dom(),
+        fixed_start_volume: dom(),
+    },
+    experience: {
+        baseKey: base(addOrder()),
+        sound_when_video_loops: dom('1'),
+        awaiting_for_mouseenter_to_initialize: dom(),
+        awaiting_with_video_thumnail_as_bg: dom('1'),
+    },
+    fullscreenStyle: {
+        baseKey: base(addOrder()),
+        smoll_vid_when_big_ends: dom('1'),
+        mute_on_exit_fullscreenchange: dom(),
+        pause_on_exit_fullscreenchange: dom(),
+    },
+    /* one at a time - radio */
+    muteStyle: {
+        baseKey: base(addOrder()),
+        strict_mute_everything_except_current: dom('1'),
+        muted_on_mouse_over: dom(),
+        muted_on_any_mouse_interaction: dom(),
+    },
+    playStyle: {
+        baseKey: base(addOrder()),
+        strict_play_current_on_mouse_over: dom('1'),
+        play_on_mouse_over: dom(),
+        visible_clips_start_to_play_unmuted: dom(),
+    },
+    range: {
+        baseKey: base(addOrder()),
+        /*seconds up to 60*/
+        timestamp_display_scroll_offset: dom('5'),
+        /* integers from 0 to 100 */
+        end_loop_sound_volume: dom('50'),
+    },
+    InAndOutKeys: {
+        baseKey: base(addOrder()),
+        /* middle mouse button is on by default */
+        ctrlKey: sub('1'),
+        shiftKey: sub(),
+        altKey: sub(),
+    },
+    defaultValues: {
+        baseKey: base(addOrder()),
+        video_volume: sub(40),
+        /* 'dark' or 'light' */
+        css_theme: sub('dark'),
+        /* empty means 50% - only valid css units like px  %  vw */
+        player_span: sub('50%'),
+        /* distinguish between {{[[video]]:}} from {{[[yt-gif]]:}} or 'both' which is also valid*/
+        override_roam_video_component: sub(),
+        /* src sound when yt gif makes a loop, empty if unwanted */
+        end_loop_sound_src: sub('https://freesound.org/data/previews/256/256113_3263906-lq.mp3'),
+    },
+}
+
+//#region crazy obj code ... javascript are you ok?
+function addOrder()
+{
+    return Number(++orderCounter);
+}
+function base(order = '0')
+{
+    const base = {
+        order: order,
+    }
+    return Object.assign(baseTmp(), base);
+}
+function dom(baseValue = '')
+{
+    const dom = {
+        domEl: '',
+    }
+    return Object.assign(baseTmp(), subTemp(baseValue), dom);
+}
+function sub(baseValue = '')
+{
+    return Object.assign(baseTmp(), subTemp(baseValue));
+}
+
+function baseTmp()
+{
+    return {
+        uid: '',
+        string: '',
+        examined: false,
+    }
+}
+function subTemp(baseValue = '')
+{
+    const subSub = {
+        baseValue: baseValue,
+        sessionValue: null,
+    }
+    return Object.assign(baseTmp(), subSub);
+}
+//#endregion
+
+const initSettingsPageMessage = `The first ${orderCounter + 1} blocks will be added/removed automatically. The last parameters are customizable. 👋`;
+
 
 if (TargetUID == null) // BrandNewInstallation
 {
-    window.UISettings = {
-        /* permutations - checkbox */
-        display: {
-            baseValues: basePpt('1'),
-            clip_life_span_format: domElPpt('1'),
-        },
-        previous: {
-            baseValues: basePpt('2'),
-            /* one a time */
-            strict_start_timestamp: domElPpt('1'),
-            start_timestamp: domElPpt(''),
-            fixed_start_timestamp: domElPpt(''),
-            /* one a time */
-            strict_start_volume: domElPpt('1'),
-            start_volume: domElPpt(''),
-            fixed_start_volume: domElPpt(''),
-        },
-        experience: {
-            baseValues: basePpt('3'),
-            sound_when_video_loops: domElPpt('1'),
-            awaiting_for_mouseenter_to_initialize: domElPpt(''),
-            awaiting_with_video_thumnail_as_bg: domElPpt('1'),
-        },
-        fullscreenStyle: {
-            baseValues: basePpt('4'),
-            smoll_vid_when_big_ends: domElPpt('1'),
-            mute_on_exit_fullscreenchange: domElPpt(''),
-            pause_on_exit_fullscreenchange: domElPpt(''),
-        },
-        /* one at a time - radio */
-        muteStyle: {
-            baseValues: basePpt('5'),
-            strict_mute_everything_except_current: domElPpt('1'),
-            muted_on_mouse_over: domElPpt(''),
-            muted_on_any_mouse_interaction: domElPpt(''),
-        },
-        playStyle: {
-            baseValues: basePpt('6'),
-            strict_play_current_on_mouse_over: domElPpt('1'),
-            play_on_mouse_over: domElPpt(''),
-            visible_clips_start_to_play_unmuted: domElPpt(''),
-        },
-        range: {
-            baseValues: basePpt('7'),
-            /*seconds up to 60*/
-            timestamp_display_scroll_offset: domElPpt('5'),
-            /* integers from 0 to 100 */
-            end_loop_sound_volume: domElPpt('50'),
-        },
-        InAndOutKeys: {
-            baseValues: basePpt('7'),
-            /* middle mouse button is on by default */
-            ctrlKey: subPpt('1'),
-            shiftKey: subPpt(''),
-            altKey: subPpt(''),
-        },
-        defaultValues: {
-            baseValues: basePpt('8'),
-            video_volume: subPpt(40),
-            /* 'dark' or 'light' */
-            css_theme: subPpt('dark'),
-            /* empty means 50% - only valid css units like px  %  vw */
-            player_span: subPpt('50%'),
-            /* distinguish between {{[[video]]:}} from {{[[yt-gif]]:}} or 'both' which is also valid*/
-            override_roam_video_component: subPpt(''),
-            /* src sound when yt gif makes a loop, empty if unwanted */
-            end_loop_sound_src: subPpt('https://freesound.org/data/previews/256/256113_3263906-lq.mp3'),
-        },
-    }
-    function basePpt(order = '0')
-    {
-        return {
-            uid: '',
-            order: order,
-            string: '',
-        }
-    }
-    function domElPpt(baseValue = '')
-    {
-        return {
-            uid: '',
-            domEl: '',
-            string: '',
-            baseValue: baseValue,
-            sessionValue: null,
-        }
-    }
-    function subPpt(baseValue = '')
-    {
-        return {
-            uid: '',
-            string: '',
-            baseValue: baseValue,
-            sessionValue: null,
-        }
-    }
+    TargetUID = await navigateToUiOrCreate(targetPage);
+    await BrandNewInstallation(TargetUID);
 
-    const newUID = await navigateToUiOrCreate(targetPage);
-    await BrandNewInstallation(newUID);
     async function BrandNewInstallation(TargetUID)
     {
         for (const parentKey in window.UISettings)
@@ -110,8 +140,8 @@ if (TargetUID == null) // BrandNewInstallation
             const parentInfo = fmtSettings([parentKey]);
             const addedRoot = await createBlock(TargetUID, 100000, parentInfo.string, parentInfo.uid);
 
-            window.UISettings[parentKey].uid = addedRoot.uid; // LEVEL 0
-            window.UISettings[parentKey].string = addedRoot.string; // LEVEL 0
+            window.UISettings[parentKey].baseKey.uid = addedRoot.uid; // LEVEL 0
+            window.UISettings[parentKey].baseKey.string = addedRoot.string; // LEVEL 0
 
             for (const childKey in window.UISettings[parentKey])
             {
@@ -120,35 +150,92 @@ if (TargetUID == null) // BrandNewInstallation
                     if (subKey != 'sessionValue')
                         continue;
 
-                    try
-                    {
-                        const baseValue = window.UISettings[parentKey][childKey].baseValue;
+                    const baseValue = window.UISettings[parentKey][childKey].baseValue;
 
-                        const SubPropertyInfo = fmtSettings([childKey, baseValue]);
-                        const addedSubInfo = await createBlock(addedRoot.uid, 100000, SubPropertyInfo.string, SubPropertyInfo.uid);
+                    const SubPropertyInfo = fmtSettings([childKey, baseValue]);
+                    const addedSubInfo = await createBlock(addedRoot.uid, 100000, SubPropertyInfo.string, SubPropertyInfo.uid);
 
-                        window.UISettings[parentKey][childKey].uid = addedSubInfo.uid; // > LEVEL 1
-                        window.UISettings[parentKey][childKey].string = addedSubInfo.string; // > LEVEL 1
-
-                    }
-                    catch (err)
-                    {
-                        debugger;
-                    }
+                    window.UISettings[parentKey][childKey].uid = addedSubInfo.uid; // LEVEL 0 > sub
+                    window.UISettings[parentKey][childKey].string = addedSubInfo.string; // LEVEL 0 > sub
+                    window.UISettings[parentKey][childKey].sessionValue = baseValue; // LEVEL 0 > sub
                 }
             }
         }
     }
 }
-else
+else // Read and store Session Values
 {
-
     const entirePageText = await GetAllNestedTextFromUID(TargetUID);
+    const addedBlocks = await addMissingSettings(TargetUID);
+    // I want to think of this expensive calculations as looping through a 2d grid array
+    // My monkey brain will never be able to compute THAT or even this
+
+    async function addMissingSettings(TargetUID)
+    {
+        let addedBlocks = [];
+        for (const parentKey in window.UISettings)
+        {
+            const examined = window.UISettings[parentKey].baseKey.examined;
+            if (!examined)
+            {
+                const respectOrder = window.UISettings[parentKey].baseKey.order;
+                const parentInfo = fmtSettings([parentKey]);
+                const addedRoot = await createBlock(TargetUID, respectOrder, parentInfo.string, parentInfo.uid);
+
+                window.UISettings[parentKey].baseKey.uid = addedRoot.uid;
+                window.UISettings[parentKey].baseKey.string = addedRoot.string;
+                window.UISettings[parentKey].baseKey.examined = true;
+
+                addedBlocks.push(addedRoot.string);
+            }
+
+            for (const childKey in window.UISettings[parentKey])
+            {
+                for (const subKey in window.UISettings[parentKey][childKey]) // FIRST LEVEL > Sub properties
+                {
+                    if (subKey != 'sessionValue')
+                        continue;
+
+                    const examined = window.UISettings[parentKey][childKey].examined;
+                    if (!examined)
+                    {
+                        const addedRoot = window.UISettings[parentKey].baseKey;
+                        const baseValue = window.UISettings[parentKey][childKey].baseValue;
+                        const respectOrder = window.UISettings[parentKey].baseKey.order;
+
+                        const SubPropertyInfo = fmtSettings([childKey, baseValue]);
+                        const addedSubInfo = await createBlock(addedRoot.uid, respectOrder, SubPropertyInfo.string, SubPropertyInfo.uid);
+
+                        window.UISettings[parentKey][childKey].uid = addedSubInfo.uid; // LEVEL 0 > sub
+                        window.UISettings[parentKey][childKey].string = addedSubInfo.string; // LEVEL 0 > sub
+                        window.UISettings[parentKey][childKey].sessionValue = baseValue; // LEVEL 0 > sub
+
+                        addedBlocks.push(addedSubInfo.string);
+
+                        window.UISettings[parentKey][childKey].examined = true;
+                    }
+                }
+            }
+        }
+        return addedBlocks;
+    }
 
     console.log(entirePageText);
     console.log(window.UISettings);
+    console.log(addedBlocks);
 }
+await SetNumberedViewWithUid(TargetUID);
+await CollapseDirectcChildren(TargetUID, false);
 return '';
+
+
+
+
+
+
+
+
+
 
 async function GetAllNestedTextFromUID(UID)
 {
@@ -160,8 +247,112 @@ async function GetAllNestedTextFromUID(UID)
     }
 
     //accumulativeString
-    return await RecursiveReadAndAssignChildrenUIData(ChildrenHierarchy[0][0], '');
+    return await Rec_Read_Write_SettingsPage(ChildrenHierarchy[0][0], '');
 }
+
+async function Rec_Read_Write_SettingsPage(nextObj, accStr, nextUID, keyFromLevel0)
+{
+    const { tab, nextStr, indent } = await NestedString(nextObj);
+    const rgxBase = new RegExp(/\(([^\)]+)\)( : )(\b\w+\b)| |:|(\b.*\b)/, 'gm');
+    rgxBase.lastIndex = 0;
+    const [whole, uid, join, key, x, y, z, value] = rgxBase.exec(nextStr || 'hello');
+    console.log(whole, uid, join, key, x, y, z, value);
+
+
+    if (!SuccesfullKeyUpt(indent))
+    {
+        const uidToDelete = uid || nextUID;
+        if (uidToDelete)
+        {
+            await removingBlock(uidToDelete);
+        }
+    }
+    else
+    {
+        accStr = accStr + '\n' + tab + nextStr; // outside of here, you'll the page after the delitions
+    }
+
+
+    if (nextObj.children)
+    {
+        const object = await getBlockOrPageInfo(nextObj.uid);
+        const children = sortObjectsByOrder(object[0][0].children);
+
+        for (const child of children)
+        {
+            if (child.order > orderCounter) // stop here
+                return accStr;
+
+            accStr = await Rec_Read_Write_SettingsPage(child, accStr, uid, key);
+        }
+    }
+
+    return accStr;
+
+    //#region local uitils
+    function SuccesfullKeyUpt(indent)
+    {
+        if (indent == 0)
+        {
+            if (RecIsValidNestedKey(window.UISettings, key)) // LEVEL 0 block upt
+            {
+                window.UISettings[key].baseKey.string = whole;
+                window.UISettings[key].baseKey.uid = uid;
+                window.UISettings[key].baseKey.examined = true;
+                return true;
+            }
+        }
+        else if (indent == 1)
+        {
+            if (RecIsValidNestedKey(window.UISettings, keyFromLevel0, [key])) // nested LEVEL 1 block upt
+            {
+                window.UISettings[keyFromLevel0][key].string = whole;
+                window.UISettings[keyFromLevel0][key].uid = uid;
+                window.UISettings[keyFromLevel0][key].examined = true;
+                window.UISettings[keyFromLevel0][key].sessionValue = value;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function RecIsValidNestedKey(obj, level, ...rest)
+    {
+        if (obj === undefined) 
+        {
+            return false
+        }
+        if (rest.length == 0 && obj.hasOwnProperty(level))
+        {
+            return true
+        }
+        return RecIsValidNestedKey(obj[level], ...rest)
+    }
+    async function removingBlock(uid)
+    {
+        if (whole == TargetUID) return;
+        // the nature of the recursive func makes it
+        // so the page can't be avoided, you don't want that - return
+
+        console.log(`"${whole}" <= invalid YT GIF setting was removed!`);
+        await ccc.util.deleteBlock(uid);
+    }
+    //#endregion
+}
+
+async function NestedString(obj)
+{
+    const nextStr = obj.string || obj.title || '';
+    const parentsHierarchy = await getBlockParentUids(obj.uid);
+    let nestLevel = parentsHierarchy.length;
+    let tab = '\t';
+    return {
+        tab: tab.repeat(nestLevel),
+        nextStr,
+        indent: nestLevel,
+    }
+}
+
 
 
 
@@ -213,88 +404,32 @@ async function createBlock(parent_uid, block_order, block_string, manualUID = fa
 
 
 
-
-
-
-async function RecursiveReadAndAssignChildrenUIData(nextObj, accStr, nextUID, keyFromLevel0)
+async function SetNumberedViewWithUid(uid)
 {
-    const { tab, nextStr, indent } = await NestedString(nextObj);
-    const rgxBase = new RegExp(/\(([^\)]+)\)( : )(\b\w+\b)| |:|(\b.*\b)/, 'gm');
-    const [whole, uid, join, key, optJoin, value] = rgxBase.exec(nextStr || 'hello');
-
-    if (indent == 0) // LEVEL 0
-    {
-        if (RecIsValidNestedKey(window.UISettings, key))
-        {
-            window.UISettings[key].string = whole;
-            window.UISettings[key].uid = uid;
-        }
-        else
-        {
-            if (uid || nextUID)
-                await removingBlock(uid || nextUID);
-        }
-
-    }
-    else if (indent == 1) // LEVEL 1
-    {
-        if (RecIsValidNestedKey(window.UISettings, keyFromLevel0, [key]))
-        {
-            window.UISettings[keyFromLevel0][key].string = whole;
-            window.UISettings[keyFromLevel0][key].uid = uid;
-        }
-        else
-        {
-            await removingBlock(uid || nextUID);
-        }
-    }
-    function RecIsValidNestedKey(obj, level, ...rest)
-    {
-        if (obj === undefined) 
-        {
-            return false
-        }
-        if (rest.length == 0 && obj.hasOwnProperty(level))
-        {
-            return true
-        }
-        return RecIsValidNestedKey(obj[level], ...rest)
-    }
-
-    async function removingBlock(uid)
-    {
-        if (whole == TargetUID) return; // the nature of the recursive func makes it so the page can't be avoided
-
-        console.log(`"${whole}" <= invalid YT GIF setting! remving ... ${uid || 'the block'} `);
-        await ccc.util.deleteBlock(uid);
-    }
-
-    accStr = accStr + '\n' + tab + nextStr;
-
-    if (nextObj.children)
-    {
-        const object = await getBlockOrPageInfo(nextObj.uid);
-        const children = sortObjectsByOrder(object[0][0].children);
-
-        for (const child of children)
-        {
-            accStr = await RecursiveReadAndAssignChildrenUIData(child, accStr, uid, key);
-        }
-    }
-    return accStr;
+    //https://github.com/dvargas92495/roam-js-extensions/blob/c7092e40f6602a97fb555ae9d0cda8d2780ba0f2/src/entries/mouseless.ts#:~:text=%60%5B%3Afind%20(pull%20%3Fb%20%5B%3Achildren/view-type%5D)%20%3Awhere%20%5B%3Fb%20%3Ablock/uid%20%22%24%7Buid%7D%22%5D%5D%60
+    const newViewType = "numbered";
+    window.roamAlphaAPI.updateBlock({
+        block: { uid, "children-view-type": newViewType },
+    });
 }
-async function NestedString(obj)
+async function CollapseDirectcChildren(block_uid, block_expanded)
 {
-    const nextStr = obj.string || obj.title || '';
-    const parentsHierarchy = await getBlockParentUids(obj.uid);
-    let nestLevel = parentsHierarchy.length;
-    let tab = '\t';
-    return {
-        tab: tab.repeat(nestLevel),
-        nextStr,
-        indent: nestLevel,
+    const firstGen = await ccc.util.allChildrenInfo(block_uid);
+    const children = sortObjectsByOrder(firstGen[0][0].children);
+
+    for (const child of children)
+    {
+        await ExpandBlock(child.uid, block_expanded);
     }
 }
+async function ExpandBlock(block_uid, block_expanded)
+{
+    return await window.roamAlphaAPI.updateBlock(
+        { block: { uid: block_uid, open: block_expanded } });
+}
+
+
+
 
 async function getBlockOrPageInfo(blockUid)
 {
@@ -411,7 +546,7 @@ async function navigateToUiOrCreate(destinationPage, openInSideBar = false, sSid
             {
                 destinationPage = destinationPage.substring(0, 254);
             }
-            await ccc.util.getOrCreatePageUid(destinationPage);
+            await ccc.util.getOrCreatePageUid(destinationPage, initSettingsPageMessage);
             await sleep(50);
 
             uid = await await ccc.util.getPageUid(destinationPage);
