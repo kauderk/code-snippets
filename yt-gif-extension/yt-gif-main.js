@@ -1,59 +1,7 @@
-// version 33 - semi-refactored
-// Load the IFrame Player API.
-const tag = document.createElement('script');
-tag.src = 'https://www.youtube.com/player_api';
-const firstScriptTag = document.getElementsByTagName('script')[0];
-firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-
-
-
-//#region This is super weird - loading Utils variable
-let Utils = ImportUtilies().then(val =>
-{
-    Utils = kauderk.util;
-});
-async function ImportUtilies()
-{
-    if (typeof kauderk !== 'undefined' && typeof kauderk.util !== 'undefined')
-    {
-        // Somebody has already loaded the utility 
-        // HI CCC, I plagariezed the heck of your method,
-        // but : import * as utils from ${URLFolder('js/utils.js')}; 
-        // wasn't working for me
-        return null;// kauderk.util returns undefined, Why? SO I just don't bother on trying
-    }
-    else
-    {
-        const utilsScript = document.createElement("script");
-        utilsScript.src = URLFolder(`js/utils.js`) + "?" + new Date().getTime();
-        utilsScript.id = 'yt-gif-utils';
-        utilsScript.type = "text/javascript";
-
-        document.getElementsByTagName('head')[0].appendChild(utilsScript);
-
-        await scriptLoaded(utilsScript);
-        return null;// kauderk.util returns undefined, Why? SO I just don't bother on trying
-
-        //#region local util
-        async function scriptLoaded(script)
-        {
-            return new Promise((resolve, reject) =>
-            {
-                script.onload = () => resolve(script)
-            })
-        }
-        //#endregion
-    }
-}
-//#endregion
-
-
-
-
+// version 34 - semi-refactored
 /*-----------------------------------*/
 /* USER SETTINGS  */
-const UI = window.YTGIF;
+const UI = UISettings;
 /* user doesn't need to see this */
 UI.label = {
     rangeValue: '',
@@ -221,22 +169,59 @@ rm_components.both = {
 
 
 
-// wait for APIs and Utils to exist
-const almostReady = setInterval(() =>
+// wait for APIs and Utils to exist - loading Utils variable
+let Utils;
+LoadExternalResources().then(val =>
 {
-    if ((typeof (YT) == 'undefined'))
+    Utils = kauderk.util;
+    Ready();
+});
+async function LoadExternalResources()
+{
+    if (typeof kauderk !== 'undefined' && typeof kauderk.util !== 'undefined' && (typeof (YT) != 'undefined'))
     {
-        return;
+        // Somebody has already loaded the utility 
+        // HI CCC, I plagariezed the heck of your method,
+        // but : import * as utils from ${URLFolder('js/utils.js')}; 
+        // wasn't working for me
+        return null;
     }
-    if (typeof Utils != 'object')
+    else
     {
-        return;
+        const utilsScript = document.createElement("script");
+        utilsScript.src = URLFolder(`js/utils.js`) + "?" + new Date().getTime();
+        utilsScript.id = 'yt-gif-utils';
+        utilsScript.type = "text/javascript";
+        document.getElementsByTagName('head')[0].appendChild(utilsScript);
+
+
+        // Load the IFrame Player API.
+        const YTAPI = document.createElement('script');
+        YTAPI.src = 'https://www.youtube.com/player_api';
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(YTAPI, firstScriptTag);
+
+
+        await loadScript(utilsScript);
+        await loadScript(YTAPI);
+
+        return null;
+
+        //#region local util
+        async function loadScript(script)
+        {
+            return new Promise((resolve, reject) =>
+            {
+                script.onload = () => resolve(script)
+            })
+        }
+        //#endregion
     }
+}
 
-    clearInterval(almostReady);
-    Ready(); // load dropdown menu and deploy iframes
 
-}, 500);
+
+
 
 async function Ready()
 {
@@ -270,8 +255,27 @@ async function Ready()
     await Load_DDM_onTopbar(dropDownMenu); // DDM - drop down menu
 
 
+    // 2. RoamAPI to load/read users values on load
+    /* getOrCreatePageUid // 'roam/js/kauderk/yt-gif/settings' YT GIF Extension Settings
 
-    // 2. assign variables and events
+    ccc.util.queryAllTxtInChildren('---------'); // works with pages UIDs also - that's cool
+
+    for each UISettings parent property 
+    
+        if it doesn't exist 
+            create block with it's name
+            assign the newly created block uid to the UISettings parent's sub property blockUID:
+
+    for each child property create a block with it's name
+
+    getBlockWithStringFromPageUid
+    get string form each block child
+    check if value value != base
+    asign valid sessionValue // base will be assign to sessionValue regarless
+    */
+
+
+    // 3. assign variables and events
     DDM_to_UI_variables(); // the 'UI' variables are HIGHLY dependent on this, because they will change from //string to //Element - cringe I know, but how else?
     //#region relevant variables
     const { ddm_icon, ddm_focus, ddm_info_message_selector, dropdown__hidden } = cssData
@@ -290,7 +294,7 @@ async function Ready()
 
 
 
-    // 3. run extension and events after set up
+    // 4. run extension and events after set up
     //#region relevant variables
     const { override_roam_video_component } = UI.defaultValues;
     const { awaiting_with_video_thumnail_as_bg } = UI.experience;
@@ -379,37 +383,33 @@ async function Ready()
         {
             for (const childKey in UI[parentKey])
             {
-                const userValue = UI[parentKey][childKey];
+                const sessionValue = UI[parentKey][childKey]['sessionValue'];
 
                 const domEl = document.getElementById(childKey);
 
-                if (domEl) //don't mess up any other variable
+                if (domEl) 
                 {
                     UI[parentKey][childKey] = domEl;
+
+                    switch (parentKey)
+                    {
+                        case 'range':
+                            UI[parentKey][childKey].value = Number(sessionValue);
+                            break;
+                        case 'label':
+                            UI[parentKey][childKey].innerHTML = sessionValue;
+                            break;
+                        default:
+                            const binaryInput = UI[parentKey][childKey];
+                            binaryInput.checked = Utils.isTrue(sessionValue);
+                            Utils.linkClickPreviousElement(binaryInput);
+                    }
+                }
+                else
+                {
+                    continue; //don't mess up any other variable
                 }
 
-                switch (parentKey)
-                {
-                    case 'display':
-                    case 'previous':
-                    case 'referenced':
-                    case 'deploymentStyle':
-                    case 'experience':
-                    case 'inactiveStyle':
-                    case 'fullscreenStyle':
-                    case 'muteStyle':
-                    case 'playStyle':
-                        const binaryInput = UI[parentKey][childKey];
-                        binaryInput.checked = Utils.isTrue(userValue);
-                        Utils.linkClickPreviousElement(binaryInput);
-                        break;
-                    case 'range':
-                        UI[parentKey][childKey].value = Number(userValue);
-                        break;
-                    case 'label':
-                        UI[parentKey][childKey].innerHTML = userValue;
-                        break;
-                }
             }
         }
     }
