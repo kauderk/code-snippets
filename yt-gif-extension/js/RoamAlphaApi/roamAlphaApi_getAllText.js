@@ -1,229 +1,188 @@
+/*
 
-/* 
-add 
-notice if property doesn't exist
-    then create it
+add ☐ ☑
+    alert to the user that some settings values could cause trouble
 
-alert the user that some settings values could cause trouble
+    code and page distinguishing between
+        radio
+        checkbox
+        string
+        url
+        rng
+
+        
+added
+    notice if property doesn't exist ☑ ☑
+        then create it ☑ ☑
+        
+
+bugs ☐ ☑
+    renaming, hard deleting sub properties... ☑
+        they get deleted ☑
+        and readded at the botttom ☑
+        move around by user 
+    
+
+solved ☐ ☑
+    when changes are made to the window.UISettings ☑ ☑
+        the first block prompt message block count isn't updating 
 
 */
 
 const targetPage = 'roam/js/kauderk/yt-gif/settings';
 let TargetUID = await ccc.util.getPageUid(targetPage);
 
-let orderCounter = 0; // with initSettingsPageMessage = 0 | without = -1
+let orderCounter = 0; //  used as incremented, base counter and recursive conditional
+
+const rad = 'radio',
+    chk = 'checkbox',
+    str = 'string',
+    int = 'integer',
+    bol = 'boolean',
+    url = 'url',
+    rng = 'range';
+
 
 window.UISettings = {
     /* permutations - checkbox */
     display: {
-        baseKey: base(addOrder()),
+        baseKey: addOrder(chk),
         clip_life_span_format: dom('1'),
     },
-    previous: {
-        baseKey: base(addOrder()),
+    previousTimestamp: {
+        baseKey: addOrder(rad),
         /* one a time */
         strict_start_timestamp: dom('1'),
         start_timestamp: dom(),
         fixed_start_timestamp: dom(),
+    },
+    previousVolume: {
+        baseKey: addOrder(rad),
         /* one a time */
         strict_start_volume: dom('1'),
         start_volume: dom(),
         fixed_start_volume: dom(),
     },
     experience: {
-        baseKey: base(addOrder()),
+        baseKey: addOrder(chk),
         sound_when_video_loops: dom('1'),
         awaiting_for_mouseenter_to_initialize: dom(),
         awaiting_with_video_thumnail_as_bg: dom('1'),
     },
     fullscreenStyle: {
-        baseKey: base(addOrder()),
+        baseKey: addOrder(chk),
         smoll_vid_when_big_ends: dom('1'),
         mute_on_exit_fullscreenchange: dom(),
         pause_on_exit_fullscreenchange: dom(),
     },
     /* one at a time - radio */
     muteStyle: {
-        baseKey: base(addOrder()),
+        baseKey: addOrder(chk),
         strict_mute_everything_except_current: dom('1'),
         muted_on_mouse_over: dom(),
         muted_on_any_mouse_interaction: dom(),
     },
     playStyle: {
-        baseKey: base(addOrder()),
+        baseKey: addOrder(chk),
         strict_play_current_on_mouse_over: dom('1'),
         play_on_mouse_over: dom(),
         visible_clips_start_to_play_unmuted: dom(),
     },
     range: {
-        baseKey: base(addOrder()),
+        baseKey: addOrder(rng),
         /*seconds up to 60*/
-        timestamp_display_scroll_offset: dom('5'),
+        timestamp_display_scroll_offset: dom('5', int),
         /* integers from 0 to 100 */
-        end_loop_sound_volume: dom('50'),
+        end_loop_sound_volume: dom('50', int),
     },
     InAndOutKeys: {
-        baseKey: base(addOrder()),
+        baseKey: addOrder(chk),
         /* middle mouse button is on by default */
-        ctrlKey: sub('1'),
-        shiftKey: sub(),
-        altKey: sub(),
+        ctrlKey: dom('1'),
+        shiftKey: dom(),
+        altKey: dom(),
     },
     defaultValues: {
-        baseKey: base(addOrder()),
-        video_volume: sub(40),
+        baseKey: addOrder(),
+        video_volume: subInputType(40, int),
+
         /* 'dark' or 'light' */
-        css_theme: sub('dark'),
+        css_theme: subInputType('dark', str),
+
         /* empty means 50% - only valid css units like px  %  vw */
-        player_span: sub('50%'),
+        player_spannnnnnn: subInputType('50%', str),
+
         /* distinguish between {{[[video]]:}} from {{[[yt-gif]]:}} or 'both' which is also valid*/
-        override_roam_video_component: sub(),
+        override_roam_video_component: subInputType('', [bol, str]),
+
         /* src sound when yt gif makes a loop, empty if unwanted */
-        end_loop_sound_src: sub('https://freesound.org/data/previews/256/256113_3263906-lq.mp3'),
+        end_loop_sound_src: subInputType('https://freesound.org/data/previews/256/256113_3263906-lq.mp3', url),
     },
 }
 
-//#region crazy obj code ... javascript are you ok?
-function addOrder()
-{
-    return Number(++orderCounter);
-}
-function base(order = '0')
-{
-    const base = {
-        order: order,
-    }
-    return Object.assign(baseTmp(), base);
-}
-function dom(baseValue = '')
-{
-    const dom = {
-        domEl: '',
-    }
-    return Object.assign(baseTmp(), subTemp(baseValue), dom);
-}
-function sub(baseValue = '')
-{
-    return Object.assign(baseTmp(), subTemp(baseValue));
-}
 
-function baseTmp()
+
+//#region crazy obj code ... javascript are you ok?
+function addOrder(inputType)
 {
-    return {
-        uid: '',
-        string: '',
-        examined: false,
-    }
+    return Object.assign(baseTmp(inputType, Number(++orderCounter)));
 }
-function subTemp(baseValue = '')
+function dom(baseValue = '', inputType)
+{
+    const domObj = { domEl: '' }
+    return Object.assign(subTemp(baseValue, inputType), domObj);
+}
+function subInputType(baseValue = '', inputType)
+{
+    return Object.assign(subTemp(baseValue, inputType));
+}
+/*---------------------------------------------*/
+function subTemp(baseValue = '', inputType)
 {
     const subSub = {
         baseValue: baseValue,
         sessionValue: null,
     }
-    return Object.assign(baseTmp(), subSub);
+    return Object.assign(baseTmp(inputType), subSub);
+}
+function baseTmp(_inputType, _order)
+{
+    return {
+        uid: '',
+        string: '',
+        examined: false,
+        inputType: _inputType,
+        order: _order,
+    }
+}
+/*---------------------------------------------*/
+function PromptMssg()
+{
+    return `The first ${orderCounter + 1} blocks will be added/removed automatically. The last parameters are customizable. 👋`;
 }
 //#endregion
 
-const initSettingsPageMessage = `The first ${orderCounter + 1} blocks will be added/removed automatically. The last parameters are customizable. 👋`;
 
+
+const initSettingsPageMessage = PromptMssg();
+
+assignChildrenOrder(); // 🐌
 
 if (TargetUID == null) // BrandNewInstallation
 {
     TargetUID = await navigateToUiOrCreate(targetPage);
-    await BrandNewInstallation(TargetUID);
-
-    async function BrandNewInstallation(TargetUID)
-    {
-        for (const parentKey in window.UISettings)
-        {
-            const parentInfo = fmtSettings([parentKey]);
-            const addedRoot = await createBlock(TargetUID, 100000, parentInfo.string, parentInfo.uid);
-
-            window.UISettings[parentKey].baseKey.uid = addedRoot.uid; // LEVEL 0
-            window.UISettings[parentKey].baseKey.string = addedRoot.string; // LEVEL 0
-
-            for (const childKey in window.UISettings[parentKey])
-            {
-                for (const subKey in window.UISettings[parentKey][childKey]) // FIRST LEVEL > Sub properties
-                {
-                    if (subKey != 'sessionValue')
-                        continue;
-
-                    const baseValue = window.UISettings[parentKey][childKey].baseValue;
-
-                    const SubPropertyInfo = fmtSettings([childKey, baseValue]);
-                    const addedSubInfo = await createBlock(addedRoot.uid, 100000, SubPropertyInfo.string, SubPropertyInfo.uid);
-
-                    window.UISettings[parentKey][childKey].uid = addedSubInfo.uid; // LEVEL 0 > sub
-                    window.UISettings[parentKey][childKey].string = addedSubInfo.string; // LEVEL 0 > sub
-                    window.UISettings[parentKey][childKey].sessionValue = baseValue; // LEVEL 0 > sub
-                }
-            }
-        }
-    }
+    await BrandNewInstallation(TargetUID); // 🐌
 }
 else // Read and store Session Values
 {
-    const entirePageText = await GetAllNestedTextFromUID(TargetUID);
-    const addedBlocks = await addMissingSettings(TargetUID);
-    // I want to think of this expensive calculations as looping through a 2d grid array
-    // My monkey brain will never be able to compute THAT or even this
-
-    async function addMissingSettings(TargetUID)
-    {
-        let addedBlocks = [];
-        for (const parentKey in window.UISettings)
-        {
-            const examined = window.UISettings[parentKey].baseKey.examined;
-            if (!examined)
-            {
-                const respectOrder = window.UISettings[parentKey].baseKey.order;
-                const parentInfo = fmtSettings([parentKey]);
-                const addedRoot = await createBlock(TargetUID, respectOrder, parentInfo.string, parentInfo.uid);
-
-                window.UISettings[parentKey].baseKey.uid = addedRoot.uid;
-                window.UISettings[parentKey].baseKey.string = addedRoot.string;
-                window.UISettings[parentKey].baseKey.examined = true;
-
-                addedBlocks.push(addedRoot.string);
-            }
-
-            for (const childKey in window.UISettings[parentKey])
-            {
-                for (const subKey in window.UISettings[parentKey][childKey]) // FIRST LEVEL > Sub properties
-                {
-                    if (subKey != 'sessionValue')
-                        continue;
-
-                    const examined = window.UISettings[parentKey][childKey].examined;
-                    if (!examined)
-                    {
-                        const addedRoot = window.UISettings[parentKey].baseKey;
-                        const baseValue = window.UISettings[parentKey][childKey].baseValue;
-                        const respectOrder = window.UISettings[parentKey].baseKey.order;
-
-                        const SubPropertyInfo = fmtSettings([childKey, baseValue]);
-                        const addedSubInfo = await createBlock(addedRoot.uid, respectOrder, SubPropertyInfo.string, SubPropertyInfo.uid);
-
-                        window.UISettings[parentKey][childKey].uid = addedSubInfo.uid; // LEVEL 0 > sub
-                        window.UISettings[parentKey][childKey].string = addedSubInfo.string; // LEVEL 0 > sub
-                        window.UISettings[parentKey][childKey].sessionValue = baseValue; // LEVEL 0 > sub
-
-                        addedBlocks.push(addedSubInfo.string);
-
-                        window.UISettings[parentKey][childKey].examined = true;
-                    }
-                }
-            }
-        }
-        return addedBlocks;
-    }
+    const entirePageText = await Read_Write_SettingsPage(TargetUID); // 🐌
+    const addedBlocks = await addMissingSettings(TargetUID); // 🐌🐌
 
     console.log(entirePageText);
     console.log(window.UISettings);
     console.log(addedBlocks);
 }
+await createUpdatePromptMssIfMissing(TargetUID);
 await SetNumberedViewWithUid(TargetUID);
 await CollapseDirectcChildren(TargetUID, false);
 return '';
@@ -231,13 +190,137 @@ return '';
 
 
 
+async function createUpdatePromptMssIfMissing(parentUID)
+{
+    const child0UID = await ccc.util.getNthChildUid(parentUID, 0);
+    const child0Str = await ccc.util.blockString(child0UID);
+    const prePromptMssg = PromptMssg();
+
+    if (child0Str != prePromptMssg)
+    {
+        ccc.util.updateBlockString(child0UID, prePromptMssg);
+    }
+}
+
+
+
+
+function assignChildrenOrder()
+{
+    for (const parentKey in window.UISettings)
+    {
+        let childrenOrderCounter = -1;
+        for (const childKey in window.UISettings[parentKey])
+        {
+            for (const subKey in window.UISettings[parentKey][childKey])
+            {
+                if (subKey != 'order')
+                {
+                    continue;
+                }
+
+                const subOrder = window.UISettings[parentKey][childKey][subKey];
+                if (!subOrder)
+                {
+                    window.UISettings[parentKey][childKey][subKey] = Number(++childrenOrderCounter);
+                }
+                break;
+            }
+        }
+    }
+}
+
+
+
+
+async function addMissingSettings(TargetUID)
+{
+    let addedBlocks = [];
+    for (const parentKey in window.UISettings)
+    {
+        const examined = window.UISettings[parentKey].baseKey.examined;
+        if (!examined)
+        {
+            const respectOrder = window.UISettings[parentKey].baseKey.order;
+            const parentInfo = fmtSettings([parentKey]);
+            const addedRoot = await createBlock(TargetUID, respectOrder, parentInfo.string, parentInfo.uid);
+
+            window.UISettings[parentKey].baseKey.uid = addedRoot.uid;
+            window.UISettings[parentKey].baseKey.string = addedRoot.string;
+            window.UISettings[parentKey].baseKey.examined = true;
+
+            addedBlocks.push(addedRoot.string);
+        }
+
+        for (const childKey in window.UISettings[parentKey])
+        {
+            for (const subKey in window.UISettings[parentKey][childKey]) // FIRST LEVEL > Sub properties
+            {
+                if (subKey != 'sessionValue')
+                    continue;
+
+                const examined = window.UISettings[parentKey][childKey].examined;
+                if (!examined)
+                {
+                    const addedRoot = window.UISettings[parentKey].baseKey;
+                    const baseValue = window.UISettings[parentKey][childKey].baseValue;
+                    const respectOrder = window.UISettings[parentKey][childKey].order;
+
+                    const SubPropertyInfo = fmtSettings([childKey, baseValue]);
+                    const addedSubInfo = await createBlock(addedRoot.uid, respectOrder, SubPropertyInfo.string, SubPropertyInfo.uid);
+
+                    window.UISettings[parentKey][childKey].uid = addedSubInfo.uid; // LEVEL 0 > sub
+                    window.UISettings[parentKey][childKey].string = addedSubInfo.string; // LEVEL 0 > sub
+                    window.UISettings[parentKey][childKey].sessionValue = baseValue; // LEVEL 0 > sub
+
+                    addedBlocks.push(addedSubInfo.string);
+
+                    window.UISettings[parentKey][childKey].examined = true;
+                }
+                break;
+            }
+        }
+    }
+    return addedBlocks;
+}
+// I want to think of this expensive calculations as looping through a 2d grid array
+// My monkey brain will never be able to compute THAT or even this
+async function BrandNewInstallation(TargetUID)
+{
+    for (const parentKey in window.UISettings)
+    {
+        const parentInfo = fmtSettings([parentKey]);
+        const addedRoot = await createBlock(TargetUID, 100000, parentInfo.string, parentInfo.uid);
+
+        window.UISettings[parentKey].baseKey.uid = addedRoot.uid; // LEVEL 0
+        window.UISettings[parentKey].baseKey.string = addedRoot.string; // LEVEL 0
+
+        for (const childKey in window.UISettings[parentKey])
+        {
+            for (const subKey in window.UISettings[parentKey][childKey]) // FIRST LEVEL > Sub properties
+            {
+                if (subKey != 'sessionValue')
+                    continue;
+
+                const baseValue = window.UISettings[parentKey][childKey].baseValue;
+
+                const SubPropertyInfo = fmtSettings([childKey, baseValue]);
+                const addedSubInfo = await createBlock(addedRoot.uid, 100000, SubPropertyInfo.string, SubPropertyInfo.uid);
+
+                window.UISettings[parentKey][childKey].uid = addedSubInfo.uid; // LEVEL 0 > sub
+                window.UISettings[parentKey][childKey].string = addedSubInfo.string; // LEVEL 0 > sub
+                window.UISettings[parentKey][childKey].sessionValue = baseValue; // LEVEL 0 > sub
+            }
+        }
+    }
+}
 
 
 
 
 
 
-async function GetAllNestedTextFromUID(UID)
+async function Read_Write_SettingsPage(UID)
 {
     const ChildrenHierarchy = await getBlockOrPageInfo(UID, true);
 
@@ -250,21 +333,17 @@ async function GetAllNestedTextFromUID(UID)
     return await Rec_Read_Write_SettingsPage(ChildrenHierarchy[0][0], '');
 }
 
-async function Rec_Read_Write_SettingsPage(nextObj, accStr, nextUID, keyFromLevel0)
+async function Rec_Read_Write_SettingsPage(nextObj, accStr, nextUID, keyFromLevel0, selfOrder)
 {
     const { tab, nextStr, indent } = await NestedString(nextObj);
-    const rgxBase = new RegExp(/\(([^\)]+)\)( : )(\b\w+\b)| |:|(\b.*\b)/, 'gm');
-    rgxBase.lastIndex = 0;
-    const [whole, uid, join, key, x, y, z, value] = rgxBase.exec(nextStr || 'hello');
-    console.log(whole, uid, join, key, x, y, z, value);
+    const { uid, key, value } = getSettingsFromString(nextStr);
 
-
-    if (!SuccesfullKeyUpt(indent))
+    if (!SuccesfullKeyUpt(indent)) // remove it
     {
         const uidToDelete = uid || nextUID;
         if (uidToDelete)
         {
-            await removingBlock(uidToDelete);
+            await removingBlock(uidToDelete); // 🐌
         }
     }
     else
@@ -280,25 +359,68 @@ async function Rec_Read_Write_SettingsPage(nextObj, accStr, nextUID, keyFromLeve
 
         for (const child of children)
         {
-            if (child.order > orderCounter) // stop here
+            if (child.order > orderCounter) // stop here // 🐌
                 return accStr;
 
-            accStr = await Rec_Read_Write_SettingsPage(child, accStr, uid, key);
+            accStr = await Rec_Read_Write_SettingsPage(child, accStr, uid, key, selfOrder);
         }
     }
 
     return accStr;
 
     //#region local uitils
+    function getSettingsFromString(nextStr)
+    {
+        //const rgxBase = new RegExp(/\(([^\)]+)\)( : )(\b\w+\b)| |:|(\b.*\b)/, 'gm');
+        //const rgxBase = new RegExp(/\(([^\)]+)\)( : )(\b\w+\b)| |:|(\b.*\b)/, 'gm');
+        const rgxUid = new RegExp(/\(([^\)]+)\)/, 'gm'); //(XXXXXXXX)
+        // const rgxKey = new RegExp(/(?<=\)\s:\s)(\b\w+\b)/, 'gm'); //) : XXXXXXXXX
+        // (?<=\S : )([^\s]*)
+
+        // big monkey brain .. uga buga
+        // split the string by " : " and compare keys and values [1], [2]
+        // uga buga
+
+        let splitedStr = nextStr.split(' : '); // deconstruct
+        const firstWords = splitedStr.map(word => word.split(' ')[0]); // get only the first word inside between ' : '
+        const rawUid = rgxUid.exec(firstWords[0]);
+
+        return {
+            uid: rawUid ? rawUid[1] : undefined,
+            key: firstWords[1],
+            value: firstWords[2],
+        }
+    }
+
     function SuccesfullKeyUpt(indent)
     {
         if (indent == 0)
         {
             if (RecIsValidNestedKey(window.UISettings, key)) // LEVEL 0 block upt
             {
-                window.UISettings[key].baseKey.string = whole;
+                window.UISettings[key].baseKey.string = nextStr;
                 window.UISettings[key].baseKey.uid = uid;
                 window.UISettings[key].baseKey.examined = true;
+                const parentInputType = window.UISettings[key].baseKey.inputType;
+
+                if (parentInputType) // 🐌 it's children will loop eventually inside this Rec Func ... man...
+                {
+                    for (const subKey in window.UISettings[key])
+                    {
+                        const childType = window.UISettings[key][subKey].inputType; // will check it self... fuck!, but it's the same... so let's hope this doesn't brake anything
+                        if (!childType)
+                        {
+                            window.UISettings[key][subKey].inputType = parentInputType;
+                        }
+                    }
+                }
+
+                if (selfOrder)
+                {
+                    // NestedString returns parents uids
+                    // . . .
+                }
+
                 return true;
             }
         }
@@ -306,7 +428,7 @@ async function Rec_Read_Write_SettingsPage(nextObj, accStr, nextUID, keyFromLeve
         {
             if (RecIsValidNestedKey(window.UISettings, keyFromLevel0, [key])) // nested LEVEL 1 block upt
             {
-                window.UISettings[keyFromLevel0][key].string = whole;
+                window.UISettings[keyFromLevel0][key].string = nextStr;
                 window.UISettings[keyFromLevel0][key].uid = uid;
                 window.UISettings[keyFromLevel0][key].examined = true;
                 window.UISettings[keyFromLevel0][key].sessionValue = value;
@@ -316,7 +438,7 @@ async function Rec_Read_Write_SettingsPage(nextObj, accStr, nextUID, keyFromLeve
         return false;
     }
 
-    function RecIsValidNestedKey(obj, level, ...rest)
+    function RecIsValidNestedKey(obj, level, ...rest) // 🐌
     {
         if (obj === undefined) 
         {
@@ -330,11 +452,11 @@ async function Rec_Read_Write_SettingsPage(nextObj, accStr, nextUID, keyFromLeve
     }
     async function removingBlock(uid)
     {
-        if (whole == TargetUID) return;
+        if (uid == TargetUID) return;
         // the nature of the recursive func makes it
         // so the page can't be avoided, you don't want that - return
 
-        console.log(`"${whole}" <= invalid YT GIF setting was removed!`);
+        console.log(`"${nextStr}" <= invalid YT GIF setting was removed!`);
         await ccc.util.deleteBlock(uid);
     }
     //#endregion
@@ -353,6 +475,17 @@ async function NestedString(obj)
     }
 }
 
+
+
+
+async function moveBlock(parent_uid, block_order, block_to_move_uid)
+{
+    return window.roamAlphaAPI.moveBlock(
+        {
+            location: { "parent-uid": parent_uid, order: block_order },
+            block: { uid: block_to_move_uid }
+        });
+}
 
 
 
@@ -380,7 +513,7 @@ async function batchCreateBlocks(parent_uid, starting_block_order, string_array_
 async function createBlock(parent_uid, block_order, block_string, manualUID = false)
 {
     parent_uid = parent_uid.replace('((', '').replace('))', '');
-    let newUid = (!manualUID) ? roamAlphaAPI.util.generateUID() : manualUID;
+    let newUid = (!manualUID) ? roamAlphaAPI.util.generateUID() : manualUID; // polymorphism man...
 
     await window.roamAlphaAPI.createBlock(
         {
@@ -401,6 +534,9 @@ async function createBlock(parent_uid, block_order, block_string, manualUID = fa
         string: block_string,
     };
 }
+
+
+
 
 
 
@@ -427,6 +563,8 @@ async function ExpandBlock(block_uid, block_expanded)
     return await window.roamAlphaAPI.updateBlock(
         { block: { uid: block_uid, open: block_expanded } });
 }
+
+
 
 
 
@@ -546,7 +684,8 @@ async function navigateToUiOrCreate(destinationPage, openInSideBar = false, sSid
             {
                 destinationPage = destinationPage.substring(0, 254);
             }
-            await ccc.util.getOrCreatePageUid(destinationPage, initSettingsPageMessage);
+            await ccc.util.getOrCreatePageUid(destinationPage)
+            //await ccc.util.getOrCreatePageUid(destinationPage, initSettingsPageMessage);
             await sleep(50);
 
             uid = await await ccc.util.getPageUid(destinationPage);
