@@ -20,7 +20,9 @@ bugs ☐ ☑
     renaming, hard deleting sub properties... ☑
         they get deleted ☑
         and readded at the botttom ☑
-        move around by user 
+        move around by user ☑
+
+    moving around above the prompt mss, the injected block if any takes the that string instead
     
 
 solved ☐ ☑
@@ -32,7 +34,11 @@ solved ☐ ☑
 const targetPage = 'roam/js/kauderk/yt-gif/settings';
 let TargetUID = await ccc.util.getPageUid(targetPage);
 
-let orderCounter = 0; //  used as incremented, base counter and recursive conditional
+
+let level0Cnt = 0; //  used as incremented, base counter and recursive conditional
+
+const fmtSplit = ' : ';
+const PmtSplit = ' / ';
 
 const rad = 'radio',
     chk = 'checkbox',
@@ -41,6 +47,7 @@ const rad = 'radio',
     bol = 'boolean',
     url = 'url',
     rng = 'range';
+
 
 
 window.UISettings = {
@@ -119,13 +126,32 @@ window.UISettings = {
         end_loop_sound_src: subInputType('https://freesound.org/data/previews/256/256113_3263906-lq.mp3', url),
     },
 }
+// THE ORDER DOES MATTER, because of the counters
+window.UISettingsPrompts = {
+    workflow: addOrderPmt(0, `The first ${level0Cnt + 1} blocks will be added/removed automatically. The last parameters are customizable. 👋`),
+    //
+    //
+    // ACTUAL UI SETTINGS
+    //
+    //
+    LogStatus: addOrderEndPmt(`Everything is alright :D`),
+}
 
 
 
 //#region crazy obj code ... javascript are you ok?
+function addOrderEndPmt(blockContent = '')
+{
+    return Object.assign(baseTmp(str, Number(++level0Cnt), blockContent));
+}
+function addOrderPmt(order = 0, blockContent = '')
+{
+    return Object.assign(baseTmp(str, order, blockContent));
+}
+/*---------------------------------------------*/
 function addOrder(inputType)
 {
-    return Object.assign(baseTmp(inputType, Number(++orderCounter)));
+    return Object.assign(baseTmp(inputType, Number(++level0Cnt)));
 }
 function dom(baseValue = '', inputType)
 {
@@ -145,49 +171,65 @@ function subTemp(baseValue = '', inputType)
     }
     return Object.assign(baseTmp(inputType), subSub);
 }
-function baseTmp(_inputType, _order)
+function baseTmp(_inputType, _order, _string = '')
 {
     return {
         uid: '',
-        string: '',
+        string: _string,
         examined: false,
         inputType: _inputType,
         order: _order,
     }
 }
 /*---------------------------------------------*/
-function PromptMssg()
-{
-    return `The first ${orderCounter + 1} blocks will be added/removed automatically. The last parameters are customizable. 👋`;
-}
 //#endregion
 
 
 
-const initSettingsPageMessage = PromptMssg();
-
 assignChildrenOrder(); // 🐌
 
-if (TargetUID == null) // BrandNewInstallation
+if (TargetUID == null)
 {
     TargetUID = await navigateToUiOrCreate(targetPage);
     await BrandNewInstallation(TargetUID); // 🐌
 }
 else // Read and store Session Values
 {
+    TargetUID = await navigateToUiOrCreate(targetPage);
+    //const prompts = await Read_Write_PromptMssgs(); // 🐌
     const entirePageText = await Read_Write_SettingsPage(TargetUID); // 🐌
-    const addedBlocks = await addMissingSettings(TargetUID); // 🐌🐌
+    const addedBlocks = await addMissingSettings(); // 🐌🐌
 
     console.log(entirePageText);
     console.log(window.UISettings);
     console.log(addedBlocks);
 }
-await createUpdatePromptMssIfMissing(TargetUID);
+
 await SetNumberedViewWithUid(TargetUID);
 await CollapseDirectcChildren(TargetUID, false);
-return '';
+//return '';
 
 
+
+async function Read_Write_PromptMssgs()
+{
+    const firstGen = await ccc.util.allChildrenInfo(block_uid);
+    const children = sortObjectsByOrder(firstGen[0][0].children);
+
+    for (const child of children)
+    {
+        for (const promptKey in window.UISettingsPrompts)
+        {
+            let promptObj = window.UISettingsPrompts[promptKey]; // before
+
+            checkReorderBlock(TargetUID, promptObj.order, childObj);
+        }
+    }
+}
+async function Rec_Read_Write_PromptMssgs()
+{
+
+}
 
 
 async function createUpdatePromptMssIfMissing(parentUID)
@@ -200,9 +242,16 @@ async function createUpdatePromptMssIfMissing(parentUID)
     {
         ccc.util.updateBlockString(child0UID, prePromptMssg);
     }
+    function PromptMssg()
+    {
+        return `${fmtSplit}The first ${level0Cnt + 1} blocks will be added/removed automatically. The last parameters are customizable. 👋`;
+    }
 }
 
+async function MonitorUpdatePromptBlocks()
+{
 
+}
 
 
 function assignChildrenOrder()
@@ -233,49 +282,49 @@ function assignChildrenOrder()
 
 
 
-async function addMissingSettings(TargetUID)
+async function addMissingSettings()
 {
     let addedBlocks = [];
     for (const parentKey in window.UISettings)
     {
-        const examined = window.UISettings[parentKey].baseKey.examined;
-        if (!examined)
+        const parentObj = window.UISettings[parentKey];
+        let baseKeyObj = parentObj.baseKey;
+
+        if (!baseKeyObj.examined)
         {
-            const respectOrder = window.UISettings[parentKey].baseKey.order;
-            const parentInfo = fmtSettings([parentKey]);
-            const addedRoot = await createBlock(TargetUID, respectOrder, parentInfo.string, parentInfo.uid);
+            const manualStt = {
+                m_order: baseKeyObj.order,
+                m_strArr: [parentKey],
+            };
+            debugger;
+            baseKeyObj = await UIBlockCreation(baseKeyObj, manualStt);
 
-            window.UISettings[parentKey].baseKey.uid = addedRoot.uid;
-            window.UISettings[parentKey].baseKey.string = addedRoot.string;
-            window.UISettings[parentKey].baseKey.examined = true;
-
-            addedBlocks.push(addedRoot.string);
+            addedBlocks.push(baseKeyObj.string);
         }
 
-        for (const childKey in window.UISettings[parentKey])
+        for (const childKey in parentObj)
         {
-            for (const subKey in window.UISettings[parentKey][childKey]) // FIRST LEVEL > Sub properties
+            for (const subKey in parentObj[childKey]) // FIRST LEVEL > Sub properties
             {
                 if (subKey != 'sessionValue')
                     continue;
 
-                const examined = window.UISettings[parentKey][childKey].examined;
-                if (!examined)
+                let childObj = parentObj[childKey];
+
+                if (!childObj.examined)
                 {
-                    const addedRoot = window.UISettings[parentKey].baseKey;
-                    const baseValue = window.UISettings[parentKey][childKey].baseValue;
-                    const respectOrder = window.UISettings[parentKey][childKey].order;
+                    const baseValue = childObj.baseValue;
+                    childObj.sessionValue = baseValue; // LEVEL 0 > sub
 
-                    const SubPropertyInfo = fmtSettings([childKey, baseValue]);
-                    const addedSubInfo = await createBlock(addedRoot.uid, respectOrder, SubPropertyInfo.string, SubPropertyInfo.uid);
-
-                    window.UISettings[parentKey][childKey].uid = addedSubInfo.uid; // LEVEL 0 > sub
-                    window.UISettings[parentKey][childKey].string = addedSubInfo.string; // LEVEL 0 > sub
-                    window.UISettings[parentKey][childKey].sessionValue = baseValue; // LEVEL 0 > sub
+                    const manualStt = {
+                        m_uid: baseKeyObj.uid,
+                        m_order: childObj.order,
+                        m_strArr: [childKey, baseValue],
+                    };
+                    debugger;
+                    childObj = await UIBlockCreation(childObj, manualStt);
 
                     addedBlocks.push(addedSubInfo.string);
-
-                    window.UISettings[parentKey][childKey].examined = true;
                 }
                 break;
             }
@@ -285,35 +334,69 @@ async function addMissingSettings(TargetUID)
 }
 // I want to think of this expensive calculations as looping through a 2d grid array
 // My monkey brain will never be able to compute THAT or even this
-async function BrandNewInstallation(TargetUID)
+async function BrandNewInstallation()
 {
+    for (const promptKey in window.UISettingsPrompts)
+    {
+        let promptObj = window.UISettingsPrompts[promptKey]; // before
+
+        const manualStt = {
+            m_strArr: [promptObj.string],
+            m_join: PmtSplit,
+        };
+        const addedRootPmpt = await UIBlockCreation(promptObj, manualStt);
+    }
+
     for (const parentKey in window.UISettings)
     {
-        const parentInfo = fmtSettings([parentKey]);
-        const addedRoot = await createBlock(TargetUID, 100000, parentInfo.string, parentInfo.uid);
+        let baseObjStt = window.UISettings[parentKey];
 
-        window.UISettings[parentKey].baseKey.uid = addedRoot.uid; // LEVEL 0
-        window.UISettings[parentKey].baseKey.string = addedRoot.string; // LEVEL 0
+        const manualStt = { m_strArr: [parentKey] };
+        const addedRoot = await UIBlockCreation(baseObjStt.baseKey, manualStt);
 
-        for (const childKey in window.UISettings[parentKey])
+        for (const childKey in baseObjStt)
         {
-            for (const subKey in window.UISettings[parentKey][childKey]) // FIRST LEVEL > Sub properties
+            for (const subKey in baseObjStt[childKey]) // FIRST LEVEL > Sub properties
             {
                 if (subKey != 'sessionValue')
                     continue;
 
-                const baseValue = window.UISettings[parentKey][childKey].baseValue;
+                let SubPtt = baseObjStt[childKey];
 
-                const SubPropertyInfo = fmtSettings([childKey, baseValue]);
-                const addedSubInfo = await createBlock(addedRoot.uid, 100000, SubPropertyInfo.string, SubPropertyInfo.uid);
+                const baseValue = SubPtt.baseValue;
+                SubPtt.sessionValue = baseValue;
 
-                window.UISettings[parentKey][childKey].uid = addedSubInfo.uid; // LEVEL 0 > sub
-                window.UISettings[parentKey][childKey].string = addedSubInfo.string; // LEVEL 0 > sub
-                window.UISettings[parentKey][childKey].sessionValue = baseValue; // LEVEL 0 > sub
+                const manualStt = {
+                    m_uid: addedRoot.uid,
+                    m_strArr: [childKey, baseValue],
+                };
+                SubPtt = await UIBlockCreation(SubPtt, manualStt);
+
+                break;
             }
         }
     }
+
 }
+async function UIBlockCreation(baseKeyObj, manual = {})
+{
+    const { m_order, m_uid, m_join, m_strArr } = manual;
+    const { uid, string } = fmtSettings(m_strArr, m_join || fmtSplit);
+    const { order: selfOrder } = baseKeyObj;
+
+    await createBlock(
+        m_uid || TargetUID,
+        m_order || selfOrder || 10000,
+        string,
+        uid,
+    );
+    baseKeyObj.uid = uid;
+    baseKeyObj.string = string;
+    baseKeyObj.examined = true;
+
+    return baseKeyObj;
+}
+
 
 
 
@@ -329,16 +412,18 @@ async function Read_Write_SettingsPage(UID)
         return 'Page is empty';
     }
 
-    //accumulativeString
-    return await Rec_Read_Write_SettingsPage(ChildrenHierarchy[0][0], '');
+    const accObj = { accStr: '' };
+    return await Rec_Read_Write_SettingsPage(ChildrenHierarchy[0][0], accObj);
 }
 
-async function Rec_Read_Write_SettingsPage(nextObj, accStr, nextUID, keyFromLevel0, selfOrder)
+async function Rec_Read_Write_SettingsPage(nextObj, accObj)
 {
-    const { tab, nextStr, indent } = await NestedString(nextObj);
+    let { accStr } = accObj;
+    const { nextUID, keyFromLevel0, selfOrder } = accObj;
+    const { tab, nextStr, indent, parentUid } = await RelativeChildInfo(nextObj);
     const { uid, key, value } = getSettingsFromString(nextStr);
 
-    if (!SuccesfullKeyUpt(indent)) // remove it
+    if (! await SuccesfullSttgUpt(indent)) // remove it
     {
         const uidToDelete = uid || nextUID;
         if (uidToDelete)
@@ -359,10 +444,18 @@ async function Rec_Read_Write_SettingsPage(nextObj, accStr, nextUID, keyFromLeve
 
         for (const child of children)
         {
-            if (child.order > orderCounter) // stop here // 🐌
-                return accStr;
+            // if (child.order > UISettingsCounter) // stop here // 🐌
+            // {
+            //     return accStr;
+            // }
 
-            accStr = await Rec_Read_Write_SettingsPage(child, accStr, uid, key, selfOrder);
+            const nextAccObj = {
+                accStr: accStr,
+                nextUID: uid,
+                keyFromLevel0: key,
+                selfOrder: child.order,
+            };
+            accStr = await Rec_Read_Write_SettingsPage(child, nextAccObj);
         }
     }
 
@@ -372,8 +465,6 @@ async function Rec_Read_Write_SettingsPage(nextObj, accStr, nextUID, keyFromLeve
     function getSettingsFromString(nextStr)
     {
         //const rgxBase = new RegExp(/\(([^\)]+)\)( : )(\b\w+\b)| |:|(\b.*\b)/, 'gm');
-        //const rgxBase = new RegExp(/\(([^\)]+)\)( : )(\b\w+\b)| |:|(\b.*\b)/, 'gm');
-        const rgxUid = new RegExp(/\(([^\)]+)\)/, 'gm'); //(XXXXXXXX)
         // const rgxKey = new RegExp(/(?<=\)\s:\s)(\b\w+\b)/, 'gm'); //) : XXXXXXXXX
         // (?<=\S : )([^\s]*)
 
@@ -381,45 +472,36 @@ async function Rec_Read_Write_SettingsPage(nextObj, accStr, nextUID, keyFromLeve
         // split the string by " : " and compare keys and values [1], [2]
         // uga buga
 
-        let splitedStr = nextStr.split(' : '); // deconstruct
-        const firstWords = splitedStr.map(word => word.split(' ')[0]); // get only the first word inside between ' : '
-        const rawUid = rgxUid.exec(firstWords[0]);
+        const { rawUid, firstWords } = splitFormattedString();
 
         return {
             uid: rawUid ? rawUid[1] : undefined,
             key: firstWords[1],
             value: firstWords[2],
         }
+
+        function splitFormattedString()
+        {
+            const rgxUid = new RegExp(/\(([^\)]+)\)/, 'gm'); //(XXXXXXXX)
+            let splitedStr = nextStr.split(fmtSplit); // deconstruct
+            const firstWords = splitedStr.map(word => word.split(' ')[0]); // get only the first word inside the fmtSplit
+            const rawUid = rgxUid.exec(firstWords[0]);
+            return { rawUid, firstWords };
+        }
     }
 
-    function SuccesfullKeyUpt(indent)
+    async function SuccesfullSttgUpt(indent)
     {
         if (indent == 0)
         {
             if (RecIsValidNestedKey(window.UISettings, key)) // LEVEL 0 block upt
             {
-                window.UISettings[key].baseKey.string = nextStr;
-                window.UISettings[key].baseKey.uid = uid;
-                window.UISettings[key].baseKey.examined = true;
-                const parentInputType = window.UISettings[key].baseKey.inputType;
+                let parentObj = window.UISettings[key];
+                const baseObj = baseBlockWrite(parentObj.baseKey);
 
-                if (parentInputType) // 🐌 it's children will loop eventually inside this Rec Func ... man...
-                {
-                    for (const subKey in window.UISettings[key])
-                    {
-                        const childType = window.UISettings[key][subKey].inputType; // will check it self... fuck!, but it's the same... so let's hope this doesn't brake anything
-                        if (!childType)
-                        {
-                            window.UISettings[key][subKey].inputType = parentInputType;
-                        }
-                    }
-                }
+                parentObj = assignInputTypesToChildren(parentObj);
 
-                if (selfOrder)
-                {
-                    // NestedString returns parents uids
-                    // . . .
-                }
+                await checkReorderBlock(parentUid, selfOrder, baseObj);
 
                 return true;
             }
@@ -428,14 +510,53 @@ async function Rec_Read_Write_SettingsPage(nextObj, accStr, nextUID, keyFromLeve
         {
             if (RecIsValidNestedKey(window.UISettings, keyFromLevel0, [key])) // nested LEVEL 1 block upt
             {
-                window.UISettings[keyFromLevel0][key].string = nextStr;
-                window.UISettings[keyFromLevel0][key].uid = uid;
-                window.UISettings[keyFromLevel0][key].examined = true;
-                window.UISettings[keyFromLevel0][key].sessionValue = value;
+                const crrObjKey = baseBlockWrite(window.UISettings[keyFromLevel0][key]);
+
+                crrObjKey.sessionValue = value;
+                await checkReorderBlock(parentUid, selfOrder, crrObjKey);
+
                 return true;
             }
         }
         return false;
+
+        function assignInputTypesToChildren(parentObj) // 🐌 it's children will loop eventually inside this Rec Func ... man...
+        {
+            const parentInputType = parentObj.baseKey.inputType;
+
+            if (parentInputType) 
+            {
+                for (const parentKey in parentObj)
+                {
+                    if (parentKey == 'baseKey')
+                    {
+                        continue;
+                    }
+
+                    for (const subKey in parentObj[parentKey])
+                    {
+                        if (subKey != 'inputType')
+                        {
+                            continue;
+                        }
+                        let childType = parentObj[parentKey].inputType; // will check it self... fuck!, but it's the same... so let's hope this doesn't brake anything
+                        if (!childType)
+                        {
+                            parentObj[parentKey].inputType = parentInputType;
+                        }
+                    }
+                }
+            }
+            return parentObj;
+        }
+
+        function baseBlockWrite(genericObj)
+        {
+            genericObj.string = nextStr;
+            genericObj.uid = uid;
+            genericObj.examined = true;
+            return genericObj; // pass by value bruh
+        }
     }
 
     function RecIsValidNestedKey(obj, level, ...rest) // 🐌
@@ -452,32 +573,47 @@ async function Rec_Read_Write_SettingsPage(nextObj, accStr, nextUID, keyFromLeve
     }
     async function removingBlock(uid)
     {
-        if (uid == TargetUID) return;
+        if (uid == TargetUID || nextStr.includes(PmtSplit))
+        {
+            console.log(`"${nextStr}" pass on removal`);
+            return;
+        }
         // the nature of the recursive func makes it
         // so the page can't be avoided, you don't want that - return
 
         console.log(`"${nextStr}" <= invalid YT GIF setting was removed!`);
         await ccc.util.deleteBlock(uid);
     }
+    async function RelativeChildInfo(obj)
+    {
+        const nextStr = obj.string || obj.title || '';
+        const parentsHierarchy = await getBlockParentUids(obj.uid);
+        let nestLevel = parentsHierarchy.length;
+        let tab = '\t';
+        return {
+            tab: tab.repeat(nestLevel),
+            nextStr,
+            indent: nestLevel,
+            parentUid: (parentsHierarchy[0])
+                ? parentsHierarchy[0][0]?.uid : TargetUID, // if undefined - most defenetly it's the direct child (level 0) of the page
+        }
+    }
     //#endregion
 }
 
-async function NestedString(obj)
+
+
+
+
+async function checkReorderBlock(parentUid, selfOrder, childObjToMoveUID)
 {
-    const nextStr = obj.string || obj.title || '';
-    const parentsHierarchy = await getBlockParentUids(obj.uid);
-    let nestLevel = parentsHierarchy.length;
-    let tab = '\t';
-    return {
-        tab: tab.repeat(nestLevel),
-        nextStr,
-        indent: nestLevel,
+    const validOrder = childObjToMoveUID.order;
+    const validUid = childObjToMoveUID.uid;
+    if (selfOrder != validOrder)
+    {
+        await moveBlock(parentUid, validOrder, validUid);
     }
 }
-
-
-
-
 async function moveBlock(parent_uid, block_order, block_to_move_uid)
 {
     return window.roamAlphaAPI.moveBlock(
@@ -488,12 +624,16 @@ async function moveBlock(parent_uid, block_order, block_to_move_uid)
 }
 
 
-
-function fmtSettings(strArr = [])
+/**
+ * 
+ * @param {Array} strArr 
+ * @returns 
+ */
+function fmtSettings(strArr = [], splitter = fmtSplit)
 {
     const manualUID = roamAlphaAPI.util.generateUID();
     const preBlockStr = [`(${manualUID})`, ...strArr];
-    const blockStr = preBlockStr.join(' : ');
+    const blockStr = preBlockStr.join(splitter);
     return {
         uid: manualUID,
         string: blockStr
@@ -685,7 +825,7 @@ async function navigateToUiOrCreate(destinationPage, openInSideBar = false, sSid
                 destinationPage = destinationPage.substring(0, 254);
             }
             await ccc.util.getOrCreatePageUid(destinationPage)
-            //await ccc.util.getOrCreatePageUid(destinationPage, initSettingsPageMessage);
+
             await sleep(50);
 
             uid = await await ccc.util.getPageUid(destinationPage);
