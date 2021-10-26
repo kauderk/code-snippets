@@ -35,7 +35,7 @@ const targetPage = 'roam/js/kauderk/yt-gif/settings';
 let TargetUID = await ccc.util.getPageUid(targetPage);
 
 
-let level0Cnt = 0; //  used as incremented, base counter and recursive conditional
+let level0Cnt = -1; //  used as incremented, base counter and recursive conditional
 
 const fmtSplit = ' : ';
 const PmtSplit = ' / ';
@@ -51,6 +51,10 @@ const rad = 'radio',
 
 
 window.UISettings = {
+    Workflow: {
+        baseKey: addOrderPmt(`BIP BOP . . .`),
+    },
+
     display: {
         baseKey: addOrder(chk),
         clip_life_span_format: dom('1'),
@@ -123,32 +127,30 @@ window.UISettings = {
         /* src sound when yt gif makes a loop, empty if unwanted */
         end_loop_sound_src: subInputType('https://freesound.org/data/previews/256/256113_3263906-lq.mp3', url),
     },
+
+    LogStatus: {
+        baseKey: addOrderPmt(`Everything is alright :D`),
+    },
 }
+window.UISettings.Workflow.baseKey.string = `The first ${level0Cnt + 1} blocks will be added/removed automatically. The last parameters are customizable. 👋`;
+
 // THE ORDER DOES MATTER, because of the counter
 window.UISettingsPrompts = {
-    Workflow: {
-        baseKey: addOrderEndPmt(`The first ${level0Cnt + 2} blocks will be added/removed automatically. The last parameters are customizable. 👋`),
-    },
+
     /*----------------------*/
     /*----------------------*/
     /*- ACTUAL UI SETTINGS -*/
     /*----------------------*/
     /*----------------------*/
-    LogStatus: {
-        baseKey: addOrderEndPmt(`Everything is alright :D`),
-    },
+
 }
 
 
 
 /*---------------------------------------------*/
-function addOrderEndPmt(blockContent = '')
+function addOrderPmt(blockContent = '')
 {
     return Object.assign(baseTmp(pmt, Number(++level0Cnt), blockContent));
-}
-function addOrderPmt(order = 0, blockContent = '')
-{
-    return Object.assign(baseTmp(pmt, order, blockContent));
 }
 /*---------------------------------------------*/
 function addOrder(inputType)
@@ -199,7 +201,7 @@ else // Read and store Session Values
 {
     TargetUID = await navigateToUiOrCreate(targetPage);
     const entirePageText = await Read_Write_SettingsPage(TargetUID); // 🐌
-    const prompts = await Read_Write_PromptMssgs(TargetUID); // 🐌
+    //const prompts = await Read_Write_PromptMssgs(TargetUID); // 🐌
     // THEY WILL STACK UP AGAINS EACHOTHER IF THEY ARE NOT EXAMINED - careful, bud
     const addedBlocks = await addMissingBlocks(); // 🐌🐌
 
@@ -492,9 +494,12 @@ async function addMissingBlocks()
 
         if (!baseKeyObj.examined)
         {
+            const validStrings = (baseKeyObj.string)
+                ? [parentKey, baseKeyObj.string] : [parentKey];
+
             const manualStt = {
+                m_strArr: validStrings,
                 m_order: baseKeyObj.order,
-                m_strArr: [parentKey],
             };
 
             baseKeyObj = await UIBlockCreation(baseKeyObj, manualStt);
