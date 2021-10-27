@@ -415,63 +415,92 @@ async function addMissingBlocks()
     }
     return addedBlocks;
 }
+
 async function addAllMissingBlocks()
 {
-    const accObj = { accStr: '' };
+    const accObj = {
+        accStr: '',
+        parentsHierarchyKeys: [],
+        parentsHierarchyUids: [],
+    };
 
     return await Rec_addMissingBlocks(window.UISettings, accObj);
 }
 async function Rec_addMissingBlocks(nextObj, accObj = {})
 {
     let { accStr } = accObj;
-    const { parentUid, tab, nextStr } = accObj;
+    const { parentUid, tab, nextStr, parentsHierarchyKeys, parentsHierarchyUids } = accObj;
 
     accStr = accStr + '\n' + tab + nextStr;
+    let localParentsHierarchyUids = [];
 
     for (const property in nextObj)
     {
         let indentTracker = 0;
+        let localLoopParentsHierarchyUids = [];
+
         if (nextObj.hasOwnProperty(property) && typeof nextObj[property] === "object")
         {
-            let nestedPpt = nextObj[property];
-
-
-
-            if (nestedPpt.hasOwnProperty('baseKey')) // basically if it has valid nested blocks
+            if (property == 'sessionValue')
             {
-                debugger;
-                let baseKey = nestedPpt.baseKey;
-                const manualStt = {
-                    m_order: baseKey.order,
-                    m_strArr: (baseKey.string)
-                        ? [property, baseKey.string] : [property],
-                };
-
-                baseKey = await TryToCreateUIblock(baseKey, manualStt);
-
-                const nextAccObj = {
-                    parentUid: baseKey.uid,
-                    parentKey: property,
-                    tab: '\t'.repeat(Number(++indentTracker)),
-                    nextStr: baseKey.string,
-                };
-                accStr = await Rec_addMissingBlocks(baseKey, nextAccObj);
+                console.log(`avoiding ${property}`);
+                continue;
             }
 
-            if (nestedPpt.hasOwnProperty('sessionValue'))
+            let baseKey = {};
+            if (property == 'baseKey') // basically if it has valid nested blocks
             {
+                baseKey = nextObj[property];
+                const preStr = baseKey.string;
+                const prntKey = accObj.parentKey;
+
+                const manualStt = {
+                    m_strArr: (preStr)
+                        ? [prntKey, preStr] : [prntKey],
+                    m_order: baseKey.order,
+                };
+                debugger;
+                baseKey = await TryToCreateUIblock(baseKey, manualStt);
+                localParentsHierarchyUids = [...localParentsHierarchyUids, baseKey?.uid];
+                localLoopParentsHierarchyUids = [...localLoopParentsHierarchyUids, baseKey?.uid];
+            }
+            const validUidTopass = baseKey?.uid || '';
+            const nextAccObj = {
+                parentKey: property,
+                parentsHierarchyKeys: [...accObj.parentsHierarchyKeys, property],
+                tab: '\t'.repeat(Number(++indentTracker)),
+                parentUid: validUidTopass,
+                parentsHierarchyUids: [...accObj.parentsHierarchyUids, validUidTopass],
+                nextStr: baseKey?.string,
+            };
+            console.log('next : ', property);
+            accStr = await Rec_addMissingBlocks(nextObj[property], nextAccObj);
+
+            if (nextObj[property].baseValue != undefined)
+            {
+                let nestedPpt = nextObj[property];
                 debugger;
                 const baseValue = nestedPpt.sessionValue = nestedPpt.baseValue;
+                const validParentUid = accObj.parentsHierarchyUids[accObj.parentsHierarchyUids.length - 1];
+                const validValidUid = nextAccObj.parentUid || nextAccObj.parentsHierarchyUids[nextAccObj.parentsHierarchyUids.length - 1];
+
+                const loacalValidUid = localParentsHierarchyUids[localParentsHierarchyUids.length - 1];
+
+                const uidFormLoopBaseKey = baseKey?.uid;
+                const loacalloopValidUid = localLoopParentsHierarchyUids[localLoopParentsHierarchyUids.length - 1];
+                const validParentKey = accObj.parentsHierarchyKeys[accObj.parentsHierarchyKeys.length - 1];
+
                 const manualStt = {
-                    m_uid: parentUid,
-                    m_strArr: [property, baseValue],
+                    m_uid: validParentUid || validValidUid || loacalValidUid || loacalloopValidUid || uidFormLoopBaseKey,
+                    m_strArr: [validParentKey, baseValue],
                     m_order: nestedPpt.order,
                 }
-                nestedPpt = await TryToCreateUIblock(nestedPpt, manualStt);
+                console.log('nested : ', manualStt, accObj);
+                //nestedPpt = await TryToCreateUIblock(nestedPpt, manualStt);
             }
+
         }
     }
-    debugger;
     return accStr;
 
     async function TryToCreateUIblock(nestedBlock, manualStt)
