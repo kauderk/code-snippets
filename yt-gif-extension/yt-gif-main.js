@@ -1,7 +1,176 @@
+window.YTGIF = {
+    /* permutations - checkbox */
+    display: {
+        clip_life_span_format: {
+            base: '1',
+            domEl: '',
+            userValue: null,
+        },
+    },
+    previous: {
+        /* one a time */
+        strict_start_timestamp: {
+            base: '1',
+            domEl: '',
+            userValue: null,
+        },
+        start_timestamp: {
+            base: '',
+            domEl: '',
+            userValue: null,
+        },
+        fixed_start_timestamp: {
+            base: '',
+            domEl: '',
+            userValue: null,
+        },
+        /* one a time */
+        strict_start_volume: {
+            base: '1',
+            domEl: '',
+            userValue: null,
+        },
+        start_volume: {
+            base: '',
+            domEl: '',
+            userValue: null,
+        },
+        fixed_start_volume: {
+            base: '',
+            domEl: '',
+            userValue: null,
+        },
+    },
+    experience: {
+        sound_when_video_loops: {
+            base: '1',
+            domEl: '',
+            userValue: null,
+        },
+        awaiting_for_mouseenter_to_initialize: {
+            base: '',
+            domEl: '',
+            userValue: null,
+        },
+        awaiting_with_video_thumnail_as_bg: {
+            base: '1',
+            domEl: '',
+            userValue: null,
+        },
+    },
+    fullscreenStyle: {
+        smoll_vid_when_big_ends: {
+            base: '1',
+            domEl: '',
+            userValue: null,
+        },
+        mute_on_exit_fullscreenchange: {
+            base: '',
+            domEl: '',
+            userValue: null,
+        },
+        pause_on_exit_fullscreenchange: {
+            base: '',
+            domEl: '',
+            userValue: null,
+        },
+    },
+    /* one at a time - radio */
+    muteStyle: {
+        strict_mute_everything_except_current: {
+            base: '1',
+            domEl: '',
+            userValue: null,
+        },
+        muted_on_mouse_over: {
+            base: '',
+            domEl: '',
+            userValue: null,
+        },
+        muted_on_any_mouse_interaction: {
+            base: '',
+            domEl: '',
+            userValue: null,
+        },
+    },
+    playStyle: {
+        strict_play_current_on_mouse_over: {
+            base: '1',
+            domEl: '',
+            userValue: null,
+        },
+        play_on_mouse_over: {
+            base: '',
+            domEl: '',
+            userValue: null,
+        },
+        visible_clips_start_to_play_unmuted: {
+            base: '',
+            domEl: '',
+            userValue: null,
+        },
+    },
+    range: {
+        /*seconds up to 60*/
+        timestamp_display_scroll_offset: {
+            base: '5',
+            domEl: '',
+            userValue: null,
+        },
+        /* integers from 0 to 100 */
+        end_loop_sound_volume: {
+            base: '50',
+            domEl: '',
+            userValue: null,
+        },
+    },
+    InAndOutKeys: {
+        /* middle mouse button is on by default */
+        ctrlKey: {
+            base: '1',
+            userValue: null,
+        },
+        shiftKey: {
+            base: '',
+            userValue: null,
+        },
+        altKey: {
+            base: '',
+            userValue: null,
+        },
+    },
+    defaultValues: {
+        video_volume: {
+            base: 40,
+            userValue: null,
+        },
+        /* 'dark' or 'light' */
+        css_theme: {
+            base: 'dark',
+            userValue: null,
+        },
+        /* empty means 50% - only valid css units like px  %  vw */
+        player_span: {
+            base: '50%',
+            userValue: null,
+        },
+        /* distinguish between {{[[video]]:}} from {{[[yt-gif]]:}} or 'both' which is also valid*/
+        override_roam_video_component: {
+            base: '',
+            userValue: null,
+        },
+        /* src sound when yt gif makes a loop, empty if unwanted */
+        end_loop_sound_src: {
+            base: 'https://freesound.org/data/previews/256/256113_3263906-lq.mp3',
+            userValue: null,
+        },
+    },
+}
+
 // version 34 - semi-refactored
 /*-----------------------------------*/
 /* USER SETTINGS  */
-const UI = UISettings;
+let UI = window.YTGIF;
 /* user doesn't need to see this */
 UI.label = {
     rangeValue: '',
