@@ -32,7 +32,7 @@ solved ☐ ☑
 */
 
 const targetPage = 'roam/js/kauderk/yt-gif/settings';
-let TargetUID = await ccc.util.getPageUid(targetPage);
+let TARGET_UID = await ccc.util.getPageUid(targetPage);
 
 
 let level0Cnt = -1; //  used as incremented, base counter and recursive conditional
@@ -54,7 +54,6 @@ window.UISettings = {
     Workflow: {
         baseKey: addOrderPmt(`BIP BOP . . .`),
     },
-
     display: {
         baseKey: addOrder(chk),
         clip_life_span_format: dom('1'),
@@ -183,25 +182,27 @@ function baseTmp(_inputType, _order, _string = '')
 
 assignChildrenOrder(); // 🐌
 
-if (TargetUID == null)
+if (TARGET_UID == null)
 {
-    TargetUID = await navigateToUiOrCreate(targetPage);
-    //const addedBlocks = await addMissingBlocks(); // 🐌
+    TARGET_UID = await navigateToUiOrCreate(targetPage);
     const addedBlocks = await addAllMissingBlocks(); // 🐌
+    //const addedBlocks = await addMissingBlocks(); // 🐌
+
+    console.log(addedBlocks);
 }
 else // Read and store Session Values
 {
-    TargetUID = await navigateToUiOrCreate(targetPage);
-    //const entirePageText = await Read_Write_SettingsPage(TargetUID); // 🐌
+    TARGET_UID = await navigateToUiOrCreate(targetPage);
+    const entirePageText = await Read_Write_SettingsPage(TARGET_UID); // 🐌
     // THEY WILL STACK UP AGAINS EACHOTHER IF THEY ARE NOT EXAMINED - careful, bud
-    //const addedBlocks = await addMissingBlocks(); // 🐌🐌
     const addedBlocks = await addAllMissingBlocks(); // 🐌
+    //const addedBlocks = await addMissingBlocks(); // 🐌🐌
 
     //console.log(entirePageText);
-    //console.log(addedBlocks);
+    console.log(addedBlocks);
 }
-await SetNumberedViewWithUid(TargetUID);
-await CollapseDirectcChildren(TargetUID, false);
+await SetNumberedViewWithUid(TARGET_UID);
+await CollapseDirectcChildren(TARGET_UID, false);
 
 
 
@@ -322,7 +323,7 @@ async function Read_Write_SettingsPage(UID)
 
         async function removingBlock(uid)
         {
-            if (uid == TargetUID)
+            if (uid == TARGET_UID)
             {
                 console.log(`"${nextStr}" pass on removal`);
                 return;
@@ -420,8 +421,10 @@ async function addAllMissingBlocks()
 {
     const accObj = {
         accStr: '',
-        parentsHierarchyKeys: [],
-        parentsHierarchyUids: [],
+        nextStr: this.accStr,
+
+        accKeys: [],
+        accHierarchyUids: [],
     };
 
     return await Rec_addMissingBlocks(window.UISettings, accObj);
@@ -429,76 +432,72 @@ async function addAllMissingBlocks()
 async function Rec_addMissingBlocks(nextObj, accObj = {})
 {
     let { accStr } = accObj;
-    const { parentUid, tab, nextStr, parentsHierarchyKeys, parentsHierarchyUids } = accObj;
+    const { tab, nextStr } = accObj;
 
     accStr = accStr + '\n' + tab + nextStr;
-    let localParentsHierarchyUids = [];
+    let HierarchyUids = [];
+
 
     for (const property in nextObj)
     {
-        let indentTracker = 0;
-        let localLoopParentsHierarchyUids = [];
 
         if (nextObj.hasOwnProperty(property) && typeof nextObj[property] === "object")
         {
             if (property == 'sessionValue')
             {
-                console.log(`avoiding ${property}`);
+                //console.log(`avoiding ${property}`);
                 continue;
             }
+            let nestedPpt = nextObj[property];
 
-            let baseKey = {};
-            if (property == 'baseKey') // basically if it has valid nested blocks
+            // 1. 
+            if (property == 'baseKey')
             {
-                baseKey = nextObj[property];
-                const preStr = baseKey.string;
+                const preStr = nestedPpt.string;
                 const prntKey = accObj.parentKey;
 
                 const manualStt = {
+                    m_uid: accObj.accHierarchyUids[accObj.accHierarchyUids.length - 1] || TARGET_UID,
                     m_strArr: (preStr)
-                        ? [prntKey, preStr] : [prntKey],
-                    m_order: baseKey.order,
+                        ? [prntKey, preStr] : [prntKey], // extra join? no, then ignore it
+                    m_order: nestedPpt.order,
                 };
-                debugger;
-                baseKey = await TryToCreateUIblock(baseKey, manualStt);
-                localParentsHierarchyUids = [...localParentsHierarchyUids, baseKey?.uid];
-                localLoopParentsHierarchyUids = [...localLoopParentsHierarchyUids, baseKey?.uid];
+                nestedPpt = await TryToCreateUIblock(nestedPpt, manualStt);
+
+                HierarchyUids = [...HierarchyUids, nestedPpt?.uid];
             }
-            const validUidTopass = baseKey?.uid || '';
+
+            // 2. the order does matter
             const nextAccObj = {
                 parentKey: property,
-                parentsHierarchyKeys: [...accObj.parentsHierarchyKeys, property],
-                tab: '\t'.repeat(Number(++indentTracker)),
-                parentUid: validUidTopass,
-                parentsHierarchyUids: [...accObj.parentsHierarchyUids, validUidTopass],
-                nextStr: baseKey?.string,
-            };
-            console.log('next : ', property);
-            accStr = await Rec_addMissingBlocks(nextObj[property], nextAccObj);
 
+                accKeys: [...accObj.accKeys, property],
+
+                accHierarchyUids: pushSame(accObj.accHierarchyUids, ...HierarchyUids), // this is weird
+
+                accStr: accStr,
+                tab: `\t`.repeat(0),
+                nextStr: nestedPpt.string || '',
+            };
+
+
+            accStr = await Rec_addMissingBlocks(nextObj[property], nextAccObj); // recursion with await - 🤯
+
+            // 3. makes the most sense when the baseKey isn't missing
             if (nextObj[property].baseValue != undefined)
             {
-                let nestedPpt = nextObj[property];
-                debugger;
-                const baseValue = nestedPpt.sessionValue = nestedPpt.baseValue;
-                const validParentUid = accObj.parentsHierarchyUids[accObj.parentsHierarchyUids.length - 1];
-                const validValidUid = nextAccObj.parentUid || nextAccObj.parentsHierarchyUids[nextAccObj.parentsHierarchyUids.length - 1];
-
-                const loacalValidUid = localParentsHierarchyUids[localParentsHierarchyUids.length - 1];
-
-                const uidFormLoopBaseKey = baseKey?.uid;
-                const loacalloopValidUid = localLoopParentsHierarchyUids[localLoopParentsHierarchyUids.length - 1];
-                const validParentKey = accObj.parentsHierarchyKeys[accObj.parentsHierarchyKeys.length - 1];
-
                 const manualStt = {
-                    m_uid: validParentUid || validValidUid || loacalValidUid || loacalloopValidUid || uidFormLoopBaseKey,
-                    m_strArr: [validParentKey, baseValue],
+                    m_uid: HierarchyUids[HierarchyUids.length - 1], // parent key to create under
+                    m_strArr:
+                        [
+                            nextAccObj.accKeys[nextAccObj.accKeys.length - 1],
+                            nestedPpt.sessionValue = nestedPpt.baseValue // it's a good that the value could be empty - you know it's paramater then
+                        ], // key description, value
                     m_order: nestedPpt.order,
                 }
-                console.log('nested : ', manualStt, accObj);
-                //nestedPpt = await TryToCreateUIblock(nestedPpt, manualStt);
-            }
 
+                nestedPpt = await TryToCreateUIblock(nestedPpt, manualStt);
+            }
         }
     }
     return accStr;
@@ -508,10 +507,18 @@ async function Rec_addMissingBlocks(nextObj, accObj = {})
         if (!nestedBlock.examined)
         {
             nestedBlock = await UIBlockCreation(nestedBlock, manualStt);
-
-            console.log('added: ', nestedBlock.string);
         }
+        // else
+        // {
+        //     console.log(`${nestedBlock.string} already exist & was examined`);
+        // }
         return nestedBlock;
+    }
+
+    function pushSame(arr = [], el)
+    {
+        arr.push(el);
+        return arr;
     }
 }
 //#endregion
@@ -526,7 +533,7 @@ async function UIBlockCreation(baseKeyObj, manual = {})
     const { order: selfOrder } = baseKeyObj;
 
     await createBlock(
-        m_uid || TargetUID,
+        m_uid || TARGET_UID,
         m_order || selfOrder || 10000,
         string,
         uid,
@@ -565,7 +572,7 @@ async function RelativeChildInfo(obj)
         nextStr,
         indent: nestLevel,
         parentUid: (parentsHierarchy[0])
-            ? parentsHierarchy[0][0]?.uid : TargetUID, // if undefined - most defenetly it's the direct child (level 0) of the page
+            ? parentsHierarchy[0][0]?.uid : TARGET_UID, // if undefined - most defenetly it's the direct child (level 0) of the page
     }
 }
 function getUidKeywordsFromString(nextStr, join = fmtSplit)
