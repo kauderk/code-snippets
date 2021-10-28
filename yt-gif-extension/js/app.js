@@ -62,6 +62,7 @@ const YT_GIF_OBSERVERS_TEMP = {
     }
 }
 window.YT_GIF_OBSERVERS = (!window.YT_GIF_OBSERVERS) ? YT_GIF_OBSERVERS_TEMP : window.YT_GIF_OBSERVERS;
+
 /*-----------------------------------*/
 const iframeIDprfx = 'player_';
 let currentFullscreenPlayer = '';
@@ -203,9 +204,12 @@ rm_components.both = {
 /*-----------------------------------*/
 
 
-if (![YT, kauderk, kauderk.util].includes(undefined))
+if (
+    typeof kauderk.util !== 'undefined' &&
+    typeof (YT) != 'undefined'
+)
 {
-    Ready(); // LET'S GO! LET'S GO!
+    await Ready(); // LET'S GO! LET'S GO!
 }
 else
 {
