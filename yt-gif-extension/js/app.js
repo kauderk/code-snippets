@@ -217,7 +217,6 @@ else
 
 async function Ready()
 {
-    console.count('ready func yt gif');
     // the objects "UI", "links", "attrData" and "cssData" are binded to all of these functions
     if (DDM_Els().length > 0)
     {

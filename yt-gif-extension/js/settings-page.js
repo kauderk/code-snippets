@@ -104,7 +104,6 @@ init();
 
 async function init()
 {
-    console.count('settings page script');
     assignChildrenOrder(); // 🐌
 
     if (TARGET_UID == null) // Brand new installation
