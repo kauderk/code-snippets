@@ -98,7 +98,7 @@ window.YT_GIF_SETTINGS_PAGE = {
 window.YT_GIF_SETTINGS_PAGE.Workflow.baseKey.string = `The first ${level0Cnt + 1} blocks will be added/removed automatically. The last parameters are customizable. 👋`;
 
 
-await init();
+init();
 
 async function init()
 {

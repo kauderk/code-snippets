@@ -1,4 +1,10 @@
-LoadExternalResources();
+
+init();
+async function init()
+{
+    await LoadExternalResources();
+    await createXload('app.js');
+}
 
 async function LoadExternalResources()
 {
@@ -23,21 +29,11 @@ async function LoadExternalResources()
 
         promises.push(createXload('settings-page.js'));
 
-        promises.push(createXload('app.js'));
 
 
         await Promise.all([loadScript(ytApiScript), ...promises]);
 
         return null;
-    }
-    async function createXload(src)
-    {
-        const obj = {
-            src: src,
-            id: `yt-gif-${src}`
-        }
-        const script = createScript(obj);
-        return await loadScript(script);
     }
     function loadYT_IFRAME_API()
     {
@@ -47,12 +43,35 @@ async function LoadExternalResources()
         firstScriptTag.parentNode.insertBefore(YTAPI, firstScriptTag);
         return YTAPI;
     }
-    async function loadScript(script)
+}
+async function loadScript(script)
+{
+    return new Promise((resolve, reject) =>
     {
-        return new Promise((resolve, reject) =>
+        script.onload = () => resolve(script)
+    })
+}
+async function createXload(src)
+{
+    const obj = {
+        src: src,
+        id: `script-yt-gif-${src}`
+    }
+
+    romoveIfany(id);
+    const script = createScript(obj);
+    return await loadScript(script);
+
+    function romoveIfany(id)
+    {
+        const scriptAlready = document.querySelectorAll(`[id='${id}']`);
+        if (scriptAlready) // well well well - we don't like duplicates - lol
         {
-            script.onload = () => resolve(script)
-        })
+            for (const el of scriptAlready)
+            {
+                el.parentElement.removeChild(el);
+            }
+        }
     }
     function createScript({ src, id })
     {
