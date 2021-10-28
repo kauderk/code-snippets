@@ -788,9 +788,8 @@ async function Ready()
         return new Promise(function (resolve, reject)
         {
             const stylesAlready = document.querySelectorAll(`[id='${id}']`);
-            if (stylesAlready) // well well well - we don't like duplicates
+            if (stylesAlready?.length > 0) // well well well - we don't like duplicates
             {
-                debugger;
                 SytleSheetExistAlready(cssURL);
                 for (const el of stylesAlready)
                 {
