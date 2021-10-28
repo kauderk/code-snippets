@@ -219,7 +219,7 @@ async function Ready()
 {
     console.count('ready func yt gif');
     // the objects "UI", "links", "attrData" and "cssData" are binded to all of these functions
-    if (DDM_AreadyExistEls())
+    if (DDM_Els().length > 0)
     {
         try
         {
@@ -385,8 +385,8 @@ async function Ready()
         //⚠️
         const rm_moreIcon = document.querySelector('.bp3-icon-more').closest('.rm-topbar .rm-topbar__spacer-sm + .bp3-popover-wrapper');
         const htmlText = await UTILS.FetchText(dropDownMenu);
-        const previousList = DDM_AreadyExistEls();
-        if (previousList)
+        const previousList = DDM_Els();
+        if (previousList?.length > 0)
         {
             for (const el of previousList)
             {
@@ -830,7 +830,7 @@ async function Ready()
 
         UptLabel(scroll);
     }
-    function DDM_AreadyExistEls()
+    function DDM_Els()
     {
         const { ddm_exist } = cssData
         return document.querySelectorAll('.' + ddm_exist);
