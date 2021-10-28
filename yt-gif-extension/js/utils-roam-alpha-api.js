@@ -276,5 +276,6 @@ kauderk.rap = ((rap) =>
         }
         return pageUid;
     }
+    return rap;
 })(kauderk.rap || {});
 debugger;
