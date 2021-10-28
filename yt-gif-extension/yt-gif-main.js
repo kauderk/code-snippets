@@ -19,17 +19,13 @@ async function LoadExternalResources()
     }
     else
     {
-        let promises = [];
-
-        loadScript(loadYT_IFRAME_API());
+        await loadScript(loadYT_IFRAME_API());
 
         await createXload('utils.js');
 
         await createXload('utils-roam-alpha-api.js');
 
         await createXload('settings-page.js');
-
-        //await Promise.all([, ...promises]);
 
         return null;
     }
