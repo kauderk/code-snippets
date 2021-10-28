@@ -83,7 +83,7 @@ window.YT_GIF_SETTINGS_PAGE = {
         video_volume: subInputType(40, int),
 
         /* 'dark' or 'light' */
-        css_theme: subInputType('light', str),
+        css_theme: subInputType('dark', str),
 
         /* empty means 50% - only valid css units like px  %  vw */
         player_span: subInputType('50%', str),
