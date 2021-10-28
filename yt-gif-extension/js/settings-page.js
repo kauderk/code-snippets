@@ -1,6 +1,6 @@
 // version 1 - semi-refactored
 const targetPage = 'roam/js/kauderk/yt-gif/settings';
-const RAP = kauderk.RAP;
+const RAP = window.kauderk.RAP;
 debugger;
 let TARGET_UID = RAP.getPageUid(targetPage);
 

@@ -1,5 +1,6 @@
+var kauderk = window.kauderk || {};
 
-window.kauderk.RAP = ((RAP) =>
+kauderk.RAP = ((RAP) =>
 {
     /* DISCLAIMER - THE MAJORITY OF THIS FUNCTIONS I TOOK THEM FROM ...
     https://github.com/yangkennyk/Roam42-Mirror/blob/5f9217e7f89c46b8cc409726aca744d1eca106e9/common/commonDatalog.js
@@ -275,5 +276,5 @@ window.kauderk.RAP = ((RAP) =>
         }
         return pageUid;
     }
-})(window.kauderk.RAP || {});
+})(kauderk.RAP || {});
 debugger;
