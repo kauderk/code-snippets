@@ -1,7 +1,7 @@
 // version 1 - semi-refactored
 const targetPage = 'roam/js/kauderk/yt-gif/settings';
 const RAP = window.kauderk.rap;
-debugger;
+
 let TARGET_UID = RAP.getPageUid(targetPage);
 
 let level0Cnt = -1;

@@ -7,7 +7,7 @@
  * - nested object >>> sesionValue
  */
 debugger;
-
+const Utils = window.kauderk.util;
 const UI = window.YT_GIF_SETTINGS_PAGE;
 /* user doesn't need to see this */
 UI.label = {
