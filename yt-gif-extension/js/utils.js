@@ -1,13 +1,21 @@
 let kauderk = window.kauderk || {};
-kauderk.util = ((newUtil) =>
+kauderk.util = ((util) =>
 {
-    newUtil.print = (str = 'hi') =>
+    util.RemoveElsEventListeners = (withEventListeners) =>
+    {
+        for (const el of withEventListeners)
+        {
+            el.replaceWith(el.cloneNode(true));
+        }
+    }
+
+    util.print = (str = 'hi') =>
     {
         console.log(str);
     }
 
     // linearly maps value from the range (a..b) to (c..d)
-    newUtil.mapRange = (value, a, b, c, d) =>
+    util.mapRange = (value, a, b, c, d) =>
     {
         // first map value from (a..b) to (0..1)
         value = (value - a) / (b - a);
@@ -15,28 +23,28 @@ kauderk.util = ((newUtil) =>
         return c + value * (d - c);
     }
 
-    newUtil.linkClickPreviousElement = (el) =>
+    util.linkClickPreviousElement = (el) =>
     {
         el.previousElementSibling.setAttribute('for', el.id); // link clicks
     }
 
-    newUtil.applyIMGbg = (wrapper, url) =>
+    util.applyIMGbg = (wrapper, url) =>
     {
-        wrapper.style.backgroundImage = `url(${newUtil.get_youtube_thumbnail(url)})`;
+        wrapper.style.backgroundImage = `url(${util.get_youtube_thumbnail(url)})`;
     }
-    newUtil.removeIMGbg = (wrapper) =>
+    util.removeIMGbg = (wrapper) =>
     {
         wrapper.style.backgroundImage = 'none';
     }
 
 
-    newUtil.NoCash = (url) =>
+    util.NoCash = (url) =>
     {
         return url + "?" + new Date().getTime()
     }
 
 
-    newUtil.inViewport = (els) =>
+    util.inViewport = (els) =>
     {
         let matches = [],
             elCt = els.length;
@@ -64,13 +72,13 @@ kauderk.util = ((newUtil) =>
 
 
 
-    newUtil.emptyEl = (classList, el) =>
+    util.emptyEl = (classList, el) =>
     {
         if (classList)
             el.classList.add(classList);
         return el;
     }
-    newUtil.toggleClasses = (bol, classNames, el) =>
+    util.toggleClasses = (bol, classNames, el) =>
     {
         if (bol)
         {
@@ -83,7 +91,7 @@ kauderk.util = ((newUtil) =>
     }
 
 
-    newUtil.exitFullscreen = () =>
+    util.exitFullscreen = () =>
     {
         if (document.exitFullscreen)
         {
@@ -96,22 +104,22 @@ kauderk.util = ((newUtil) =>
             document.webkitExitFullscreen();
         }
     }
-    newUtil.closestBlockID = (el) =>
+    util.closestBlockID = (el) =>
     {
         return el?.closest('.rm-block__input')?.id
     }
-    newUtil.allIframeIDprfx = () =>
+    util.allIframeIDprfx = () =>
     {
         return document.querySelectorAll(`[id*=${iframeIDprfx}]`);
     }
-    newUtil.allIframeStyle = (style) =>
+    util.allIframeStyle = (style) =>
     {
         return document.querySelectorAll(`[${style}]`);
     }
 
 
 
-    newUtil.isTrue = (value) =>
+    util.isTrue = (value) =>
     {
         if (typeof (value) === 'string')
             value = value.trim().toLowerCase();
@@ -129,11 +137,11 @@ kauderk.util = ((newUtil) =>
                 return false;
         }
     }
-    newUtil.isValidUrl = (value) =>
+    util.isValidUrl = (value) =>
     {
         return /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:[/?#]\S*)?$/i.test(value);
     }
-    newUtil.isValidFetch = async (url) =>
+    util.isValidFetch = async (url) =>
     {
         try
         {
@@ -148,13 +156,13 @@ kauderk.util = ((newUtil) =>
             return [null, error];
         };
     }
-    newUtil.FetchText = async (url) =>
+    util.FetchText = async (url) =>
     {
-        const [response, err] = await newUtil.isValidFetch(newUtil.NoCash(url)); // firt time fetching something... This is cool
+        const [response, err] = await util.isValidFetch(util.NoCash(url)); // firt time fetching something... This is cool
         if (response)
             return await response.text();
     }
-    newUtil.get_youtube_thumbnail = (url, quality) =>
+    util.get_youtube_thumbnail = (url, quality) =>
     {
         //https://stackoverflow.com/questions/18681788/how-to-get-a-youtube-thumbnail-from-a-youtube-iframe
         if (url)
@@ -196,7 +204,7 @@ kauderk.util = ((newUtil) =>
     }
 
 
-    newUtil.isValidCSSUnit = (value) =>
+    util.isValidCSSUnit = (value) =>
     {
         //  valid CSS unit types
         const CssUnitTypes = ['em', 'ex', 'ch', 'rem', 'vw', 'vh', 'vmin',
@@ -215,7 +223,7 @@ kauderk.util = ((newUtil) =>
         return isValid;
     }
 
-    newUtil.ChangeElementType = (element, newtype) =>
+    util.ChangeElementType = (element, newtype) =>
     {
         let newelement = document.createElement(newtype);
 
@@ -239,5 +247,5 @@ kauderk.util = ((newUtil) =>
 
 
 
-    return newUtil;
+    return util;
 })(kauderk.util || {});
