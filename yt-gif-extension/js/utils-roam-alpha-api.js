@@ -1,6 +1,6 @@
 var kauderk = window.kauderk || {};
 
-kauderk.RAP = ((RAP) =>
+kauderk.rap = ((rap) =>
 {
     /* DISCLAIMER - THE MAJORITY OF THIS FUNCTIONS I TOOK THEM FROM ...
     https://github.com/yangkennyk/Roam42-Mirror/blob/5f9217e7f89c46b8cc409726aca744d1eca106e9/common/commonDatalog.js
@@ -14,7 +14,7 @@ kauderk.RAP = ((RAP) =>
     >>>> "Why not use those already?" Well, I learned some things in the process. I'd like to think that way. 
     Also, this piece of code is less dependent on external resources.
     */
-    RAP.moveBlock = async (parent_uid, block_order, block_to_move_uid) =>
+    rap.moveBlock = async (parent_uid, block_order, block_to_move_uid) =>
     {
         return window.roamAlphaAPI.moveBlock(
             {
@@ -22,8 +22,8 @@ kauderk.RAP = ((RAP) =>
                 block: { uid: block_to_move_uid }
             });
     }
-    RAP.sleep = m => new Promise(r => setTimeout(r, m));
-    RAP.createBlock = async (parent_uid, block_order, block_string, manualUID = false) =>
+    rap.sleep = m => new Promise(r => setTimeout(r, m));
+    rap.createBlock = async (parent_uid, block_order, block_string, manualUID = false) =>
     {
         parent_uid = parent_uid.replace('((', '').replace('))', '');
         let newUid = (!manualUID) ? roamAlphaAPI.util.generateUID() : manualUID; // polymorphism man...
@@ -39,7 +39,7 @@ kauderk.RAP = ((RAP) =>
                     uid: newUid
                 }
             });
-        await RAP.sleep(10); //seems a brief pause is need for DB to register the write
+        await rap.sleep(10); //seems a brief pause is need for DB to register the write
         return {
             uid: newUid,
             parentUid: parent_uid,
@@ -47,7 +47,7 @@ kauderk.RAP = ((RAP) =>
             string: block_string,
         };
     }
-    RAP.SetNumberedViewWithUid = async (uid) =>
+    rap.SetNumberedViewWithUid = async (uid) =>
     {
         //https://github.com/dvargas92495/roam-js-extensions/blob/c7092e40f6602a97fb555ae9d0cda8d2780ba0f2/src/entries/mouseless.ts#:~:text=%60%5B%3Afind%20(pull%20%3Fb%20%5B%3Achildren/view-type%5D)%20%3Awhere%20%5B%3Fb%20%3Ablock/uid%20%22%24%7Buid%7D%22%5D%5D%60
         const newViewType = "numbered";
@@ -55,22 +55,22 @@ kauderk.RAP = ((RAP) =>
             block: { uid, "children-view-type": newViewType },
         });
     }
-    RAP.CollapseDirectcChildren = async (block_uid, block_expanded) =>
+    rap.CollapseDirectcChildren = async (block_uid, block_expanded) =>
     {
         const firstGen = await ccc.util.allChildrenInfo(block_uid);
-        const children = RAP.sortObjectsByOrder(firstGen[0][0].children);
+        const children = rap.sortObjectsByOrder(firstGen[0][0].children);
 
         for (const child of children)
         {
-            await RAP.ExpandBlock(child.uid, block_expanded);
+            await rap.ExpandBlock(child.uid, block_expanded);
         }
     }
-    RAP.ExpandBlock = async (block_uid, block_expanded) =>
+    rap.ExpandBlock = async (block_uid, block_expanded) =>
     {
         return await window.roamAlphaAPI.updateBlock(
             { block: { uid: block_uid, open: block_expanded } });
     }
-    RAP.getBlockOrPageInfo = async (blockUid) =>
+    rap.getBlockOrPageInfo = async (blockUid) =>
     {
         const results = await window.roamAlphaAPI.q(`[:find (pull ?e [ :node/title :block/string :block/children :block/uid :block/order { :block/children ... } ] ) :where [ ?e :block/uid \"${blockUid}\" ] ]`);
         /*const Reading =
@@ -97,11 +97,11 @@ kauderk.RAP = ((RAP) =>
             ;*/
         return (results.length == 0) ? undefined : results
     }
-    RAP.sortObjectsByOrder = (o) =>
+    rap.sortObjectsByOrder = (o) =>
     {
         return o.sort((a, b) => a.order - b.order);
     }
-    RAP.getBlockParentUids = async (uid) =>
+    rap.getBlockParentUids = async (uid) =>
     {
         try
         {
@@ -132,14 +132,14 @@ kauderk.RAP = ((RAP) =>
                 , [uid])[0][0];*/
             var UIDS = parentUIDs.parents.map(e => e.uid)
             UIDS.shift();
-            return RAP.getPageNamesFromBlockUidList(UIDS)
+            return rap.getPageNamesFromBlockUidList(UIDS)
         }
         catch (e) 
         {
             return '';
         }
     }
-    RAP.getPageNamesFromBlockUidList = async (blockUidList) =>
+    rap.getPageNamesFromBlockUidList = async (blockUidList) =>
     {
         //blockUidList ex ['sdfsd', 'ewfawef']
         var rule = '[[(ancestor ?b ?a)[?a :block/children ?b]][(ancestor ?b ?a)[?parent :block/children ?b ](ancestor ?parent ?a) ]]';
@@ -152,7 +152,7 @@ kauderk.RAP = ((RAP) =>
         var results = await window.roamAlphaAPI.q(query, blockUidList, rule);
         return results;
     }
-    RAP.navigateToUiOrCreate = async (destinationPage, openInSideBar = false, sSidebarType = 'outline') =>
+    rap.navigateToUiOrCreate = async (destinationPage, openInSideBar = false, sSidebarType = 'outline') =>
     {
         //sSidebarType = block, outline, graph
         const prefix = destinationPage.substring(0, 2);
@@ -168,7 +168,7 @@ kauderk.RAP = ((RAP) =>
             destinationPage = destinationPage.substring(2, destinationPage.length - 2);
         }
 
-        let uid = await RAP.getPageUid(destinationPage);
+        let uid = await rap.getPageUid(destinationPage);
 
         if (uid == null)
         {
@@ -181,11 +181,11 @@ kauderk.RAP = ((RAP) =>
                 {
                     destinationPage = destinationPage.substring(0, 254);
                 }
-                await RAP.getOrCreatePageUid(destinationPage)
+                await rap.getOrCreatePageUid(destinationPage)
 
                 await sleep(50);
 
-                uid = await await RAP.getPageUid(destinationPage);
+                uid = await await rap.getPageUid(destinationPage);
             }
             else
             {
@@ -232,24 +232,24 @@ kauderk.RAP = ((RAP) =>
         }
     }
     /* -------------------------------------------------------------------- */
-    RAP.getPageUid = (pageTitle) =>
+    rap.getPageUid = (pageTitle) =>
     {
         const res = window.roamAlphaAPI.q(
             `[:find (pull ?page [:block/uid])
         :where [?page :node/title \"${pageTitle}\"]]`)
         return res.length ? res[0][0].uid : null
     }
-    RAP.deleteBlock = (blockUid) =>
+    rap.deleteBlock = (blockUid) =>
     {
         return window.roamAlphaAPI.deleteBlock({ "block": { "uid": blockUid } });
     }
-    RAP.createUid = () =>
+    rap.createUid = () =>
     {
         return roamAlphaAPI.util.generateUID();
     }
-    RAP.createPage = (pageTitle) =>
+    rap.createPage = (pageTitle) =>
     {
-        let pageUid = RAP.createUid()
+        let pageUid = rap.createUid()
         const status = window.roamAlphaAPI.createPage(
             {
                 "page":
@@ -257,7 +257,7 @@ kauderk.RAP = ((RAP) =>
             })
         return status ? pageUid : null
     }
-    RAP.createChildBlock = (parentUid, order, childString, childUid) =>
+    rap.createChildBlock = (parentUid, order, childString, childUid) =>
     {
         return window.roamAlphaAPI.createBlock(
             {
@@ -265,16 +265,16 @@ kauderk.RAP = ((RAP) =>
                 block: { string: childString.toString(), uid: childUid }
             })
     }
-    RAP.getOrCreatePageUid = (pageTitle, initString = null) =>
+    rap.getOrCreatePageUid = (pageTitle, initString = null) =>
     {
-        let pageUid = RAP.getPageUid(pageTitle)
+        let pageUid = rap.getPageUid(pageTitle)
         if (!pageUid)
         {
-            pageUid = RAP.createPage(pageTitle);
+            pageUid = rap.createPage(pageTitle);
             if (initString)
-                RAP.createChildBlock(pageUid, 0, initString, RAP.createUid());
+                rap.createChildBlock(pageUid, 0, initString, rap.createUid());
         }
         return pageUid;
     }
-})(kauderk.RAP || {});
+})(kauderk.rap || {});
 debugger;
