@@ -11,7 +11,7 @@ async function LoadExternalResources()
     if (
         typeof kauderk !== 'undefined' &&
         typeof kauderk.util !== 'undefined' &&
-        typeof (kauderk.RAP) != 'undefined' &&
+        typeof (kauderk.rap) != 'undefined' &&
         typeof (YT) != 'undefined'
     )
     {
