@@ -1,4 +1,4 @@
-let kauderk = window.kauderk || {};
+var kauderk = window.kauderk || {};
 
 kauderk.RAP = ((RAP) =>
 {

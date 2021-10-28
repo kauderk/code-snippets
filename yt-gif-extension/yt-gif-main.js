@@ -2,15 +2,18 @@ LoadExternalResources();
 
 async function LoadExternalResources()
 {
-    //if (typeof kauderk !== 'undefined' && typeof kauderk.util !== 'undefined' && (typeof (YT) != 'undefined'))
-    if (![YT, kauderk, kauderk.util, kauderk.RAP].includes(undefined))
+    if (
+        typeof kauderk !== 'undefined' &&
+        typeof kauderk.util !== 'undefined' &&
+        typeof (kauderk.RAP) != 'undefined' &&
+        typeof (YT) != 'undefined'
+    )
     {
         return null;
     }
     else
     {
         let promises = [];
-
 
         const ytApiScript = loadYT_IFRAME_API();
 
