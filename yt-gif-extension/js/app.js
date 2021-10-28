@@ -205,7 +205,7 @@ rm_components.both = {
 
 
 if (
-    typeof kauderk.util !== 'undefined' &&
+    typeof kauderk?.util !== 'undefined' &&
     typeof (YT) != 'undefined'
 )
 {
@@ -2018,8 +2018,10 @@ Discarted
     add yt_api customizable settings ✘
 
 
-Bugs to fix
+Bugs
     hover a frame > mouse leave with sound > focus on another window > go back to roam & and mouse enter a new frame, both videos play unmuted even with strict_mute_everything_except_current enabled ☐
-    work around > mouse enter a new frame holding middle mouse > mutes the previous, but the previous video still plays unmuted even though play_on_mouse_over enebled ☐
+        work around > mouse enter a new frame holding middle mouse > mutes the previous, but the previous video still plays unmuted even though play_on_mouse_over enebled ☐
 
+    initizlizing any video
+        it's volume is 100 always
 */

@@ -19,7 +19,7 @@ async function LoadExternalResources()
     }
     else
     {
-        await loadScript(loadYT_IFRAME_API());
+        await loadYT_IFRAME_API();
 
         await createXload('utils.js');
 
@@ -31,19 +31,12 @@ async function LoadExternalResources()
     }
     function loadYT_IFRAME_API()
     {
-        const YTAPI = document.createElement('script');
-        YTAPI.src = 'https://www.youtube.com/player_api';
+        const script = document.createElement('script');
+        script.src = 'https://www.youtube.com/player_api';
         const firstScriptTag = document.getElementsByTagName('script')[0];
-        firstScriptTag.parentNode.insertBefore(YTAPI, firstScriptTag);
-        return YTAPI;
+        firstScriptTag.parentNode.insertBefore(script, firstScriptTag);
+        return new Promise((resolve, reject) => { script.onload = () => resolve(script) })
     }
-}
-async function loadScript(script)
-{
-    return new Promise((resolve, reject) =>
-    {
-        script.onload = () => resolve(script)
-    })
 }
 async function createXload(src)
 {
@@ -80,5 +73,12 @@ async function createXload(src)
         {
             return `https://kauderk.github.io/code-snippets/yt-gif-extension/js/${f}`
         };
+    }
+    async function loadScript(script)
+    {
+        return new Promise((resolve, reject) =>
+        {
+            script.onload = () => resolve(script)
+        })
     }
 }
