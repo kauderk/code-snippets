@@ -32,16 +32,16 @@ UI.referenced = {
 }
 /*-----------------------------------*/
 const YT_GIF_OBSERVERS_TEMP = {
-    MasterMutationObservers: [],
-    MasterIntersectionObservers: [],
-    CreationCounter: -1, // crucial, bc the api won't reload iframes with the same id
+    masterMutationObservers: [],
+    masterIntersectionObservers: [],
+    creationCounter: -1, // crucial, bc the api won't reload iframes with the same id
     CleanMasterObservers: function ()
     {
-        const mutObjRes = cleanObserverArr(this.MasterMutationObservers);
-        this.MasterMutationObservers = mutObjRes.observer;
+        const mutObjRes = cleanObserverArr(this.masterMutationObservers);
+        this.masterMutationObservers = mutObjRes.observer;
 
-        const insObjRes = cleanObserverArr(this.MasterIntersectionObservers);
-        this.MasterIntersectionObservers = insObjRes.observer;
+        const insObjRes = cleanObserverArr(this.masterIntersectionObservers);
+        this.masterIntersectionObservers = insObjRes.observer;
 
         console.log(`${mutObjRes.counter} mutation and ${insObjRes.counter} intersection master observers cleaned`);
 
@@ -526,17 +526,17 @@ async function Ready()
         const options = {
             video: () =>
             { //video_MasterObserver
-                window.YT_GIF_OBSERVERS.MasterMutationObservers.push(ObserveIframesAndDelployYTPlayers(rm_components.video.classToObserve));
+                window.YT_GIF_OBSERVERS.masterMutationObservers.push(ObserveIframesAndDelployYTPlayers(rm_components.video.classToObserve));
             },
             yt_gif: () =>
             { //yt_gif_MasterObserver
-                window.YT_GIF_OBSERVERS.MasterMutationObservers.push(ObserveIframesAndDelployYTPlayers(rm_components.yt_gif.classToObserve));
+                window.YT_GIF_OBSERVERS.masterMutationObservers.push(ObserveIframesAndDelployYTPlayers(rm_components.yt_gif.classToObserve));
             },
             both: () =>
             { //both_MasterObserver
                 for (const classValue of rm_components.both.classesToObserve)
                 {
-                    window.YT_GIF_OBSERVERS.MasterMutationObservers.push(ObserveIframesAndDelployYTPlayers(classValue));
+                    window.YT_GIF_OBSERVERS.masterMutationObservers.push(ObserveIframesAndDelployYTPlayers(classValue));
                 }
             },
         }
@@ -852,7 +852,7 @@ function ObserveIframesAndDelployYTPlayers(targetClass)
     for (const component of hidden)
     {
         // I'm quite impressed with this... I mean...
-        window.YT_GIF_OBSERVERS.MasterIntersectionObservers.push(ObserveIntersectToSetUpPlayer(component, 'second wave'));
+        window.YT_GIF_OBSERVERS.masterIntersectionObservers.push(ObserveIntersectToSetUpPlayer(component, 'second wave'));
     }
 
     // 3. ready to observe and deploy iframes
@@ -915,7 +915,7 @@ function ObserveIframesAndDelployYTPlayers(targetClass)
         {
             if (isNotZoomPath(node))
             {
-                window.YT_GIF_OBSERVERS.MasterIntersectionObservers.push(ObserveIntersectToSetUpPlayer(node, 'valid entries MutationObserver'));
+                window.YT_GIF_OBSERVERS.masterIntersectionObservers.push(ObserveIntersectToSetUpPlayer(node, 'valid entries MutationObserver'));
             }
         }
     };
