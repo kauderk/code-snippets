@@ -100,26 +100,26 @@ window.YT_GIF_SETTINGS_PAGE = {
 window.YT_GIF_SETTINGS_PAGE.Workflow.baseKey.string = `The first ${level0Cnt + 1} blocks will be added/removed automatically. The last parameters are customizable. 👋`;
 
 
-init();
+//init();
 
-async function init()
+//async function init()
+//{
+assignChildrenOrder(); // 🐌
+
+if (TARGET_UID == null) // Brand new installation
 {
-    assignChildrenOrder(); // 🐌
-
-    if (TARGET_UID == null) // Brand new installation
-    {
-        TARGET_UID = await RAP.navigateToUiOrCreate(targetPage);
-        const addedBlocks = await addAllMissingBlocks(); // 🐌
-    }
-    else // Read and store Session Values
-    {
-        TARGET_UID = await RAP.getOrCreatePageUid(targetPage);
-        const entirePageText = await Read_Write_SettingsPage(TARGET_UID); // 🐌
-        const addedBlocks = await addAllMissingBlocks(); // 🐌 // THEY WILL STACK UP AGAINS EACHOTHER IF THEY ARE NOT EXAMINED - careful, bud
-    }
-    await RAP.SetNumberedViewWithUid(TARGET_UID);
-    await RAP.CollapseDirectcChildren(TARGET_UID, false);
+    TARGET_UID = await RAP.navigateToUiOrCreate(targetPage);
+    const addedBlocks = await addAllMissingBlocks(); // 🐌
 }
+else // Read and store Session Values
+{
+    TARGET_UID = await RAP.getOrCreatePageUid(targetPage);
+    const entirePageText = await Read_Write_SettingsPage(TARGET_UID); // 🐌
+    const addedBlocks = await addAllMissingBlocks(); // 🐌 // THEY WILL STACK UP AGAINS EACHOTHER IF THEY ARE NOT EXAMINED - careful, bud
+}
+await RAP.SetNumberedViewWithUid(TARGET_UID);
+await RAP.CollapseDirectcChildren(TARGET_UID, false);
+//}
 
 //#region HIDDEN FUNCTIONS
 function assignChildrenOrder()
