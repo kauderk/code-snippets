@@ -7,7 +7,7 @@
  * - nested object >>> sesionValue
  */
 debugger;
-const Utils = window.kauderk.util;
+const UTILS = window.kauderk.util;
 const UI = window.YT_GIF_SETTINGS_PAGE;
 /* user doesn't need to see this */
 UI.label = {
@@ -333,7 +333,7 @@ async function Ready()
     {
         const { yt_gif_wrapper, yt_gif_iframe_wrapper, ty_gif_custom_player_span, yt_gif } = cssData;
 
-        if (!Utils.isValidCSSUnit(player_span)) 
+        if (!UTILS.isValidCSSUnit(player_span)) 
         {
             return null;
         }
@@ -373,7 +373,7 @@ async function Ready()
 
     async function PlayerHtml_UCS(playerControls, end_loop_sound_src)
     {
-        let htmlText = await Utils.FetchText(playerControls);
+        let htmlText = await UTILS.FetchText(playerControls);
         if (end_loop_sound_src != '')
         {
             htmlText = htmlText.replace(/(?<=<source src=\")(?=")/gm, end_loop_sound_src);
@@ -385,7 +385,7 @@ async function Ready()
     {
         //⚠️
         const rm_moreIcon = document.querySelector('.bp3-icon-more').closest('.rm-topbar .rm-topbar__spacer-sm + .bp3-popover-wrapper');
-        const htmlText = await Utils.FetchText(dropDownMenu);
+        const htmlText = await UTILS.FetchText(dropDownMenu);
         const previousList = DDM_AreadyExistEls();
         if (previousList)
         {
@@ -393,7 +393,7 @@ async function Ready()
             {
                 el.parentElement.removeChild(el);
             }
-            Utils.RemoveElsEventListeners(previousList);
+            UTILS.RemoveElsEventListeners(previousList);
         }
 
         rm_moreIcon.insertAdjacentHTML('afterend', htmlText);
@@ -426,8 +426,8 @@ async function Ready()
                             break;
                         default:
                             const binaryInput = UI[parentKey][childKey];
-                            binaryInput.checked = Utils.isTrue(sessionValue);
-                            Utils.linkClickPreviousElement(binaryInput);
+                            binaryInput.checked = UTILS.isTrue(sessionValue);
+                            UTILS.linkClickPreviousElement(binaryInput);
                     }
                 }
                 else
@@ -489,11 +489,11 @@ async function Ready()
         function GainFocus(e, el, targetEl)
         {
             el.focus();
-            Utils.toggleClasses(true, classNames, targetEl);
+            UTILS.toggleClasses(true, classNames, targetEl);
         }
         function LoosedFocus(e, el, targetEl)
         {
-            Utils.toggleClasses(false, classNames, targetEl);
+            UTILS.toggleClasses(false, classNames, targetEl);
         }
         function spanNegativeTabIndex(el)
         {
@@ -509,7 +509,7 @@ async function Ready()
     {
         // this can be shorter for sure, how though?
 
-        if (Utils.isTrue(override_roam_video_component)) //video
+        if (UTILS.isTrue(override_roam_video_component)) //video
         {
             return 'video';
         }
@@ -569,7 +569,7 @@ async function Ready()
             {
                 for (const i of valid)
                 {
-                    Utils.toggleClasses(!main.checked, toggleClassArr, i);
+                    UTILS.toggleClasses(!main.checked, toggleClassArr, i);
                 }
             }
             //#endregion
@@ -600,11 +600,11 @@ async function Ready()
             {
                 if (withThumbnails.checked)
                 {
-                    Utils.applyIMGbg(i, i.dataset.videoUrl);
+                    UTILS.applyIMGbg(i, i.dataset.videoUrl);
                 }
                 else
                 {
-                    Utils.removeIMGbg(i); // spaguetti
+                    UTILS.removeIMGbg(i); // spaguetti
                 }
             }
         }
@@ -720,7 +720,7 @@ async function Ready()
 
             for (const key in deploymentRadioStates)
             {
-                if (Utils.isTrue(deploymentRadioStates[key]())) // THIS IS CRAZY
+                if (UTILS.isTrue(deploymentRadioStates[key]())) // THIS IS CRAZY
                 {
                     RunMasterObserverWithKey(key)
                     return;
@@ -735,12 +735,12 @@ async function Ready()
             function isSubMenuHidden(bol)
             {
                 const hiddenClass = [`${cssData.dropdown__hidden}`]
-                Utils.toggleClasses(bol, hiddenClass, subHiddenDDM);
+                UTILS.toggleClasses(bol, hiddenClass, subHiddenDDM);
             }
             function isSubDDMpulsing(bol)
             {
                 const pulseAnim = [cssData.dwn_pulse_anim]; // spagguetti
-                Utils.toggleClasses(bol, pulseAnim, subHiddenDDM_message); // spagguetti
+                UTILS.toggleClasses(bol, pulseAnim, subHiddenDDM_message); // spagguetti
             }
             //#endregion
         }
@@ -765,8 +765,8 @@ async function Ready()
         }
         function DeployCheckboxesToggleAnims(bol, animation)
         {
-            Utils.toggleClasses(bol, animation, checkMenuParent);
-            Utils.toggleClasses(bol, noInputAnimation, subMenuCheckParent);
+            UTILS.toggleClasses(bol, animation, checkMenuParent);
+            UTILS.toggleClasses(bol, noInputAnimation, subMenuCheckParent);
         }
         //#endregion
 
@@ -780,7 +780,7 @@ async function Ready()
     //#region uitils
     async function smart_LoadCSS(cssURL, id) // 'cssURL' is the stylesheet's URL, i.e. /css/styles.css
     {
-        if (!(await Utils.isValidFetch(cssURL))) 
+        if (!(await UTILS.isValidFetch(cssURL))) 
         {
             return;
         }
@@ -798,7 +798,7 @@ async function Ready()
             }
             const link = document.createElement('link');
             link.rel = 'stylesheet';
-            link.href = Utils.NoCash(cssURL);
+            link.href = UTILS.NoCash(cssURL);
             link.id = id;
             document.head.appendChild(link);
 
@@ -843,7 +843,7 @@ async function Ready()
 function ObserveIframesAndDelployYTPlayers(targetClass)
 {
     // 1. set up all visible YT GIFs
-    const visible = Utils.inViewport(AvoidAllZoomChilds());
+    const visible = UTILS.inViewport(AvoidAllZoomChilds());
     for (const component of visible)
     {
         onYouTubePlayerAPIReady(component, 'first wave');
@@ -947,8 +947,8 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
 
     // 1. last 9 letter form the closest blockID
     const uid = wrapper.closest('span[data-uid]')?.getAttribute('data-uid') ||
-        Utils.closestBlockID(wrapper)?.slice(-9) ||
-        Utils.closestBlockID(document.querySelector('.bp3-popover-open'))?.slice(-9);
+        UTILS.closestBlockID(wrapper)?.slice(-9) ||
+        UTILS.closestBlockID(document.querySelector('.bp3-popover-open'))?.slice(-9);
 
     if (!uid) return; // don't add up false positives
     const newId = iframeIDprfx + Number(++window.YT_GIF_OBSERVERS.creationCounter);
@@ -958,7 +958,7 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
     // 2. the div that the YTiframe will replace
     if (wrapper.tagName != 'DIV')
     {
-        wrapper = Utils.ChangeElementType(wrapper, 'div');
+        wrapper = UTILS.ChangeElementType(wrapper, 'div');
     }
     wrapper.parentElement.classList.add(`${cssData.yt_gif_wrapper}-parent`);
     wrapper.className = `${cssData.yt_gif_wrapper} dont-focus-block`;
@@ -979,7 +979,7 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
     // 4. to record a target's point of reference
     const record = Object.create(sesionIDs);
     sesionIDs.uid = uid;
-    const blockID = Utils.closestBlockID(wrapper);
+    const blockID = UTILS.closestBlockID(wrapper);
     if (blockID != null)
         recordedIDs.set(blockID, record);
 
@@ -997,21 +997,21 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
 
         if (UI.experience.awaiting_with_video_thumnail_as_bg.checked)
         {
-            Utils.applyIMGbg(wrapper, url);
+            UTILS.applyIMGbg(wrapper, url);
         }
         else
         {
             mainAnimation = awaitingAnimation;
         }
 
-        Utils.toggleClasses(true, mainAnimation, wrapper);
+        UTILS.toggleClasses(true, mainAnimation, wrapper);
         wrapper.addEventListener('mouseenter', CreateYTPlayer);
 
         //#region handler
         function CreateYTPlayer(e)
         {
-            Utils.toggleClasses(false, mainAnimation, wrapper);
-            Utils.removeIMGbg(wrapper);
+            UTILS.toggleClasses(false, mainAnimation, wrapper);
+            UTILS.removeIMGbg(wrapper);
             wrapper.removeEventListener('mouseenter', CreateYTPlayer);
 
             // 5. ACTUAL CREATION OF THE EMBEDED YOUTUBE VIDEO PLAYER (target)
@@ -1191,7 +1191,7 @@ async function onPlayerReady(event)
     const entryVolume = validVolumeURL();
     const tickOffset = 1000 / speed;
 
-    const blockID = Utils.closestBlockID(iframe);
+    const blockID = UTILS.closestBlockID(iframe);
     const rocording = recordedIDs.get(blockID);
     // 🚧?
     if (rocording != null)
@@ -1278,7 +1278,7 @@ async function onPlayerReady(event)
     function IframeRemmovedFromDom_callback(observer)
     {
         // expensive for sure 🙋 removeEventListeners
-        Utils.RemoveElsEventListeners(withEventListeners);
+        UTILS.RemoveElsEventListeners(withEventListeners);
         for (const p in UI.playStyle)
         {
             UI.playStyle[p].removeEventListener('change', playStyleDDMO); // all valid, toggle play state
@@ -1433,7 +1433,7 @@ async function onPlayerReady(event)
                     {
                         videoIsPlayingWithSound(true);
                     }
-                    else if (Utils.inViewport(iframe) && !t.__proto__.globalHumanInteraction)
+                    else if (UTILS.inViewport(iframe) && !t.__proto__.globalHumanInteraction)
                     {
                         togglePlay(UI.playStyle.visible_clips_start_to_play_unmuted.checked); // pause
                     }
@@ -1569,10 +1569,10 @@ async function onPlayerReady(event)
             //#region local utils
             function LoopTroughVisibleYTGIFs(config = { styleQuery, others_callback: () => { }, self_callback: () => { } })
             {
-                const ytGifs = Utils.inViewport(Utils.allIframeStyle(config?.styleQuery));
+                const ytGifs = UTILS.inViewport(UTILS.allIframeStyle(config?.styleQuery));
                 for (const i of ytGifs)
                 {
-                    const blockID = Utils.closestBlockID(i);
+                    const blockID = UTILS.closestBlockID(i);
                     if (i != iframe)
                     {
                         config?.others_callback(blockID, i);
@@ -1607,7 +1607,7 @@ async function onPlayerReady(event)
 
     function playStyleDDMO(visible_clips_start_to_play_unmuted)
     {
-        if (!Utils.inViewport(iframe)) return; //play all VISIBLE Players, this will be called on all visible iframes
+        if (!UTILS.inViewport(iframe)) return; //play all VISIBLE Players, this will be called on all visible iframes
 
         if (visible_clips_start_to_play_unmuted.checked)
         {
@@ -1622,7 +1622,7 @@ async function onPlayerReady(event)
 
     function muteStyleDDMO(muted_on_any_mouse_interaction, muted_on_any_mouse_interaction)
     {
-        if (!Utils.inViewport(iframe)) return; //mute all VISIBLE Players, this will be called on all visible iframes
+        if (!UTILS.inViewport(iframe)) return; //mute all VISIBLE Players, this will be called on all visible iframes
 
         if (strict_mute_everything_except_current.checked || muted_on_any_mouse_interaction.checked)
         {
@@ -1816,7 +1816,7 @@ async function onPlayerReady(event)
         if (e.buttons == 4) return true;
 
         for (const name in UI.InAndOutKeys)
-            if (e[name] && Utils.isTrue(UI.InAndOutKeys[name]))
+            if (e[name] && UTILS.isTrue(UI.InAndOutKeys[name]))
                 return true;
 
         return false;
@@ -1912,7 +1912,7 @@ function onStateChange(state)
     {
         t.seekTo(map?.start || 0);
 
-        if (Utils.isValidUrl(UI.defaultValues.end_loop_sound_src))
+        if (UTILS.isValidUrl(UI.defaultValues.end_loop_sound_src))
         {
             if (UI.experience.sound_when_video_loops.checked)
             {
@@ -1924,7 +1924,7 @@ function onStateChange(state)
                     { // return a promise
                         var audio = new Audio();                     // create audio wo/ src
                         audio.preload = "auto";                      // intend to play through
-                        audio.volume = Utils.mapRange(UI.range.end_loop_sound_volume.value, 0, 100, 0, 1.0);
+                        audio.volume = UTILS.mapRange(UI.range.end_loop_sound_volume.value, 0, 100, 0, 1.0);
                         audio.autoplay = true;                       // autoplay when loaded
                         audio.onerror = reject;                      // on error, reject
                         audio.onended = resolve;                     // when done, resolve
@@ -1940,7 +1940,7 @@ function onStateChange(state)
         {
             if (document.fullscreenElement)
             {
-                Utils.exitFullscreen();
+                UTILS.exitFullscreen();
                 currentFullscreenPlayer = '';
             }
         }
