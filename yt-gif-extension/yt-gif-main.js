@@ -30,7 +30,6 @@ async function LoadExternalResources()
         promises.push(createXload('settings-page.js'));
 
 
-
         await Promise.all([loadScript(ytApiScript), ...promises]);
 
         return null;
@@ -58,7 +57,7 @@ async function createXload(src)
         id: `script-yt-gif-${src}`
     }
 
-    romoveIfany(id);
+    romoveIfany(obj.id);
     const script = createScript(obj);
     return await loadScript(script);
 
