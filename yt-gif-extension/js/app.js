@@ -209,7 +209,7 @@ if (
     typeof (YT) != 'undefined'
 )
 {
-    await Ready(); // LET'S GO! LET'S GO!
+    Ready(); // LET'S GO! LET'S GO!
 }
 else
 {
