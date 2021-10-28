@@ -6,6 +6,8 @@
  * The variable types will change.
  * - nested object >>> sesionValue
  */
+debugger;
+
 const UI = window.YT_GIF_SETTINGS_PAGE;
 /* user doesn't need to see this */
 UI.label = {

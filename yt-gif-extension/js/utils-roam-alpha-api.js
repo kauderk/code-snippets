@@ -275,4 +275,5 @@ window.kauderk.RAP = ((RAP) =>
         }
         return pageUid;
     }
-})(kauderk.RAP || {});
+})(window.kauderk.RAP || {});
+debugger;
