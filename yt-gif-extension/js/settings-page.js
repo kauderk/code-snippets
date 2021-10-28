@@ -104,6 +104,7 @@ init();
 
 async function init()
 {
+    console.count('settings page script');
     assignChildrenOrder(); // 🐌
 
     if (TARGET_UID == null) // Brand new installation
@@ -113,11 +114,9 @@ async function init()
     }
     else // Read and store Session Values
     {
-        TARGE5T_UID = await RAP.getOrCreatePageUid(targetPage);
+        TARGET_UID = await RAP.getOrCreatePageUid(targetPage);
         const entirePageText = await Read_Write_SettingsPage(TARGET_UID); // 🐌
-
-        // THEY WILL STACK UP AGAINS EACHOTHER IF THEY ARE NOT EXAMINED - careful, bud
-        const addedBlocks = await addAllMissingBlocks(); // 🐌
+        const addedBlocks = await addAllMissingBlocks(); // 🐌 // THEY WILL STACK UP AGAINS EACHOTHER IF THEY ARE NOT EXAMINED - careful, bud
     }
     await RAP.SetNumberedViewWithUid(TARGET_UID);
     await RAP.CollapseDirectcChildren(TARGET_UID, false);

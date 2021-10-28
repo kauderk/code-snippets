@@ -61,9 +61,7 @@ const YT_GIF_OBSERVERS_TEMP = {
         }
     }
 }
-console.log(window.YT_GIF_OBSERVERS, YT_GIF_OBSERVERS_TEMP);
 window.YT_GIF_OBSERVERS = (!window.YT_GIF_OBSERVERS) ? YT_GIF_OBSERVERS_TEMP : window.YT_GIF_OBSERVERS;
-console.log(window.YT_GIF_OBSERVERS, YT_GIF_OBSERVERS_TEMP);
 /*-----------------------------------*/
 const iframeIDprfx = 'player_';
 let currentFullscreenPlayer = '';
@@ -219,6 +217,7 @@ else
 
 async function Ready()
 {
+    console.count('ready func yt gif');
     // the objects "UI", "links", "attrData" and "cssData" are binded to all of these functions
     if (DDM_AreadyExistEls())
     {
