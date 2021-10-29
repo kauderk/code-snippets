@@ -5,8 +5,6 @@ const RAP = window.kauderk.rap;
 
 let TARGET_UID = RAP.getPageUid(targetPage);
 
-let level0Cnt = -1;
-
 const fmtSplit = ' : ';
 const cptrPrfx = '<',
     cptrSufx = '>';
@@ -24,10 +22,74 @@ const rad = 'radio',
 window.YT_GIF_SETTINGS_PAGE = {
     Workflow: {
         baseKey: addOrderPmt(`GREEN`),
+        a1: {
+            baseKey: addOrderPmt(`💐 Bouquet 🌸 Cherry Blossom`),
+        },
+        a2: {
+            baseKey: addOrderPmt(`💮 White Flower 🏵️ Rosette`),
+        },
+        a3: {
+            baseKey: addOrderPmt(`🌹 Rose 🥀 Wilted Flower`),
+        },
+        a6: {
+            baseKey: addOrderPmt(`🐢 Turtle`),
+            a: {
+                baseKey: addOrderPmt(`🦎 Lizard 🐲 Dragon Face`),
+                a: {
+                    baseKey: addOrderPmt(`🌿 Herb ☘️ Shamrock 🍀 Four Leaf Clover`),
+                },
+            },
+        },
+        a4: {
+            baseKey: addOrderPmt(`🌺 Hibiscus 🌻 Sunflower`),
+        },
+        a5: {
+            baseKey: addOrderPmt(`🌼 Blossom 🌷 Tulip`),
+        },
+        a7: {
+            baseKey: addOrderPmt(`🐍 Snake`),
+        }
+    },
+    two: {
+        baseKey: addOrderPmt(`WHITE`),
+        b: {
+            baseKey: addOrderPmt(`🐭 Mouse Face`),
+            b: {
+                baseKey: addOrderPmt(`🦊Fox 🦝Raccoon`),
+                b: {
+                    baseKey: addOrderPmt(`🐀 Rat 🐹 Hamster 🐇Rabbit`),
+                    b: {
+                        baseKey: addOrderPmt(`🐵 Monkey Face 🐒 Monkey 🦍 Gorilla 🦧 Orangutan`),
+                        b: {
+                            baseKey: addOrderPmt(`🦃 Turkey 🐔 Chicken 🐓 Rooster 🐣 Hatching Chick 🐤 Baby Chick `),
+                            b: {
+                                baseKey: addOrderPmt(`🐥 Baby Chick 🐦 Bird 🐧 Penguin 🐟 Fish 🐠 Tropical Fish 🐡 Blowfish`),
+                                b: {
+                                    baseKey: addOrderPmt(`🐎 Horse 🦄 Unicorn 🦓 Zebra 🦌 Deer 🦬 Bison 🐮 Cow Face 🐂 Ox`),
+                                },
+                            },
+
+                        },
+                    },
+                },
+            },
+        },
+        a: {
+            baseKey: addOrderPmt(`🐘 Elephant`),
+            a: {
+                baseKey: addOrderPmt(`🦏 Rhinoceros 🦛 Hippopotamus`),
+            },
+        },
     },
     display: {
         baseKey: addOrder(chk),
         clip_life_span_format: dom('1'),
+        experience: {
+            baseKey: addOrder(chk),
+            sound_when_video_loops: dom('1'),
+            awaiting_for_mouseenter_to_initialize: dom(),
+            awaiting_with_video_thumnail_as_bg: dom('1'),
+        },
     },
     previousTimestamp: {
         baseKey: addOrder(rad),
@@ -42,6 +104,13 @@ window.YT_GIF_SETTINGS_PAGE = {
         strict_start_volume: dom('1'),
         start_volume: dom(),
         fixed_start_volume: dom(),
+        InAndOutKeys: {
+            baseKey: addOrder(chk),
+            /* middle mouse button is on by default */
+            ctrlKey: dom('1'),
+            shiftKey: dom(),
+            altKey: dom(),
+        },
     },
     experience: {
         baseKey: addOrder(chk),
@@ -73,6 +142,22 @@ window.YT_GIF_SETTINGS_PAGE = {
         timestamp_display_scroll_offset: dom('5', int),
         /* integers from 0 to 100 */
         end_loop_sound_volume: dom('50', int),
+        defaultValues: {
+            baseKey: addOrder(),
+            video_volume: subInputType(40, int),
+
+            /* 'dark' or 'light' */
+            css_theme: subInputType('dark', str),
+
+            /* empty means 50% - only valid css units like px  %  vw */
+            player_span: subInputType('50%', str),
+
+            /* distinguish between {{[[video]]:}} from {{[[yt-gif]]:}} or 'both' which is also valid*/
+            override_roam_video_component: subInputType('', [bol, str]),
+
+            /* src sound when yt gif makes a loop, empty if unwanted */
+            end_loop_sound_src: subInputType('https://freesound.org/data/previews/256/256113_3263906-lq.mp3', url),
+        },
     },
     InAndOutKeys: {
         baseKey: addOrder(chk),
@@ -95,12 +180,12 @@ window.YT_GIF_SETTINGS_PAGE = {
         override_roam_video_component: subInputType('', [bol, str]),
 
         /* src sound when yt gif makes a loop, empty if unwanted */
-        end_loop_sound_sra: subInputType('https://freesound.org/data/previews/256/256113_3263906-lq.mp3', url),
+        end_loop_sound_src: subInputType('https://freesound.org/data/previews/256/256113_3263906-lq.mp3', url),
     },
 }
 
 // THE ORDER DOES MATTER, because of the counter
-window.YT_GIF_SETTINGS_PAGE.Workflow.baseKey.string = `The first ${level0Cnt + 1} blocks will be added/removed automatically. The last parameters are customizable. 👋`;
+//window.YT_GIF_SETTINGS_PAGE.Workflow.baseKey.string = `The first ${Object.keys(window.YT_GIF_SETTINGS_PAGE).length} blocks will be added/removed automatically. The last parameters are customizable. 👋`;
 
 
 init();
@@ -121,7 +206,7 @@ async function init()
         const addedBlocks = await addAllMissingBlocks(); // 🐌 // THEY WILL STACK UP AGAINS EACHOTHER IF THEY ARE NOT EXAMINED - careful, bud
     }
     await RAP.SetNumberedViewWithUid(TARGET_UID);
-    await RAP.CollapseDirectcChildren(TARGET_UID, false);
+    //await RAP.CollapseDirectcChildren(TARGET_UID, false);
 }
 
 //#region HIDDEN FUNCTIONS
@@ -162,68 +247,44 @@ async function assignChildrenMissingValues()
     async function Rec_assignChildrenMissingValues(nextObj, accObj = passAccObj)
     {
         let { accStr } = accObj;
+        let funcIndent = -1;
+
         const { nextStr, indent } = accObj;
         const tab = `\t`.repeat((indent < 0) ? 0 : indent);
 
         accStr = accStr + '\n' + tab + nextStr;
 
-        let funcIndent = -1;
-        let baseIndent = undefined;
 
         for (const property in nextObj)
         {
-            let loopIndent = -1;
             if (nextObj.hasOwnProperty(property) && typeof nextObj[property] === "object" && nextObj[property] != null)
             {
-                //let nextAccObj;
-
-
-                let nestedPpt = nextObj[property];
+                const nestedPpt = nextObj[property];
                 const nextAccObj = {
                     indent: indent + 1,
-                    parentKey: property,
                     accStr: accStr,
-                    tab: `\t`.repeat(this.indent),
-                    nextStr: nestedPpt?.string || '',
-                    accKeys: accObj.accKeys,
+                    nextStr: nestedPpt.string || '',
+                    baseOrder: null,
                 };
                 accStr = await Rec_assignChildrenMissingValues(nextObj[property], nextAccObj); // recursion with await - 🤯
 
-                // 1. indent = 0
-                if (nextObj[property].baseKey != undefined) // the acutal main objects are set up so the main sub key (block) has it's properties nested, and below it's possible children, so to change it, you have to look one level above it
+                if (nestedPpt = window.YT_GIF_SETTINGS_PAGE[property])
                 {
-                    nextObj[property].baseKey.order = Number(++funcIndent);
-                    nextObj[property].baseKey.indent = baseIndent = nextAccObj.indent;
+                    console.log('direct child: ', property);
                 }
-
-                const obj = {
-                    separator: "--------------------",
-                    indent,
-                    nextAccObj: nextAccObj.nextStr,
-                    nextAccObjIndent: nextAccObj.indent, // seems to be advaned by one
-                    nextObjIndent: nextObj.indent,
-                    Nest_0: nextObj[property]?.baseKey?.order, // level 0 works after the Rec_ call
-                    loopIndent: Number(++loopIndent),
-                    '': '',
-                    nextAccParent: nextAccObj.parentKey,
-                    accKeys: nextAccObj.accKeys,
-                    property,
-                }
-
-                nextAccObj.accKeys = [...accObj.accKeys, property];
-
-                if (property == 'baseKey')
+                if (nestedPpt.baseKey != undefined) // the acutal main objects are set up so the main sub key (block) has it's properties nested, and below it's possible children, so to change it, you have to look one level above it
                 {
-                    obj.separator = "*******************************************************";
+                    nestedPpt.baseKey.order = nextAccObj.baseOrder = Number(++funcIndent);
+                    nestedPpt.baseKey.indent = nextAccObj.indent;
                 }
-                if (nextObj[property].indent != undefined) // arbitrary property -> subTemp()
+                else // nested on same indent
                 {
-                    nextObj[property].indent = (indent < 0) ? 0 : indent;
-                    console.log(JSON.stringify(obj, null, 4));
+                    debugger;
+                    nestedPpt.order = Number(++funcIndent) - 1;
+                    nestedPpt.indent = nextAccObj.indent;
                 }
 
-                // 3. indent = 1
-
+                // so far it works for the first indentation, but with actual user inputs whey they get to a nested one, they skip one
             }
         }
         return accStr;
@@ -350,18 +411,12 @@ async function Read_Write_SettingsPage(UID)
             }
             async function checkReorderBlock(parentUid, selfOrder, childObjToMoveUID)
             {
-                const validOrder = childObjToMoveUID.order || 0;
+                const validOrder = childObjToMoveUID.order;
                 const validUid = childObjToMoveUID.uid;
                 if (selfOrder != validOrder)
                 {
-                    try
-                    {
-                        await RAP.moveBlock(parentUid, validOrder, validUid);
-                    }
-                    catch (err)
-                    {
-                        debugger;
-                    }
+                    debugger;
+                    await RAP.moveBlock(parentUid, validOrder, validUid);
                 }
             }
             function RecIsValidNestedKey(obj, level, ...rest) // 🐌
@@ -630,7 +685,7 @@ function baseTmp(_inputType, _string = '')
         string: _string,
         examined: false,
         inputType: _inputType,
-        order: 0,
+        order: -1,
         indent: -1,
     }
 }
@@ -671,6 +726,8 @@ FIXME
     tryToremoveBlock
         nested blocks, specially those inside addOrderPmt()
         get removed just to be readded by next func
+
+    order & indent on non baseKeys plz
 
 
 solved ☐ ☑
