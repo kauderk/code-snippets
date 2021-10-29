@@ -1,5 +1,6 @@
 // version 1 - semi-refactored
 const targetPage = 'roam/js/kauderk/yt-gif/settings';
+const UTILS = window.kauderk.util;
 const RAP = window.kauderk.rap;
 
 let TARGET_UID = RAP.getPageUid(targetPage);
@@ -22,7 +23,37 @@ const rad = 'radio',
 
 window.YT_GIF_SETTINGS_PAGE = {
     Workflow: {
-        baseKey: addOrderPmt(`BIP BOP . . .`),
+        baseKey: addOrderPmt(`Workflow 0`),
+        w1: {
+            baseKey: addOrderPmt(`w1`),
+            w1_1: {
+                baseKey: addOrderPmt(`w1_1`),
+            },
+        },
+        w2: {
+            baseKey: addOrderPmt(`w2`),
+        }
+    },
+    test: {
+        baseKey: addOrderPmt(`test 0`),
+        t1: {
+            baseKey: addOrderPmt(`t1`),
+            t1_1: {
+                baseKey: addOrderPmt(`t1_1`),
+                t1_1_1: {
+                    baseKey: addOrderPmt(`t1_1_1`),
+                    t1_1_1_1: {
+                        baseKey: addOrderPmt(`t1_1_1_1`),
+                    },
+                },
+            },
+            t2_2: {
+                baseKey: addOrderPmt(`t2_2`),
+            }
+        },
+        t2: {
+            baseKey: addOrderPmt(`t2`),
+        }
     },
     display: {
         baseKey: addOrder(chk),
@@ -106,7 +137,8 @@ init();
 
 async function init()
 {
-    assignChildrenOrder(); // 🐌
+    //assignChildrenOrder(); // 🐌
+    await assignChildrenMissingValues();
 
     if (TARGET_UID == null) // Brand new installation
     {
@@ -147,7 +179,7 @@ function assignChildrenOrder()
         }
     }
 }
-function assignChildrenMissingValues()
+async function assignChildrenMissingValues()
 {
     const accObj = {
         accStr: '',
@@ -167,11 +199,12 @@ function assignChildrenMissingValues()
             if (nextObj.hasOwnProperty(property) && typeof nextObj[property] === "object")
             {
                 let nestedPpt = nextObj[property];
+                console.log(property);
 
-                // 1. indent = 0
+                // 1. indent = 0    
                 if (property == 'baseKey')
                 {
-                    console.log(property);
+                    //console.log(property);
                 }
 
                 // 2. the order does matter
@@ -179,15 +212,15 @@ function assignChildrenMissingValues()
                     parentKey: property,
                     accStr: accStr,
                     tab: `\t`.repeat(0),
-                    nextStr: nestedPpt.string || '',
+                    nextStr: nestedPpt?.string || '',
                 };
 
                 accStr = await Rec_assignChildrenMissingValues(nextObj[property], nextAccObj); // recursion with await - 🤯
 
                 // 3. indent = 1
-                if (nextObj[property].baseValue != undefined) // arbitrary property -> subTemp()
+                if (nextObj[property]?.baseValue != undefined) // arbitrary property -> subTemp()
                 {
-                    console.log(nextAccObj.parentKey, property);
+                    //console.log(nextAccObj.parentKey, property);
                 }
             }
         }
@@ -315,11 +348,18 @@ async function Read_Write_SettingsPage(UID)
             }
             async function checkReorderBlock(parentUid, selfOrder, childObjToMoveUID)
             {
-                const validOrder = childObjToMoveUID.order;
+                const validOrder = childObjToMoveUID.order || 0;
                 const validUid = childObjToMoveUID.uid;
                 if (selfOrder != validOrder)
                 {
-                    await RAP.moveBlock(parentUid, validOrder, validUid);
+                    try
+                    {
+                        await RAP.moveBlock(parentUid, validOrder, validUid);
+                    }
+                    catch (err)
+                    {
+                        debugger;
+                    }
                 }
             }
             function RecIsValidNestedKey(obj, level, ...rest) // 🐌
@@ -548,7 +588,7 @@ function assertObjPpt_base(baseKeyObj, string, uid)
 /*---------------------------------------------*/
 function addOrderPmt(blockContent = '')
 {
-    return Object.assign(baseTmp(pmt, Number(++level0Cnt), blockContent));
+    return baseTmp(pmt, 0, blockContent);
 }
 /*---------------------------------------------*/
 function addOrder(inputType)
