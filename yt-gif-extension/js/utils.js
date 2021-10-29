@@ -2,6 +2,12 @@ var kauderk = window.kauderk || {};
 
 kauderk.util = ((util) =>
 {
+    util.pushSame = (arr = [], el) =>
+    {
+        arr.push(el);
+        return arr;
+    }
+    /* ----------------------------------------------- */
     util.RemoveElsEventListeners = (withEventListeners) =>
     {
         for (const el of withEventListeners)

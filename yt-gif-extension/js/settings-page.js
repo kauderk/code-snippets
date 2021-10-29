@@ -7,6 +7,8 @@ let TARGET_UID = RAP.getPageUid(targetPage);
 let level0Cnt = -1;
 
 const fmtSplit = ' : ';
+const cptrPrfx = '<',
+    cptrSufx = '>';
 const PmtSplit = ' / ';
 
 const rad = 'radio',
@@ -145,6 +147,53 @@ function assignChildrenOrder()
         }
     }
 }
+function assignChildrenMissingValues()
+{
+    const accObj = {
+        accStr: '',
+        nextStr: this.accStr,
+    };
+
+    return await Rec_assignChildrenMissingValues(window.YT_GIF_SETTINGS_PAGE, accObj);
+    async function Rec_assignChildrenMissingValues(nextObj, accObj = {})
+    {
+        let { accStr } = accObj;
+        const { tab, nextStr } = accObj;
+
+        accStr = accStr + '\n' + tab + nextStr;
+
+        for (const property in nextObj)
+        {
+            if (nextObj.hasOwnProperty(property) && typeof nextObj[property] === "object")
+            {
+                let nestedPpt = nextObj[property];
+
+                // 1. indent = 0
+                if (property == 'baseKey')
+                {
+                    console.log(property);
+                }
+
+                // 2. the order does matter
+                const nextAccObj = {
+                    parentKey: property,
+                    accStr: accStr,
+                    tab: `\t`.repeat(0),
+                    nextStr: nestedPpt.string || '',
+                };
+
+                accStr = await Rec_assignChildrenMissingValues(nextObj[property], nextAccObj); // recursion with await - 🤯
+
+                // 3. indent = 1
+                if (nextObj[property].baseValue != undefined) // arbitrary property -> subTemp()
+                {
+                    console.log(nextAccObj.parentKey, property);
+                }
+            }
+        }
+        return accStr;
+    }
+}
 async function Read_Write_SettingsPage(UID)
 {
     const ChildrenHierarchy = await RAP.getBlockOrPageInfo(UID, true);
@@ -161,9 +210,9 @@ async function Read_Write_SettingsPage(UID)
         let { accStr } = accObj;
         const { nextUID, keyFromLevel0, selfOrder } = accObj;
         const { tab, nextStr, indent, parentUid } = await RelativeChildInfo(nextObj);
-        const { uid, key, value } = getUidKeywordsFromString(nextStr);
+        const { uid, key, value, caputuredValue, caputureOk } = getUidKeywordsFromBlockString(nextStr);
 
-        if (! await SuccesfullSttgUpt(indent)) // remove it
+        if (! await SuccessfulSttgUpt(indent)) // remove it
         {
             const uidToDelete = uid || nextUID;
             if (uidToDelete)
@@ -197,18 +246,20 @@ async function Read_Write_SettingsPage(UID)
         return accStr;
 
         //#region local uitils
-        async function SuccesfullSttgUpt(indent)
+        async function SuccessfulSttgUpt(indent)
         {
             if (indent == 0)
             {
                 if (RecIsValidNestedKey(window.YT_GIF_SETTINGS_PAGE, key)) // LEVEL 0 block upt
                 {
                     let parentObj = window.YT_GIF_SETTINGS_PAGE[key];
-                    const baseObj = baseUIpptValidation(parentObj.baseKey, nextStr, uid);
+                    const baseObj = assertObjPpt_base(parentObj.baseKey, nextStr, uid);
 
                     parentObj = assignInputTypesToChildren(parentObj);
 
                     await checkReorderBlock(parentUid, selfOrder, baseObj);
+
+                    tryToCorrectWrittenUID(nextStr);
 
                     return true;
                 }
@@ -217,9 +268,14 @@ async function Read_Write_SettingsPage(UID)
             {
                 if (RecIsValidNestedKey(window.YT_GIF_SETTINGS_PAGE, keyFromLevel0, [key])) // nested LEVEL 1 block upt
                 {
-                    const crrObjKey = baseUIpptValidation(window.YT_GIF_SETTINGS_PAGE[keyFromLevel0][key], nextStr, uid);
+                    const crrObjKey = assertObjPpt_base(window.YT_GIF_SETTINGS_PAGE[keyFromLevel0][key], nextStr, uid);
 
                     crrObjKey.sessionValue = value;
+                    crrObjKey.caputuredValue = caputuredValue;
+                    if (!caputureOk)
+                    {
+                        console.warn(`BUD bud - "${nextStr}" value is looking weird, it will default to false...`);
+                    }
                     await checkReorderBlock(parentUid, selfOrder, crrObjKey);
 
                     return true;
@@ -247,7 +303,8 @@ async function Read_Write_SettingsPage(UID)
                                 continue;
                             }
                             let childType = parentObj[parentKey].inputType; // will check it self... fuck!, but it's the same... so let's hope this doesn't brake anything
-                            if (!childType)
+
+                            if (typeof childType == 'undefined')
                             {
                                 parentObj[parentKey].inputType = parentInputType;
                             }
@@ -306,18 +363,46 @@ async function Read_Write_SettingsPage(UID)
                     ? parentsHierarchy[0][0]?.uid : TARGET_UID, // if undefined - most defenetly it's the direct child (level 0) of the page
             }
         }
-        function getUidKeywordsFromString(nextStr, join = fmtSplit)
+        function getUidKeywordsFromBlockString(nextStr, join = fmtSplit)
         {
             const rgxUid = new RegExp(/\(([^\)]+)\)/, 'gm'); //(XXXXXXXX)
             let splitedStr = nextStr.split(join); // deconstruct
-            const firstKeyword = splitedStr.map(word => word.split(' ')[0]); // get only the first word inside the fmtSplit
-            const rawUid = rgxUid.exec(firstKeyword[0]);
+            const everyFirstKeyword = splitedStr.map(word => word.split(' ')[0]); // returns array
+
+            const preUid = rgxUid.exec(everyFirstKeyword[0]);
+
+            const { value, caputureOk } = tryTrimCapturedValue(everyFirstKeyword[2] || '');
 
             return {
-                uid: rawUid ? rawUid[1] : undefined,
-                key: firstKeyword[1],
-                value: firstKeyword[2],
+                uid: preUid ? preUid[1] : undefined,
+
+                key: everyFirstKeyword[1],
+
+                caputuredValue: everyFirstKeyword[2],
+                value: value,
+                caputureOk: caputureOk,
             }
+            function tryTrimCapturedValue(string)
+            {
+                const prefix = string.substring(0, 1);
+                const suffix = string.substring((string.length - 1), string.length);
+                if (prefix == cptrPrfx && suffix == cptrSufx)
+                {
+                    // < >
+                    return {
+                        caputuredValue: string.substring(1, string.length - 1),
+                        caputureOk: true,
+                    }
+                }
+                return {
+                    caputuredValue: string,
+                    caputureOk: false,
+                }
+            }
+        }
+        function tryToCorrectWrittenUID(blockStr)
+        {
+
         }
         //#endregion
     }
@@ -344,7 +429,6 @@ async function addAllMissingBlocks()
 
         for (const property in nextObj)
         {
-
             if (nextObj.hasOwnProperty(property) && typeof nextObj[property] === "object")
             {
                 if (property == 'sessionValue')
@@ -354,7 +438,7 @@ async function addAllMissingBlocks()
                 }
                 let nestedPpt = nextObj[property];
 
-                // 1. 
+                // 1. indent = 0
                 if (property == 'baseKey')
                 {
                     const preStr = nestedPpt.string;
@@ -377,7 +461,7 @@ async function addAllMissingBlocks()
 
                     accKeys: [...accObj.accKeys, property],
 
-                    accHierarchyUids: pushSame(accObj.accHierarchyUids, ...HierarchyUids), // this is weird
+                    accHierarchyUids: UTILS.pushSame(accObj.accHierarchyUids, ...HierarchyUids), // this is weird
 
                     accStr: accStr,
                     tab: `\t`.repeat(0),
@@ -387,16 +471,19 @@ async function addAllMissingBlocks()
 
                 accStr = await Rec_addAllMissingBlocks(nextObj[property], nextAccObj); // recursion with await - 🤯
 
-                // 3. makes the most sense when the baseKey isn't missing
-                if (nextObj[property].baseValue != undefined)
+                // 3. indent = 1
+                if (nextObj[property].baseValue != undefined) // arbitrary property -> subTemp()
                 {
+                    const value = nestedPpt.sessionValue = nestedPpt.baseValue;
+                    const caputuredValue = nextObj[property].caputuredValue = `<${value}>`;
+
                     const manualStt = {
                         m_uid: HierarchyUids[HierarchyUids.length - 1], // parent key to create under
                         m_strArr:
                             [
                                 nextAccObj.accKeys[nextAccObj.accKeys.length - 1],
-                                nestedPpt.sessionValue = nestedPpt.baseValue // it's a good that the value could be empty - you know it's paramater then
-                            ], // "key description" : "value"
+                                caputuredValue
+                            ], // "key_description" : "<value>"
                         m_order: nestedPpt.order,
                     }
 
@@ -427,7 +514,7 @@ async function addAllMissingBlocks()
                     uid,
                 );
 
-                return baseUIpptValidation(baseKeyObj, string, uid);
+                return assertObjPpt_base(baseKeyObj, string, uid);
                 //#region local utils
                 function fmtSettings(strArr = [], splitter = fmtSplit)
                 {
@@ -443,15 +530,9 @@ async function addAllMissingBlocks()
             }
             //#endregion
         }
-
-        function pushSame(arr = [], el)
-        {
-            arr.push(el);
-            return arr;
-        }
     }
 }
-function baseUIpptValidation(baseKeyObj, string, uid)
+function assertObjPpt_base(baseKeyObj, string, uid)
 {
     baseKeyObj.string = string;
     baseKeyObj.uid = uid;
@@ -489,6 +570,7 @@ function subTemp(baseValue = '', inputType)
     const subSub = {
         baseValue: baseValue,
         sessionValue: null,
+        caputuredValue: '<>',
     }
     return Object.assign(baseTmp(inputType), subSub);
 }
@@ -510,15 +592,22 @@ function baseTmp(_inputType, _order, _string = '')
 /* TODO LIST
 
 add ☐ ☑
-    alert to the user that some settings values could cause trouble
+    read values from settings page ☐
+        alert to the user that some settings values could cause trouble ☐
 
-    code and page distinguishing between
+        damage control ☐
+            if the written uid doesn't match with the acutal block uid,
+                update it ☐
+                    if the property_key does match with the settings-page-obj
+
+    create a recursive fucc to add order to nested objs ☐
+
+    code and page distinguishing between ☑ ☑
         radio
         checkbox
         string
         url
         rng
-
 
 added
     notice if property doesn't exist ☑ ☑
@@ -526,16 +615,19 @@ added
 
 
 bugs ☐ ☑
-    renaming, hard deleting sub properties... ☑
+
+
+solved ☐ ☑
+    the inputType ins't being updated on dom() objs ☑ ☑
+
+    when changes are made to the window.YT_GIF_SETTINGS_PAGE ☑ ☑
+        the first block prompt message block count isn't updating
+
+    renaming, hard deleting sub properties... ☑ ☑
         they get deleted ☑
         and readded at the botttom ☑
         move around by user ☑
 
-    moving around above the prompt mss, the injected block if any takes the that string instead
-
-
-solved ☐ ☑
-    when changes are made to the window.YT_GIF_SETTINGS_PAGE ☑ ☑
-        the first block prompt message block count isn't updating
-
+    moving around above the prompt mss, ☑ ☑
+        the injected block if any ---- that block inherits that string
 */
