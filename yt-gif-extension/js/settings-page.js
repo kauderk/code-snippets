@@ -23,38 +23,68 @@ const rad = 'radio',
 
 window.YT_GIF_SETTINGS_PAGE = {
     Workflow: {
-        baseKey: addOrderPmt(`Workflow 0`),
-        w1: {
-            baseKey: addOrderPmt(`w1`),
-            w1_1: {
-                baseKey: addOrderPmt(`w1_1`),
+        baseKey: addOrderPmt(`GREEN`),
+        a1: {
+            baseKey: addOrderPmt(`💐 Bouquet 🌸 Cherry Blossom`),
+        },
+        a2: {
+            baseKey: addOrderPmt(`💮 White Flower 🏵️ Rosette`),
+        },
+        a3: {
+            baseKey: addOrderPmt(`🌹 Rose 🥀 Wilted Flower`),
+        },
+        a6: {
+            baseKey: addOrderPmt(`🐢 Turtle`),
+            a: {
+                baseKey: addOrderPmt(`🦎 Lizard 🐲 Dragon Face`),
+                a: {
+                    baseKey: addOrderPmt(`🌿 Herb ☘️ Shamrock 🍀 Four Leaf Clover`),
+                },
             },
         },
-        w2: {
-            baseKey: addOrderPmt(`w2`),
+        a4: {
+            baseKey: addOrderPmt(`🌺 Hibiscus 🌻 Sunflower`),
+        },
+        a5: {
+            baseKey: addOrderPmt(`🌼 Blossom 🌷 Tulip`),
+        },
+        a7: {
+            baseKey: addOrderPmt(`🐍 Snake`),
         }
     },
-    test: {
-        baseKey: addOrderPmt(`test 0`),
-        t1: {
-            baseKey: addOrderPmt(`t1`),
-            t1_1: {
-                baseKey: addOrderPmt(`t1_1`),
-                t1_1_1: {
-                    baseKey: addOrderPmt(`t1_1_1`),
-                    t1_1_1_1: {
-                        baseKey: addOrderPmt(`t1_1_1_1`),
+    two: {
+        baseKey: addOrderPmt(`WHITE`),
+        b: {
+            baseKey: addOrderPmt(`🐭 Mouse Face`),
+            b: {
+                baseKey: addOrderPmt(`🦊Fox 🦝Raccoon`),
+                b: {
+                    baseKey: addOrderPmt(`🐀 Rat 🐹 Hamster 🐇Rabbit`),
+                    b: {
+                        baseKey: addOrderPmt(`🐵 Monkey Face 🐒 Monkey 🦍 Gorilla 🦧 Orangutan`),
+                        b: {
+                            baseKey: addOrderPmt(`🦃 Turkey 🐔 Chicken 🐓 Rooster 🐣 Hatching Chick 🐤 Baby Chick `),
+                            b: {
+                                baseKey: addOrderPmt(`🐥 Baby Chick 🐦 Bird 🐧 Penguin 🐟 Fish 🐠 Tropical Fish 🐡 Blowfish`),
+                                b: {
+                                    baseKey: addOrderPmt(`🐎 Horse 🦄 Unicorn 🦓 Zebra 🦌 Deer 🦬 Bison 🐮 Cow Face 🐂 Ox`),
+                                },
+                            },
+
+                        },
                     },
                 },
             },
-            t2_2: {
-                baseKey: addOrderPmt(`t2_2`),
-            }
         },
-        t2: {
-            baseKey: addOrderPmt(`t2`),
-        }
+        a: {
+            baseKey: addOrderPmt(`🐘 Elephant`),
+            a: {
+                baseKey: addOrderPmt(`🦏 Rhinoceros 🦛 Hippopotamus`),
+            },
+        },
     },
+}
+const savedObj = {
     display: {
         baseKey: addOrder(chk),
         clip_life_span_format: dom('1'),
@@ -125,12 +155,13 @@ window.YT_GIF_SETTINGS_PAGE = {
         override_roam_video_component: subInputType('', [bol, str]),
 
         /* src sound when yt gif makes a loop, empty if unwanted */
-        end_loop_sound_src: subInputType('https://freesound.org/data/previews/256/256113_3263906-lq.mp3', url),
+        end_loop_sound_sra: subInputType('https://freesound.org/data/previews/256/256113_3263906-lq.mp3', url),
     },
+
 }
 
 // THE ORDER DOES MATTER, because of the counter
-window.YT_GIF_SETTINGS_PAGE.Workflow.baseKey.string = `The first ${level0Cnt + 1} blocks will be added/removed automatically. The last parameters are customizable. 👋`;
+//window.YT_GIF_SETTINGS_PAGE.Workflow.baseKey.string = `The first ${level0Cnt + 1} blocks will be added/removed automatically. The last parameters are customizable. 👋`;
 
 
 init();
@@ -138,7 +169,8 @@ init();
 async function init()
 {
     //assignChildrenOrder(); // 🐌
-    await assignChildrenMissingValues();
+    const result = await assignChildrenMissingValues();
+    console.log(result);
 
     if (TARGET_UID == null) // Brand new installation
     {
@@ -181,41 +213,73 @@ function assignChildrenOrder()
 }
 async function assignChildrenMissingValues()
 {
-    const accObj = {
+    const passAccObj = {
         accStr: '',
         nextStr: this.accStr,
+        indent: -1,
+        accKeys: [],
     };
 
-    return await Rec_assignChildrenMissingValues(window.YT_GIF_SETTINGS_PAGE, accObj);
-    async function Rec_assignChildrenMissingValues(nextObj, accObj = {})
+    return await Rec_assignChildrenMissingValues(window.YT_GIF_SETTINGS_PAGE, passAccObj);
+    async function Rec_assignChildrenMissingValues(nextObj, accObj = passAccObj)
     {
         let { accStr } = accObj;
-        const { tab, nextStr } = accObj;
+        const { nextStr, indent } = accObj;
+        let validIndent = indent;
 
-        accStr = accStr + '\n' + tab + nextStr;
+        if (indent < 0)
+            validIndent = 0;
+
+        accStr = accStr + '\n' + `\t`.repeat(validIndent) + nextStr;
+
+
+        let funcIndent = -1;
 
         for (const property in nextObj)
         {
+            let loopIndent = -1;
             if (nextObj.hasOwnProperty(property) && typeof nextObj[property] === "object")
             {
+                //let nextAccObj;
+                //if (nextObj[property].string != undefined)
+                //{
+
                 let nestedPpt = nextObj[property];
-                console.log(property);
+                const nextAccObj = {
+                    indent: indent + 1,
+                    parentKey: property,
+                    accStr: accStr,
+                    tab: `\t`.repeat(this.indent),
+                    nextStr: nestedPpt?.string || '',
+                    accKeys: accObj.accKeys,
+                };
+                accStr = await Rec_assignChildrenMissingValues(nextObj[property], nextAccObj); // recursion with await - 🤯
+
+                const obj = {
+                    separator: "--------------------",
+                    indent,
+                    nextAccObj: nextAccObj.nextStr,
+                    nextAccObjIndent: nextAccObj.indent, // seems to be advaned by one
+                    nextObjIndent: nextObj.indent,
+                    Nest_0: Number(++funcIndent), // level 0 works after the Rec_ call
+                    loopIndent: Number(++loopIndent),
+                    '': '',
+                    nextAccParent: nextAccObj.parentKey,
+                    accKeys: nextAccObj.accKeys,
+                    property,
+                }
+
+                nextAccObj.accKeys = [...accObj.accKeys, property];
 
                 // 1. indent = 0    
                 if (property == 'baseKey')
                 {
-                    //console.log(property);
+                    obj.separator = "*******************************************************";
                 }
 
-                // 2. the order does matter
-                const nextAccObj = {
-                    parentKey: property,
-                    accStr: accStr,
-                    tab: `\t`.repeat(0),
-                    nextStr: nestedPpt?.string || '',
-                };
+                console.log(JSON.stringify(obj, null, 4));
+                //}
 
-                accStr = await Rec_assignChildrenMissingValues(nextObj[property], nextAccObj); // recursion with await - 🤯
 
                 // 3. indent = 1
                 if (nextObj[property]?.baseValue != undefined) // arbitrary property -> subTemp()
@@ -588,12 +652,12 @@ function assertObjPpt_base(baseKeyObj, string, uid)
 /*---------------------------------------------*/
 function addOrderPmt(blockContent = '')
 {
-    return baseTmp(pmt, 0, blockContent);
+    return baseTmp(pmt, blockContent);
 }
 /*---------------------------------------------*/
 function addOrder(inputType)
 {
-    return Object.assign(baseTmp(inputType, Number(++level0Cnt)));
+    return baseTmp(inputType);
 }
 function dom(baseValue = '', inputType)
 {
@@ -602,7 +666,7 @@ function dom(baseValue = '', inputType)
 }
 function subInputType(baseValue = '', inputType)
 {
-    return Object.assign(subTemp(baseValue, inputType));
+    return subTemp(baseValue, inputType);
 }
 /*---------------------------------------------*/
 function subTemp(baseValue = '', inputType)
@@ -614,14 +678,14 @@ function subTemp(baseValue = '', inputType)
     }
     return Object.assign(baseTmp(inputType), subSub);
 }
-function baseTmp(_inputType, _order, _string = '')
+function baseTmp(_inputType, _string = '')
 {
     return {
         uid: '',
         string: _string,
         examined: false,
         inputType: _inputType,
-        order: _order,
+        order: 0,
     }
 }
 /*---------------------------------------------*/
