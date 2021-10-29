@@ -24,67 +24,7 @@ const rad = 'radio',
 window.YT_GIF_SETTINGS_PAGE = {
     Workflow: {
         baseKey: addOrderPmt(`GREEN`),
-        a1: {
-            baseKey: addOrderPmt(`💐 Bouquet 🌸 Cherry Blossom`),
-        },
-        a2: {
-            baseKey: addOrderPmt(`💮 White Flower 🏵️ Rosette`),
-        },
-        a3: {
-            baseKey: addOrderPmt(`🌹 Rose 🥀 Wilted Flower`),
-        },
-        a6: {
-            baseKey: addOrderPmt(`🐢 Turtle`),
-            a: {
-                baseKey: addOrderPmt(`🦎 Lizard 🐲 Dragon Face`),
-                a: {
-                    baseKey: addOrderPmt(`🌿 Herb ☘️ Shamrock 🍀 Four Leaf Clover`),
-                },
-            },
-        },
-        a4: {
-            baseKey: addOrderPmt(`🌺 Hibiscus 🌻 Sunflower`),
-        },
-        a5: {
-            baseKey: addOrderPmt(`🌼 Blossom 🌷 Tulip`),
-        },
-        a7: {
-            baseKey: addOrderPmt(`🐍 Snake`),
-        }
     },
-    two: {
-        baseKey: addOrderPmt(`WHITE`),
-        b: {
-            baseKey: addOrderPmt(`🐭 Mouse Face`),
-            b: {
-                baseKey: addOrderPmt(`🦊Fox 🦝Raccoon`),
-                b: {
-                    baseKey: addOrderPmt(`🐀 Rat 🐹 Hamster 🐇Rabbit`),
-                    b: {
-                        baseKey: addOrderPmt(`🐵 Monkey Face 🐒 Monkey 🦍 Gorilla 🦧 Orangutan`),
-                        b: {
-                            baseKey: addOrderPmt(`🦃 Turkey 🐔 Chicken 🐓 Rooster 🐣 Hatching Chick 🐤 Baby Chick `),
-                            b: {
-                                baseKey: addOrderPmt(`🐥 Baby Chick 🐦 Bird 🐧 Penguin 🐟 Fish 🐠 Tropical Fish 🐡 Blowfish`),
-                                b: {
-                                    baseKey: addOrderPmt(`🐎 Horse 🦄 Unicorn 🦓 Zebra 🦌 Deer 🦬 Bison 🐮 Cow Face 🐂 Ox`),
-                                },
-                            },
-
-                        },
-                    },
-                },
-            },
-        },
-        a: {
-            baseKey: addOrderPmt(`🐘 Elephant`),
-            a: {
-                baseKey: addOrderPmt(`🦏 Rhinoceros 🦛 Hippopotamus`),
-            },
-        },
-    },
-}
-const savedObj = {
     display: {
         baseKey: addOrder(chk),
         clip_life_span_format: dom('1'),
@@ -157,11 +97,10 @@ const savedObj = {
         /* src sound when yt gif makes a loop, empty if unwanted */
         end_loop_sound_sra: subInputType('https://freesound.org/data/previews/256/256113_3263906-lq.mp3', url),
     },
-
 }
 
 // THE ORDER DOES MATTER, because of the counter
-//window.YT_GIF_SETTINGS_PAGE.Workflow.baseKey.string = `The first ${level0Cnt + 1} blocks will be added/removed automatically. The last parameters are customizable. 👋`;
+window.YT_GIF_SETTINGS_PAGE.Workflow.baseKey.string = `The first ${level0Cnt + 1} blocks will be added/removed automatically. The last parameters are customizable. 👋`;
 
 
 init();
@@ -170,7 +109,6 @@ async function init()
 {
     //assignChildrenOrder(); // 🐌
     const result = await assignChildrenMissingValues();
-    console.log(result);
 
     if (TARGET_UID == null) // Brand new installation
     {
@@ -225,24 +163,20 @@ async function assignChildrenMissingValues()
     {
         let { accStr } = accObj;
         const { nextStr, indent } = accObj;
-        let validIndent = indent;
+        const tab = `\t`.repeat((indent < 0) ? 0 : indent);
 
-        if (indent < 0)
-            validIndent = 0;
-
-        accStr = accStr + '\n' + `\t`.repeat(validIndent) + nextStr;
-
+        accStr = accStr + '\n' + tab + nextStr;
 
         let funcIndent = -1;
+        let baseIndent = undefined;
 
         for (const property in nextObj)
         {
             let loopIndent = -1;
-            if (nextObj.hasOwnProperty(property) && typeof nextObj[property] === "object")
+            if (nextObj.hasOwnProperty(property) && typeof nextObj[property] === "object" && nextObj[property] != null)
             {
                 //let nextAccObj;
-                //if (nextObj[property].string != undefined)
-                //{
+
 
                 let nestedPpt = nextObj[property];
                 const nextAccObj = {
@@ -255,13 +189,20 @@ async function assignChildrenMissingValues()
                 };
                 accStr = await Rec_assignChildrenMissingValues(nextObj[property], nextAccObj); // recursion with await - 🤯
 
+                // 1. indent = 0
+                if (nextObj[property].baseKey != undefined) // the acutal main objects are set up so the main sub key (block) has it's properties nested, and below it's possible children, so to change it, you have to look one level above it
+                {
+                    nextObj[property].baseKey.order = Number(++funcIndent);
+                    nextObj[property].baseKey.indent = baseIndent = nextAccObj.indent;
+                }
+
                 const obj = {
                     separator: "--------------------",
                     indent,
                     nextAccObj: nextAccObj.nextStr,
                     nextAccObjIndent: nextAccObj.indent, // seems to be advaned by one
                     nextObjIndent: nextObj.indent,
-                    Nest_0: Number(++funcIndent), // level 0 works after the Rec_ call
+                    Nest_0: nextObj[property]?.baseKey?.order, // level 0 works after the Rec_ call
                     loopIndent: Number(++loopIndent),
                     '': '',
                     nextAccParent: nextAccObj.parentKey,
@@ -271,21 +212,18 @@ async function assignChildrenMissingValues()
 
                 nextAccObj.accKeys = [...accObj.accKeys, property];
 
-                // 1. indent = 0    
                 if (property == 'baseKey')
                 {
                     obj.separator = "*******************************************************";
                 }
-
-                console.log(JSON.stringify(obj, null, 4));
-                //}
-
+                if (nextObj[property].indent != undefined) // arbitrary property -> subTemp()
+                {
+                    nextObj[property].indent = (indent < 0) ? 0 : indent;
+                    console.log(JSON.stringify(obj, null, 4));
+                }
 
                 // 3. indent = 1
-                if (nextObj[property]?.baseValue != undefined) // arbitrary property -> subTemp()
-                {
-                    //console.log(nextAccObj.parentKey, property);
-                }
+
             }
         }
         return accStr;
@@ -314,7 +252,7 @@ async function Read_Write_SettingsPage(UID)
             const uidToDelete = uid || nextUID;
             if (uidToDelete)
             {
-                await removingBlock(uidToDelete); // 🐌
+                await tryToremoveBlock(uidToDelete); // 🐌
             }
         }
         else
@@ -440,7 +378,7 @@ async function Read_Write_SettingsPage(UID)
             }
             //#endregion
         }
-        async function removingBlock(uid)
+        async function tryToremoveBlock(uid)
         {
             if (uid == TARGET_UID)
             {
@@ -533,7 +471,7 @@ async function addAllMissingBlocks()
 
         for (const property in nextObj)
         {
-            if (nextObj.hasOwnProperty(property) && typeof nextObj[property] === "object")
+            if (nextObj.hasOwnProperty(property) && typeof nextObj[property] === "object" && nextObj[property] != null)
             {
                 if (property == 'sessionValue')
                 {
@@ -576,22 +514,29 @@ async function addAllMissingBlocks()
                 accStr = await Rec_addAllMissingBlocks(nextObj[property], nextAccObj); // recursion with await - 🤯
 
                 // 3. indent = 1
-                if (nextObj[property].baseValue != undefined) // arbitrary property -> subTemp()
+                try
                 {
-                    const value = nestedPpt.sessionValue = nestedPpt.baseValue;
-                    const caputuredValue = nextObj[property].caputuredValue = `<${value}>`;
+                    if (nextObj[property].baseValue != undefined) // arbitrary property -> subTemp()
+                    {
+                        const value = nestedPpt.sessionValue = nestedPpt.baseValue;
+                        const caputuredValue = nextObj[property].caputuredValue = `<${value}>`;
 
-                    const manualStt = {
-                        m_uid: HierarchyUids[HierarchyUids.length - 1], // parent key to create under
-                        m_strArr:
-                            [
-                                nextAccObj.accKeys[nextAccObj.accKeys.length - 1],
-                                caputuredValue
-                            ], // "key_description" : "<value>"
-                        m_order: nestedPpt.order,
+                        const manualStt = {
+                            m_uid: HierarchyUids[HierarchyUids.length - 1], // parent key to create under
+                            m_strArr:
+                                [
+                                    nextAccObj.accKeys[nextAccObj.accKeys.length - 1],
+                                    caputuredValue
+                                ], // "key_description" : "<value>"
+                            m_order: nestedPpt.order,
+                        }
+
+                        nestedPpt = await TryToCreateUIblock(nestedPpt, manualStt);
                     }
-
-                    nestedPpt = await TryToCreateUIblock(nestedPpt, manualStt);
+                }
+                catch (err)
+                {
+                    debugger;
                 }
             }
         }
@@ -686,6 +631,7 @@ function baseTmp(_inputType, _string = '')
         examined: false,
         inputType: _inputType,
         order: 0,
+        indent: -1,
     }
 }
 /*---------------------------------------------*/
@@ -719,6 +665,12 @@ added
 
 
 bugs ☐ ☑
+
+
+FIXME
+    tryToremoveBlock
+        nested blocks, specially those inside addOrderPmt()
+        get removed just to be readded by next func
 
 
 solved ☐ ☑
