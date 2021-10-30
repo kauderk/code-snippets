@@ -42,14 +42,15 @@ window.YT_GIF_SETTINGS_PAGE = {
     i0_cx_o1: {
         baseKey: addOrder(chk),
         i1_cx_o0: dom('1'),
-        i1_cx_o1: {
+        i1_cx_o1: dom('1'),
+        i1_cx_o2: dom('1'),
+        i1_cx_o3: {
             baseKey: addOrder(chk),
             i2_cx_o0: dom('1'),
             i2_cx_o1: dom(),
             i2_cx_o2: dom('1'),
         },
-        i1_cx_o2: dom('1'),
-        i1_cx_o3: dom('1'),
+        i1_cx_o4: dom('1'),
     },
 }
 
@@ -115,7 +116,8 @@ async function assignChildrenMissingValues()
     async function Rec_assignChildrenMissingValues(nextObj, accObj = passAccObj)
     {
         let { accStr } = accObj;
-        let funcOrder = -1;
+        let funcGeneralOrder = -1;
+        let funcInlineOrder = -1;
 
         const { nextStr, indent } = accObj;
         const tab = `\t`.repeat((indent < 0) ? 0 : indent);
@@ -133,28 +135,34 @@ async function assignChildrenMissingValues()
                     indent: indent + 1,
                     accStr: accStr,
                     nextStr: nestedPpt.string || '',
+                    previousOrder: funcInlineOrder,
+                    previousPptName: property,
                 };
 
                 accStr = await Rec_assignChildrenMissingValues(nextObj[property], nextAccObj);
 
-                if (nestedPpt.baseKey != undefined) // the acutal main objects are set up so the main sub key (block) has it's properties nested, and below it's possible children, so to change it, you have to look one level above it
-                {
-                    nestedPpt.baseKey.order = Number(++funcOrder);
-                    nestedPpt.baseKey.indent = nextAccObj.indent;
-                }
-                else if (nestedPpt.domEl != undefined)
+                if (nestedPpt.domEl != undefined)
                 {
                     //debugger;
-                    nestedPpt.order = Number(++funcOrder) - 1;
+                    nestedPpt.order = Number(++funcGeneralOrder);
                     nestedPpt.indent = nextAccObj.indent;
+                    // if (accObj.previousOrder > 0)
+                    //     console.log({ previousOrder: accObj.previousOrder, inlineOrder: nestedPpt.order, previousPptName: accObj.previousPptName });
                 }
-                else // nested on same indent
+                else if (nestedPpt.baseKey != undefined) // the acutal main objects are set up so the main sub key (block) has it's properties nested, and below it's possible children, so to change it, you have to look one level above it
                 {
-                    const preOrder = Number(++funcOrder) - 2;
-                    nestedPpt.order = (preOrder < 0) ? 0 : preOrder;
-                    nestedPpt.indent = nextAccObj.indent;
-                    console.log(property);
+                    // const validPreInlineOrder = (funcInlineOrder < 0) ? 1 : funcInlineOrder;
+                    // const preOrder = funcBaseKeyOrder = funcBaseKeyOrder + 2 + validPreInlineOrder;
+                    nestedPpt.baseKey.order = Number(++funcGeneralOrder);
+                    nestedPpt.baseKey.indent = nextAccObj.indent;
                 }
+                // else // nested on same indent
+                // {
+                //     const preOrder = Number(++funcOrder) - 1;
+                //     nestedPpt.order = (preOrder < 0) ? 0 : preOrder;
+                //     nestedPpt.indent = nextAccObj.indent;
+                //     console.log(property, preOrder);
+                // }
 
                 // so far it works for the first indentation, but with actual user inputs whey they get to a nested one, they skip one
             }
