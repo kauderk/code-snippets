@@ -1,10 +1,9 @@
 
-init();
-async function init()
+(async function ()
 {
     await LoadExternalResources();
     await createXload('app.js');
-}
+})();
 
 async function LoadExternalResources()
 {

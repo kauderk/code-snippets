@@ -1,3 +1,36 @@
+function Rec_findObj(keyCheck)
+{
+    for (const key in window.YT_GIF_SETTINGS_PAGE)
+    {
+        const firstLevelObj = window.YT_GIF_SETTINGS_PAGE[key];
+        if (key == keyCheck)
+        {
+            return firstLevelObj;
+        }
+        for (const subKey in firstLevelObj)
+        {
+            const validKey = RecIsValidNestedKey(firstLevelObj, subKey);
+            if (validKey.level == keyCheck)
+            {
+                return validKey.obj;
+            }
+        }
+    }
+    function RecIsValidNestedKey(obj, level, ...rest) // 🐌
+    {
+        //console.log("hi");
+        if (obj === undefined) 
+        {
+            return { ok: false, obj }
+        }
+        if (rest.length == 0 && obj.hasOwnProperty(level))
+        {
+            return { ok: true, rest, obj, level }
+        }
+        return RecIsValidNestedKey(obj[level], ...rest)
+    }
+}
+Rec_findObj("playStyle");
 /*
 const toDebugObj = {
     Workflow: {

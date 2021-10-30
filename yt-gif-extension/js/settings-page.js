@@ -22,6 +22,24 @@ const rad = 'radio',
 window.YT_GIF_SETTINGS_PAGE = {
     Workflow: {
         baseKey: addOrderPmt(`BIP BOP . . .`),
+        joins: {
+            baseKey: addOrderPmt(`either " : " for actual settings or " / " for prompt guidelines`),
+        },
+        parameters: {
+            baseKey: addOrderPmt(`(xxxuidxxx) : yt_gif_settings_key : <value>`),
+            uid: {
+                baseKey: addOrderPmt(`(xxxuidxxx) unique per user data base, without it the settings can't be written on this page`),
+            },
+            key: {
+                baseKey: addOrderPmt(`yt_gif_settings_key second way to know which setting to change`),
+            },
+            value: {
+                baseKey: addOrderPmt(`<value> in many cases optional and most of the time a binary switch, on - off`),
+            },
+        },
+        reach: {
+            baseKey: addOrderPmt(`Blocks below "LogStatus" will be ignored`),
+        },
     },
     previousTimestamp: {
         baseKey: addOrder(rad),
@@ -94,16 +112,14 @@ window.YT_GIF_SETTINGS_PAGE = {
     },
     LogStatus: {
         baseKey: addOrderPmt(`Everything looks alright :D`),
-    }
+    },
 }
 
 // THE ORDER DOES MATTER, because of the counter
-window.YT_GIF_SETTINGS_PAGE.Workflow.baseKey.string = `F The first ${Object.keys(window.YT_GIF_SETTINGS_PAGE).length} blocks will be -added on updates- and -removed if drepreacted- automatically. The last parameters "<>" are customizable. 👋`;
+window.YT_GIF_SETTINGS_PAGE.Workflow.baseKey.string = `The first ${Object.keys(window.YT_GIF_SETTINGS_PAGE).length} blocks will be -added on updates- and -removed if drepreacted- automatically. The last parameters "<>" are customizable. 👋`;
 
 
-init();
-
-async function init()
+(async function init()
 {
     const result = await assignChildrenMissingValues();
 
@@ -119,7 +135,7 @@ async function init()
     }
     await RAP.SetNumberedViewWithUid(TARGET_UID);
     await RAP.CollapseDirectcChildren(TARGET_UID, false);
-}
+})();
 
 //#region HIDDEN FUNCTIONS
 async function assignChildrenMissingValues()
@@ -189,7 +205,7 @@ async function Read_Write_SettingsPage(UID)
         let { accStr } = accObj;
         const { nextUID, keyFromLevel0, selfOrder } = accObj;
         const { tab, nextStr, indent, parentUid } = await RelativeChildInfo(nextObj);
-        const { uid, key, value, caputuredValue, caputureValueOk, caputuredString } = getKeywordsFromBlockString(nextStr);
+        const { uid, key, value, caputuredValue, caputureValueOk, splitedStrArr, join } = getKeywordsFromBlockString(nextStr);
 
         if (! await SuccessfulSttgUpt(indent)) // remove it
         {
@@ -218,7 +234,10 @@ async function Read_Write_SettingsPage(UID)
                     keyFromLevel0: key,
                     selfOrder: child.order,
                 };
-                accStr = await Rec_Read_Write_SettingsPage(child, nextAccObj);
+                if (!nextStr.includes('LogStatus'))
+                {
+                    accStr = await Rec_Read_Write_SettingsPage(child, nextAccObj);
+                }
             }
         }
 
@@ -234,13 +253,13 @@ async function Read_Write_SettingsPage(UID)
                     let parentObj = window.YT_GIF_SETTINGS_PAGE[key];
                     const baseKey = parentObj.baseKey;
 
-                    const { stringOk, v_string } = validateBlockContent(baseKey, caputuredString);
-                    if (!stringOk)
+                    const { stringOK, v_string, v_uid } = await validateBlockContent(baseKey, nextStr, splitedStrArr, uid, accObj.nextUID);
+                    if (!stringOK)
                     {
-                        console.warn(`BUD bud - "${caputuredString}" content was looking weird`);
-                        await RAP.updateBlock(uid, v_string);
+                        await RAP.updateBlock(v_uid, v_string);
                     }
-                    const newBaseKeyObj = assertObjPpt_base(baseKey, v_string, uid);
+
+                    const newBaseKeyObj = assertObjPpt_base(baseKey, v_string, v_uid);
                     // parentObj = assignInputTypesToChildren(parentObj); FIXME
 
                     await checkReorderBlock(parentUid, selfOrder, newBaseKeyObj);
@@ -251,19 +270,26 @@ async function Read_Write_SettingsPage(UID)
             {
                 if (RecIsValidNestedKey(window.YT_GIF_SETTINGS_PAGE, keyFromLevel0, [key])) // nested LEVEL 1 block upt
                 {
-                    const crrObjKey = assertObjPpt_base(window.YT_GIF_SETTINGS_PAGE[keyFromLevel0][key], nextStr, uid);
+                    const targeObj = (join == fmtSplit) ? window.YT_GIF_SETTINGS_PAGE[keyFromLevel0][key] : window.YT_GIF_SETTINGS_PAGE[keyFromLevel0][key].baseKey;
 
-                    crrObjKey.sessionValue = value;
-                    crrObjKey.caputuredValue = caputuredValue;
-                    if (!caputureValueOk)
+                    const crrObjKey = assertObjPpt_base(targeObj, nextStr, uid);
+
+                    if (join == fmtSplit)
                     {
-                        console.warn(`BUD bud - "${nextStr}" value is looking weird, it will default to false...`);
+                        crrObjKey.sessionValue = value;
+                        crrObjKey.caputuredValue = caputuredValue;
+                        if (!caputureValueOk)
+                        {
+                            console.warn(`BUD bud - "${nextStr}" value is looking weird, it will default to false...`);
+                        }
                     }
+
                     await checkReorderBlock(parentUid, selfOrder, crrObjKey);
 
                     return true;
                 }
             }
+            debugger;
             return false;
             //#region local func
             function assignInputTypesToChildren(parentObj) // 🐌 it's children will loop eventually inside this Rec Func ... man...
@@ -300,9 +326,15 @@ async function Read_Write_SettingsPage(UID)
             {
                 const validOrder = childObjToMoveUID.order;
                 const validUid = childObjToMoveUID.uid;
-                if (selfOrder != validOrder)
+                try
                 {
-                    await RAP.moveBlock(parentUid, validOrder, validUid);
+                    if (selfOrder != validOrder)
+                    {
+                        await RAP.moveBlock(parentUid, validOrder, validUid);
+                    }
+                } catch (err)
+                {
+                    debugger;
                 }
             }
             function RecIsValidNestedKey(obj, level, ...rest) // 🐌
@@ -319,18 +351,63 @@ async function Read_Write_SettingsPage(UID)
             }
             //#endregion
         }
-        function validateBlockContent(obj, caputuredString)
+        function Rec_findObj(keyCheck)
         {
-            let v_string = obj.string;
-            let stringOk = false;
-            if (obj.string == caputuredString)
+            for (const key in window.YT_GIF_SETTINGS_PAGE)
             {
-                v_string = caputuredString;
-                stringOk = true;
+                const firstLevelObj = window.YT_GIF_SETTINGS_PAGE[key];
+                if (key == keyCheck)
+                {
+                    return firstLevelObj;
+                }
+                for (const subKey in firstLevelObj)
+                {
+                    const validKey = RecIsValidNestedKey(firstLevelObj, subKey);
+                    if (validKey.level == keyCheck)
+                    {
+                        return validKey.obj;
+                    }
+                }
             }
+            function RecIsValidNestedKey(obj, level, ...rest) // 🐌
+            {
+                //console.log("hi");
+                if (obj === undefined) 
+                {
+                    return { ok: false, obj }
+                }
+                if (rest.length == 0 && obj.hasOwnProperty(level))
+                {
+                    return { ok: true, rest, obj, level }
+                }
+                return RecIsValidNestedKey(obj[level], ...rest)
+            }
+        }
+        async function validateBlockContent(obj, nextStr, splitedStrArr, caputuredUID, nextUID)
+        {
+            const caputuredString = splitedStrArr[2] || ''; // undefinded means it doens't requieres a third param, that's ok
+
+            const uidOk = await RAP.getBlockOrPageInfo(caputuredUID);
+            const v_uid = (uidOk) ? caputuredUID : nextUID;
+
+            let v_string = obj.string;
+            let stringOK = true;
+
+            if (obj.string != caputuredString)
+            {
+                splitedStrArr.splice(2, 1, obj.string);
+                v_string = splitedStrArr.join(obj.join);
+                stringOK = false;
+            }
+            else
+            {
+                v_string = nextStr;
+            }
+
             return {
                 v_string,
-                stringOk
+                v_uid,
+                stringOK
             }
         }
         async function tryToremoveBlock(uid)
@@ -360,26 +437,30 @@ async function Read_Write_SettingsPage(UID)
                     ? parentsHierarchy[0][0]?.uid : TARGET_UID, // if undefined - most defenetly it's the direct child (level 0) of the page
             }
         }
-        function getKeywordsFromBlockString(nextStr, join = fmtSplit)
+        function getKeywordsFromBlockString(nextStr)
         {
             const rgxUid = new RegExp(/\(([^\)]+)\)/, 'gm'); //(XXXXXXXX)
-            let splitedStr = nextStr.split(join); // deconstruct
-            const everyFirstKeyword = splitedStr.map(word => word.split(' ')[0]); // returns array of words
+            const join = includesAtlest(nextStr, [PmtSplit, fmtSplit]);
+            const splitedStrArr = nextStr.split(join); // deconstruct
+            const everyFirstKeyword = splitedStrArr.map(word => word.split(' ')[0]); // returns array of words
 
             const preUid = rgxUid.exec(everyFirstKeyword[0]);
+            const p_uid = preUid ? preUid[1] : undefined;
 
             const { value, caputureValueOk } = tryTrimCapturedValue(everyFirstKeyword[2] || '');
 
             return {
-                uid: preUid ? preUid[1] : undefined,
+                uid: p_uid,
 
                 key: everyFirstKeyword[1],
 
                 caputuredValue: everyFirstKeyword[2],
                 value: value,
-                caputureValueOk: caputureValueOk,
+                caputureValueOk,
 
-                caputuredString: splitedStr[2]
+                splitedStrArr,
+
+                join
             }
             function tryTrimCapturedValue(string)
             {
@@ -397,6 +478,17 @@ async function Read_Write_SettingsPage(UID)
                     caputuredValue: string,
                     caputureValueOk: false,
                 }
+            }
+            function includesAtlest(string, srtArr)
+            {
+                for (const s of srtArr)
+                {
+                    if (string.includes(s))
+                    {
+                        return s;
+                    }
+                }
+                return fmtSplit;
             }
         }
         //#endregion
@@ -470,7 +562,7 @@ async function addAllMissingBlocks()
                 if (nextObj[property].baseValue != undefined) // arbitrary property -> subTemp()
                 {
                     const value = nestedPpt.sessionValue = nestedPpt.baseValue;
-                    const caputuredValue = nextObj[property].caputuredValue = `${cptrPrfx}${value}${cptrPrfx}`; // BIG BOI  <value>
+                    const caputuredValue = nextObj[property].caputuredValue = `${cptrPrfx}${value}${cptrSufx}`; // BIG BOI  <value>
 
                     const manualStt = {
                         m_uid: HierarchyUids[HierarchyUids.length - 1], // parent key to create under
@@ -499,7 +591,7 @@ async function addAllMissingBlocks()
             async function UIBlockCreation(baseKeyObj, manual = {})
             {
                 const { m_order, m_uid, m_join, m_strArr } = manual;
-                const { uid, string } = fmtSettings(m_strArr, m_join || fmtSplit);
+                const { uid, string } = fmtSettings(m_strArr, m_join || baseKeyObj.join);
                 const { order: selfOrder } = baseKeyObj;
 
                 await RAP.createBlock(
@@ -529,11 +621,12 @@ async function addAllMissingBlocks()
 }
 function assertObjPpt_base(baseKeyObj, string, uid)
 {
-    baseKeyObj.string = string;
-    baseKeyObj.uid = uid;
-    baseKeyObj.examined = true;
-
-    return baseKeyObj;
+    const obj = {
+        examined: true,
+        uid: uid,
+        string: string
+    }
+    return Object.assign(baseKeyObj, obj);
 }
 //#endregion
 
