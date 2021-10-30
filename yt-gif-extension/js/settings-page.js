@@ -151,7 +151,6 @@ async function assignChildrenMissingValues()
     {
         let { accStr } = accObj;
         let funcGeneralOrder = -1;
-        let inputTypeFromBaseKey = null;
 
         const { nextStr, indent } = accObj;
         const tab = `\t`.repeat((indent < 0) ? 0 : indent);
@@ -169,6 +168,7 @@ async function assignChildrenMissingValues()
                     indent: indent + 1,
                     accStr: accStr,
                     nextStr: nestedPpt.string || '',
+                    inputTypeFromBaseKey: nestedPpt?.baseKey?.inputType,
                 };
 
                 accStr = await Rec_assignChildrenMissingValues(nextObj[property], nextAccObj);
@@ -181,15 +181,13 @@ async function assignChildrenMissingValues()
                     nestedPpt.order = Number(++funcGeneralOrder);
                     nestedPpt.indent = nextAccObj.indent;
                     // 2.
-
+                    nestedPpt.inputType = (accObj.inputTypeFromBaseKey) ? accObj.inputTypeFromBaseKey : nestedPpt.inputType; // valid form baseKey? no, then keep same
                 }
                 else if (nestedPpt.baseKey != undefined) // the ptt is a wrapper, look on it's level to access the baseKey
                 {
                     // 1.
                     nestedPpt.baseKey.order = Number(++funcGeneralOrder);
                     nestedPpt.baseKey.indent = nextAccObj.indent;
-                    // 2.
-
                 }
             }
         }
