@@ -11,9 +11,16 @@ kauderk.rap = ((rap) =>
     https://www.putyourleftfoot.in/introduction-to-the-roam-alpha-api
     https://www.putyourleftfoot.in/roampagesearch
     https://github.com/c3founder/Roam-Enhancement/blob/main/enhancedUtility.js
+    https://github.com/dvargas92495/roam42/blob/35f75e3bfbcaea1cecb79250175f4730df3128b5/common/commonDatalog.js
     >>>> "Why not use those already?" Well, I learned some things in the process. I'd like to think that way. 
     Also, this piece of code is less dependent on external resources.
     */
+    rap.updateBlock = async (block_uid, block_string, block_expanded = true) =>
+    {
+        block_uid = block_uid.replace('((', '').replace('))', '');
+        return window.roamAlphaAPI.updateBlock(
+            { block: { uid: block_uid, string: block_string.toString(), open: block_expanded } });
+    }
     rap.moveBlock = async (parent_uid, block_order, block_to_move_uid) =>
     {
         return window.roamAlphaAPI.moveBlock(
