@@ -5,14 +5,14 @@ function Rec_findObj(keyCheck)
         const firstLevelObj = window.YT_GIF_SETTINGS_PAGE[key];
         if (key == keyCheck)
         {
-            return firstLevelObj;
+            return { ok: true, rest: [], firstLevelObj, level: key };
         }
         for (const subKey in firstLevelObj)
         {
             const validKey = RecIsValidNestedKey(firstLevelObj, subKey);
             if (validKey.level == keyCheck)
             {
-                return validKey.obj;
+                return validKey;
             }
         }
     }
@@ -30,7 +30,80 @@ function Rec_findObj(keyCheck)
         return RecIsValidNestedKey(obj[level], ...rest)
     }
 }
-Rec_findObj("playStyle");
+function Rec_findObj(keyCheck)
+{
+    return Rec_deeperObjFinding(window.YT_GIF_SETTINGS_PAGE, {});
+    function Rec_deeperObjFinding(nextObj, accObj)
+    {
+        for (const property in nextObj)
+        {
+            if (nextObj.hasOwnProperty(property) && typeof nextObj[property] === "object" && nextObj[property] != null)
+            {
+                if (property == keyCheck)
+                {
+                    return accObj = {
+                        ok: true,
+                        rest: [],
+                        foundObj: nextObj[property],
+                        level: property
+                    };
+                }
+                else
+                {
+                    console.log('loop', property);
+                    accObj = Rec_deeperObjFinding(nextObj[property], accObj);
+                }
+            }
+        }
+        return accObj;
+    }
+}
+Rec_findObj('joins')
+
+function getObjeByKey(keyCheck)
+{
+    const passAccObj = {
+        accStr: '',
+        nextStr: '',
+        indent: -1,
+    };
+
+    return Rec_getObjeByKey(window.YT_GIF_SETTINGS_PAGE, passAccObj);
+    function Rec_getObjeByKey(nextObj, accObj = passAccObj)
+    {
+        let { accStr } = accObj;
+
+        const { nextStr, indent } = accObj;
+        const tab = `\t`.repeat((indent < 0) ? 0 : indent);
+
+        accStr = accStr + '\n' + tab + nextStr;
+
+
+        for (const property in nextObj)
+        {
+            if (nextObj.hasOwnProperty(property) && typeof nextObj[property] === "object" && nextObj[property] != null)
+            {
+                const nestedPpt = nextObj[property];
+
+                const nextAccObj = {
+                    indent: indent + 1,
+                    accStr: accStr,
+                    nextStr: nestedPpt.string || '',
+                };
+                if (property != keyCheck)
+                {
+                    accStr = Rec_getObjeByKey(nextObj[property], nextAccObj);
+                }
+                else
+                {
+                    return accStr;
+                }
+            }
+        }
+        return accStr;
+    }
+}
+
 /*
 const toDebugObj = {
     Workflow: {
