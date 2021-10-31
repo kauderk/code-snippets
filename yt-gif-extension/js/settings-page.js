@@ -23,7 +23,7 @@ window.YT_GIF_SETTINGS_PAGE = {
     Workflow: {
         baseKey: addOrderPmt(`BIP BOP . . .`),
         joins: {
-            baseKey: addOrderPmt(`either ":" for actual settings or "/" for prompt guidelines`),
+            baseKey: addOrderPmt(`either "ﾠ:ﾠ" for actual settings or "ﾠ/ﾠ" for prompt guidelines`), // he doesn't know... he knows "ﾠ" != " "
         },
         parameters: {
             baseKey: addOrderPmt(`(xxxuidxxx) : yt_gif_settings_key : <value>`),
@@ -456,18 +456,21 @@ async function addAllMissingBlocks()
                 let nestedPpt = nextObj[property];
 
                 // 1. indent = 0
-                if (property == 'baseKey' && nestedPpt.examined == false)
+                if (property == 'baseKey')
                 {
-                    const preStr = nestedPpt.string;
-                    const prntKey = accObj.parentKey;
+                    if (nestedPpt.examined == false)
+                    {
+                        const preStr = nestedPpt.string;
+                        const prntKey = accObj.parentKey;
 
-                    const manualStt = {
-                        m_uid: accObj.accHierarchyUids[accObj.accHierarchyUids.length - 1] || TARGET_UID,
-                        m_strArr: (preStr)
-                            ? [prntKey, preStr] : [prntKey], // extra join? no, then ignore it
-                        m_order: nestedPpt.order,
-                    };
-                    nestedPpt = await TryToCreateUIblock(nestedPpt, manualStt);
+                        const manualStt = {
+                            m_uid: accObj.accHierarchyUids[accObj.accHierarchyUids.length - 1] || TARGET_UID,
+                            m_strArr: (preStr)
+                                ? [prntKey, preStr] : [prntKey], // extra join? no, then ignore it
+                            m_order: nestedPpt.order,
+                        };
+                        nestedPpt = await UIBlockCreation(nestedPpt, manualStt);
+                    }
 
                     HierarchyUids = [...HierarchyUids, nestedPpt?.uid];
                 }
@@ -489,10 +492,10 @@ async function addAllMissingBlocks()
                 accStr = await Rec_addAllMissingBlocks(nextObj[property], nextAccObj); // recursion with await - 🤯
 
                 // 3. indent = 1
-                if (nextObj[property].examined == false)
+                if (nestedPpt.examined == false)
                 {
                     const value = nestedPpt.sessionValue = nestedPpt.baseValue;
-                    const caputuredValue = nextObj[property].caputuredValue = `${cptrPrfx}${value}${cptrSufx}`; // BIG BOI  <value>
+                    const caputuredValue = nestedPpt.caputuredValue = `${cptrPrfx}${value}${cptrSufx}`; // BIG BOI  <value>
 
                     const manualStt = {
                         m_uid: HierarchyUids[HierarchyUids.length - 1], // parent key to create under
@@ -504,46 +507,46 @@ async function addAllMissingBlocks()
                         m_order: nestedPpt.order,
                     }
 
-                    nestedPpt = await TryToCreateUIblock(nestedPpt, manualStt);
+                    nestedPpt = await UIBlockCreation(nestedPpt, manualStt);
                 }
             }
         }
         return accStr;
 
-        async function TryToCreateUIblock(nestedBlock, manualStt)
+        // async function TryToCreateUIblock(nestedBlock, manualStt)
+        // {
+        //     if (!nestedBlock.examined)
+        //     {
+        //         nestedBlock = await UIBlockCreation(nestedBlock, manualStt);
+        //     }
+        //     return nestedBlock;
+        //     //#region local util
+        //     //#endregion
+        // }
+        async function UIBlockCreation(baseKeyObj, manual = {})
         {
-            if (!nestedBlock.examined)
-            {
-                nestedBlock = await UIBlockCreation(nestedBlock, manualStt);
-            }
-            return nestedBlock;
-            //#region local util
-            async function UIBlockCreation(baseKeyObj, manual = {})
-            {
-                const { m_order, m_uid, m_join, m_strArr } = manual;
-                const { uid, string } = fmtSettings(m_strArr, m_join || baseKeyObj.join);
-                const { order: selfOrder } = baseKeyObj;
+            const { m_order, m_uid, m_join, m_strArr } = manual;
+            const { uid, string } = fmtSettings(m_strArr, m_join || baseKeyObj.join);
+            const { order: selfOrder } = baseKeyObj;
 
-                await RAP.createBlock(
-                    m_uid || TARGET_UID,
-                    m_order || selfOrder || 10000,
-                    string,
-                    uid,
-                );
+            await RAP.createBlock(
+                m_uid || TARGET_UID,
+                m_order || selfOrder || 10000,
+                string,
+                uid,
+            );
 
-                return assertObjPpt_base(baseKeyObj, string, uid);
-                //#region local utils
-                function fmtSettings(strArr = [], splitter = fmtSplit)
-                {
-                    const manualUID = RAP.createUid();
-                    const preBlockStr = [`(${manualUID})`, ...strArr];
-                    const blockStr = preBlockStr.join(splitter);
-                    return {
-                        uid: manualUID,
-                        string: blockStr
-                    }
+            return assertObjPpt_base(baseKeyObj, string, uid);
+            //#region local utils
+            function fmtSettings(strArr = [], splitter = fmtSplit)
+            {
+                const manualUID = RAP.createUid();
+                const preBlockStr = [`(${manualUID})`, ...strArr];
+                const blockStr = preBlockStr.join(splitter);
+                return {
+                    uid: manualUID,
+                    string: blockStr
                 }
-                //#endregion
             }
             //#endregion
         }
