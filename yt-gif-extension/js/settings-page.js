@@ -78,6 +78,8 @@ window.YT_GIF_SETTINGS_PAGE = {
         strict_play_current_on_mouse_over: dom('1'),
         play_on_mouse_over: dom(),
         visible_clips_start_to_play_unmuted: dom(),
+        yikes: dom(),
+        yikesyikes: dom(),
     },
     range: {
         baseKey: addOrder(rng),
@@ -116,7 +118,7 @@ window.YT_GIF_SETTINGS_PAGE = {
 }
 
 // THE ORDER DOES MATTER, because of the counter
-window.YT_GIF_SETTINGS_PAGE.Workflow.baseKey.string = `The first ${Object.keys(window.YT_GIF_SETTINGS_PAGE).length} blocks will be -added on updates- and -removed if drepreacted- automatically. The last parameters "<>" are customizable. 👋`;
+window.YT_GIF_SETTINGS_PAGE.Workflow.baseKey.string = `The first ${Object.keys(window.YT_GIF_SETTINGS_PAGE).length} blocks will be -added on updates- and -removed if drepreacted- automatically. The last parameters "<>" are customizable. 🐕 👋`;
 
 
 (async function init()
@@ -269,11 +271,14 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
             if (targeObj)
             {
 
-                const { stringOK, v_string, v_uid } = await validateBlockContent(nextStr, splitedStrArr, uid, accObj.nextUID, targeObj);
-                if (!stringOK)
+                if (join == PmtSplit)
                 {
-                    console.log(`Updating block  ((${uid})) -> \n${nextStr} \nﾠ\nto ((${v_uid})) ->  \nﾠ\n${v_string}`)
-                    await RAP.updateBlock(v_uid, v_string);
+                    const { stringOK, v_string, v_uid } = await validateBlockContent(targeObj, nextStr, splitedStrArr, uid, accObj.nextUID);
+                    if (!stringOK)
+                    {
+                        console.log(`Updating block  ((${uid})) -> \n${nextStr} \nﾠ\nto ((${v_uid})) ->  \nﾠ\n${v_string}`)
+                        await RAP.updateBlock(v_uid, v_string);
+                    }
                 }
 
                 const crrObjKey = assertObjPpt_base(targeObj, nextStr, uid);
@@ -282,6 +287,7 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
                 {
                     crrObjKey.sessionValue = value;
                     crrObjKey.caputuredValue = caputuredValue;
+
                     if (!caputureValueOk && splitedStrArr[2]) // caputured string too
                     {
                         console.warn(`BUD bud - "${nextStr}" value is looking weird, it will default to false...`);
@@ -310,23 +316,19 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
                 }
             }
         }
-        async function validateBlockContent(nextStr, splitedStrArr, caputuredUID, nextUID, obj)
+        async function validateBlockContent(obj, nextStr, splitedStrArr, caputuredUID, nextUID)
         {
             const caputuredString = splitedStrArr[2] || ''; // undefinded means it doens't requieres a third param, that's ok
 
             const uidOk = await RAP.getBlockOrPageInfo(caputuredUID);
             const v_uid = (uidOk) ? caputuredUID : nextUID;
 
-            const splitedObjStr = obj.string?.split(obj.join);
-            const fromBlockStr = splitedObjStr[2] || '';
-
             let v_string = nextStr;
             let stringOK = true;
 
-            if (fromBlockStr != caputuredString)
+            if (obj.string != caputuredString)
             {
-                debugger;
-                splitedStrArr.splice(2, 1, fromBlockStr);
+                splitedStrArr.splice(2, 1, obj.string);
                 v_string = splitedStrArr.join(obj.join);
                 stringOK = false;
             }
@@ -397,12 +399,12 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
                 {
                     // < >
                     return {
-                        caputuredValue: string.substring(1, string.length - 1),
+                        value: string.substring(1, string.length - 1),
                         caputureValueOk: true,
                     }
                 }
                 return {
-                    caputuredValue: string,
+                    value: string,
                     caputureValueOk: false,
                 }
             }
@@ -450,10 +452,11 @@ async function addAllMissingBlocks()
                     //console.log(`avoiding ${property}`);
                     continue;
                 }
+
                 let nestedPpt = nextObj[property];
 
                 // 1. indent = 0
-                if (property == 'baseKey')
+                if (property == 'baseKey' && nestedPpt.examined == false)
                 {
                     const preStr = nestedPpt.string;
                     const prntKey = accObj.parentKey;
@@ -486,7 +489,7 @@ async function addAllMissingBlocks()
                 accStr = await Rec_addAllMissingBlocks(nextObj[property], nextAccObj); // recursion with await - 🤯
 
                 // 3. indent = 1
-                if (nextObj[property].baseValue != undefined) // arbitrary property -> subTemp()
+                if (nextObj[property].examined == false)
                 {
                     const value = nestedPpt.sessionValue = nestedPpt.baseValue;
                     const caputuredValue = nextObj[property].caputuredValue = `${cptrPrfx}${value}${cptrSufx}`; // BIG BOI  <value>
