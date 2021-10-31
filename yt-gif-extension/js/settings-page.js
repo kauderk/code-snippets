@@ -292,9 +292,7 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
                 await checkReorderBlock(parentUid, selfOrder, crrObjKey);
                 return true;
             }
-
             return false;
-
 
             async function checkReorderBlock(parentUid, selfOrder, childObjToMoveUID)
             {
