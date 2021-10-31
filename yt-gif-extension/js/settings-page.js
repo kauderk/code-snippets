@@ -122,6 +122,8 @@ window.YT_GIF_SETTINGS_PAGE.Workflow.baseKey.string = `The first ${Object.keys(w
 (async function init()
 {
     const result = await assignChildrenMissingValues();
+    console.log(result);
+    debugger;
 
     if (TARGET_UID == null) // Brand new installation
     {
@@ -140,38 +142,60 @@ window.YT_GIF_SETTINGS_PAGE.Workflow.baseKey.string = `The first ${Object.keys(w
 //#region HIDDEN FUNCTIONS
 async function assignChildrenMissingValues()
 {
+    let = keyObjMap = new Map(); // acc inside the Rec_func
     const passAccObj = {
         accStr: '',
         nextStr: '',
         indent: -1,
+        accKeys: [],
+        accObjPath: [],
     };
 
-    return await Rec_assignChildrenMissingValues(window.YT_GIF_SETTINGS_PAGE, passAccObj);
+    return {
+        keyObjMapArr: await Rec_assignChildrenMissingValues(window.YT_GIF_SETTINGS_PAGE, passAccObj),
+        keyObjMap
+    };
     async function Rec_assignChildrenMissingValues(nextObj, accObj = passAccObj)
     {
-        let { accStr } = accObj;
+        let { accStr, accObjPath, keyObjPair } = accObj;
         let funcGeneralOrder = -1;
 
-        const { nextStr, indent } = accObj;
+        const { nextStr, indent, accKeys } = accObj;
         const tab = `\t`.repeat((indent < 0) ? 0 : indent);
 
-        accStr = accStr + '\n' + tab + nextStr;
+        accStr = accStr + '\n' + tab + accKeys.join(" ");
 
 
         for (const property in nextObj)
         {
-            if (nextObj.hasOwnProperty(property) && typeof nextObj[property] === "object" && nextObj[property] != null)
+            const nestedPpt = nextObj[property];
+            if (
+                nextObj.hasOwnProperty(property)
+                && nestedPpt
+                && typeof nestedPpt === "object"
+                && !(nestedPpt instanceof Array)
+            )
             {
-                const nestedPpt = nextObj[property];
 
                 const nextAccObj = {
                     indent: indent + 1,
-                    accStr: accStr,
-                    nextStr: nestedPpt.string || '',
                     inputTypeFromBaseKey: nestedPpt?.baseKey?.inputType,
-                };
 
-                accStr = await Rec_assignChildrenMissingValues(nextObj[property], nextAccObj);
+                    accStr: accStr,
+                    nextStr: property || nestedPpt.string || '',
+
+                    accKeys: [...accObj.accKeys, property],
+                    accObjPath: pushSpreadSame(accObj.accObjPath, [property, nestedPpt]),
+                };
+                keyObjMap.set(property, nestedPpt);
+
+                function pushSpreadSame(arr = [], el)
+                {
+                    arr.push([...el]); /// THIS IS CRAZY!!!!!!!
+                    return arr;
+                }
+
+                accObjPath = await Rec_assignChildrenMissingValues(nextObj[property], nextAccObj);
 
                 // this took two straight days ... thank you thank you
 
@@ -191,37 +215,7 @@ async function assignChildrenMissingValues()
                 }
             }
         }
-        return accStr;
-        function assignInputTypesToChildren(parentObj) // 🐌 it's children will loop eventually inside this Rec Func ... man...
-        {
-            const parentInputType = parentObj.baseKey.inputType;
-
-            if (parentInputType) 
-            {
-                for (const parentKey in parentObj)
-                {
-                    if (parentKey == 'baseKey')
-                    {
-                        continue;
-                    }
-
-                    for (const subKey in parentObj[parentKey])
-                    {
-                        if (subKey != 'inputType')
-                        {
-                            continue;
-                        }
-                        let childType = parentObj[parentKey].inputType; // will check it self... fuck!, but it's the same... so let's hope this doesn't brake anything
-
-                        if (typeof childType == 'undefined')
-                        {
-                            parentObj[parentKey].inputType = parentInputType;
-                        }
-                    }
-                }
-            }
-            return parentObj;
-        }
+        return accObjPath;
     }
 }
 async function Read_Write_SettingsPage(UID)
@@ -714,7 +708,11 @@ function dom(baseValue = '', inputType)
 }
 function subInputType(baseValue = '', inputType)
 {
-    return subTemp(baseValue, inputType);
+    const subInputObj = {
+        baseValue: baseValue,
+        inputType: inputType,
+    }
+    return Object.assign(subTemp(), subInputObj);
 }
 /*---------------------------------------------*/
 function subTemp(baseValue = '', inputType)
