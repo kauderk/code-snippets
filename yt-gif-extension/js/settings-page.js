@@ -23,7 +23,7 @@ window.YT_GIF_SETTINGS_PAGE = {
     Workflow: {
         baseKey: addOrderPmt(`BIP BOP . . .`),
         joins: {
-            baseKey: addOrderPmt(`either " : " for actual settings or " / " for prompt guidelines`),
+            baseKey: addOrderPmt(`either ":" for actual settings or "/" for prompt guidelines`),
         },
         parameters: {
             baseKey: addOrderPmt(`(xxxuidxxx) : yt_gif_settings_key : <value>`),
@@ -121,9 +121,7 @@ window.YT_GIF_SETTINGS_PAGE.Workflow.baseKey.string = `The first ${Object.keys(w
 
 (async function init()
 {
-    const result = await assignChildrenMissingValues();
-    console.log(result);
-    debugger;
+    const { acc, keyObjMap } = await assignChildrenMissingValues();
 
     if (TARGET_UID == null) // Brand new installation
     {
@@ -132,7 +130,7 @@ window.YT_GIF_SETTINGS_PAGE.Workflow.baseKey.string = `The first ${Object.keys(w
     }
     else // Read and store Session Values
     {
-        const entirePageText = await Read_Write_SettingsPage(TARGET_UID); // 🐌
+        const entirePageText = await Read_Write_SettingsPage(TARGET_UID, keyObjMap); // 🐌
         const addedBlocks = await addAllMissingBlocks(); // 🐌 // THEY WILL STACK UP AGAINS EACHOTHER IF THEY ARE NOT EXAMINED - careful, bud
     }
     await RAP.SetNumberedViewWithUid(TARGET_UID);
@@ -148,57 +146,48 @@ async function assignChildrenMissingValues()
         nextStr: '',
         indent: -1,
         accKeys: [],
-        accObjPath: [],
     };
 
     return {
-        keyObjMapArr: await Rec_assignChildrenMissingValues(window.YT_GIF_SETTINGS_PAGE, passAccObj),
+        acc: await Rec_assignChildrenMissingValues(window.YT_GIF_SETTINGS_PAGE, passAccObj),
         keyObjMap
     };
     async function Rec_assignChildrenMissingValues(nextObj, accObj = passAccObj)
     {
-        let { accStr, accObjPath, keyObjPair } = accObj;
+        let { accStr } = accObj;
         let funcGeneralOrder = -1;
 
         const { nextStr, indent, accKeys } = accObj;
         const tab = `\t`.repeat((indent < 0) ? 0 : indent);
 
-        accStr = accStr + '\n' + tab + accKeys.join(" ");
-
+        //accStr = accStr + '\n' + tab + accKeys.join(" ");
+        accStr = accStr + '\n' + tab + nextStr;
 
         for (const property in nextObj)
         {
             const nestedPpt = nextObj[property];
-            if (
-                nextObj.hasOwnProperty(property)
-                && nestedPpt
-                && typeof nestedPpt === "object"
-                && !(nestedPpt instanceof Array)
-            )
+            if (nextObj.hasOwnProperty(property) && nestedPpt && typeof nestedPpt === "object" && !(nestedPpt instanceof Array))
             {
-
                 const nextAccObj = {
                     indent: indent + 1,
                     inputTypeFromBaseKey: nestedPpt?.baseKey?.inputType,
 
                     accStr: accStr,
-                    nextStr: property || nestedPpt.string || '',
-
-                    accKeys: [...accObj.accKeys, property],
-                    accObjPath: pushSpreadSame(accObj.accObjPath, [property, nestedPpt]),
+                    nextStr: nestedPpt.string || '',
                 };
-                keyObjMap.set(property, nestedPpt);
 
-                function pushSpreadSame(arr = [], el)
+                /* store for later */
+                if (property != 'baseKey') // there are too many, filter a litle bit
                 {
-                    arr.push([...el]); /// THIS IS CRAZY!!!!!!!
-                    return arr;
+                    const directObjPpts = (nestedPpt?.baseKey) ? nestedPpt.baseKey : nestedPpt;
+                    keyObjMap.set(property, directObjPpts);
                 }
 
-                accObjPath = await Rec_assignChildrenMissingValues(nextObj[property], nextAccObj);
+                /* the order to acc does matter */
+                accStr = await Rec_assignChildrenMissingValues(nextObj[property], nextAccObj);
 
-                // this took two straight days ... thank you thank you
 
+                /*  this took two straight days ... thank you thank you */
                 if (nestedPpt.baseValue != undefined) // inline object ≡ no baseKey
                 {
                     // 1.
@@ -215,10 +204,10 @@ async function assignChildrenMissingValues()
                 }
             }
         }
-        return accObjPath;
+        return accStr;
     }
 }
-async function Read_Write_SettingsPage(UID)
+async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
 {
     const ChildrenHierarchy = await RAP.getBlockOrPageInfo(UID, true);
 
@@ -274,33 +263,26 @@ async function Read_Write_SettingsPage(UID)
         return accStr;
 
         //#region local uitils
-        async function SuccessfulSttgUpt(indent)
+        async function SuccessfulSttgUpt()
         {
-            if (!key) return false;
-            const found = Rec_findObj(key);
-            if (!found) debugger;
-            const { ok, rest, foundObj, level } = found;
-            if (ok)
+            const targeObj = keyObjMap.get(key);
+            if (targeObj)
             {
-                if (!foundObj) debugger;
+                const crrObjKey = assertObjPpt_base(targeObj, nextStr, uid);
 
-                const targeObj = (foundObj.baseKey) ? foundObj.baseKey : foundObj; // inline obj or baseKey
-                if (targeObj.order == undefined) debugger;
-
-                const { stringOK, v_string, v_uid } = await validateBlockContent(targeObj, nextStr, splitedStrArr, uid, accObj.nextUID);
+                const { stringOK, v_string, v_uid } = await validateBlockContent(crrObjKey, nextStr, splitedStrArr, uid, accObj.nextUID);
                 if (!stringOK)
                 {
-                    debugger;
+                    console.log(`Updating block  ((${uid})) -> \n${nextStr} \nﾠ\nto ((${v_uid})) ->  \nﾠ\n${v_string}`)
                     await RAP.updateBlock(v_uid, v_string);
                 }
 
-                const crrObjKey = assertObjPpt_base(targeObj, v_string, v_uid);
 
                 if (join == fmtSplit)
                 {
                     crrObjKey.sessionValue = value;
                     crrObjKey.caputuredValue = caputuredValue;
-                    if (!caputureValueOk)
+                    if (!caputureValueOk && splitedStrArr[2]) // caputured string too
                     {
                         console.warn(`BUD bud - "${nextStr}" value is looking weird, it will default to false...`);
                     }
@@ -312,52 +294,7 @@ async function Read_Write_SettingsPage(UID)
             }
 
             return false;
-            // if (indent == 0)
-            // {
-            //     if (RecIsValidNestedKey(window.YT_GIF_SETTINGS_PAGE, key)) // LEVEL 0 block upt
-            //     {
-            //         //let parentObj = window.YT_GIF_SETTINGS_PAGE[key];
-            //         //const baseKey = parentObj.baseKey;
 
-            //         //const { stringOK, v_string, v_uid } = await validateBlockContent(baseKey, nextStr, splitedStrArr, uid, accObj.nextUID);
-            //         //if (!stringOK)
-            //         //{
-            //         //await RAP.updateBlock(v_uid, v_string);
-            //         //}
-
-            //         //const newBaseKeyObj = assertObjPpt_base(baseKey, v_string, v_uid);
-            //         // parentObj = assignInputTypesToChildren(parentObj); FIXME
-
-            //         //await checkReorderBlock(parentUid, selfOrder, newBaseKeyObj);
-            //         //return true;
-            //     }
-            // }
-            // else if (indent == 1)
-            // {
-            //     if (RecIsValidNestedKey(window.YT_GIF_SETTINGS_PAGE, keyFromLevel0, [key])) // nested LEVEL 1 block upt
-            //     {
-            //         //const targeObj = (join == fmtSplit) ? window.YT_GIF_SETTINGS_PAGE[keyFromLevel0][key] : window.YT_GIF_SETTINGS_PAGE[keyFromLevel0][key].baseKey;
-
-            //         //const crrObjKey = assertObjPpt_base(targeObj, nextStr, uid);
-
-            //         if (join == fmtSplit)
-            //         {
-            //             crrObjKey.sessionValue = value;
-            //             crrObjKey.caputuredValue = caputuredValue;
-            //             if (!caputureValueOk)
-            //             {
-            //                 console.warn(`BUD bud - "${nextStr}" value is looking weird, it will default to false...`);
-            //             }
-            //         }
-
-            //         //await checkReorderBlock(parentUid, selfOrder, crrObjKey);
-
-            //         //return true;
-            //     }
-            // }
-            // debugger;
-            // return false;
-            //#region local func
 
             async function checkReorderBlock(parentUid, selfOrder, childObjToMoveUID)
             {
@@ -374,63 +311,6 @@ async function Read_Write_SettingsPage(UID)
                     debugger;
                 }
             }
-            function RecIsValidNestedKey(obj, level, ...rest) // 🐌
-            {
-                if (obj === undefined) 
-                {
-                    return false
-                }
-                if (rest.length == 0 && obj.hasOwnProperty(level))
-                {
-                    return true
-                }
-                return RecIsValidNestedKey(obj[level], ...rest)
-            }
-            //#endregion
-        }
-        function Rec_findObj(keyCheck)
-        {
-            return Rec_deeperObjFinding(window.YT_GIF_SETTINGS_PAGE);
-            function Rec_deeperObjFinding(nextObj)
-            {
-                let found;
-                for (const property in nextObj)
-                {
-                    if (nextObj.hasOwnProperty(property) && typeof nextObj[property] === "object" && nextObj[property] != null)
-                    {
-                        if (property == keyCheck)
-                        {
-                            console.log(property, "found");
-                            return {
-                                ok: true,
-                                rest: [],
-                                foundObj: nextObj[property],
-                                level: key
-                            };
-                        }
-                        else
-                        {
-                            console.log(property, "loop");
-                            found = Rec_deeperObjFinding(nextObj[property]);
-                        }
-                    }
-                }
-                return found;
-            }
-
-            function RecIsValidNestedKey(foundObj, level, ...rest) // 🐌
-            {
-                //console.log("hi");
-                if (foundObj === undefined) 
-                {
-                    return { ok: false, foundObj }
-                }
-                if (rest.length == 0 && foundObj.hasOwnProperty(level))
-                {
-                    return { ok: true, rest, foundObj, level }
-                }
-                return RecIsValidNestedKey(foundObj[level], ...rest)
-            }
         }
         async function validateBlockContent(obj, nextStr, splitedStrArr, caputuredUID, nextUID)
         {
@@ -444,6 +324,7 @@ async function Read_Write_SettingsPage(UID)
 
             if (obj.string != caputuredString)
             {
+                debugger;
                 splitedStrArr.splice(2, 1, obj.string);
                 v_string = splitedStrArr.join(obj.join);
                 stringOK = false;

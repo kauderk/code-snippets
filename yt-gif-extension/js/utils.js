@@ -7,6 +7,23 @@ kauderk.util = ((util) =>
         arr.push(el);
         return arr;
     }
+    util.pushSpreadSame = (arr = [], el) =>
+    {
+        arr.push([...el]); /// THIS IS CRAZY!!!!!!! //accObjPath: pushSpreadSame(accObj.accObjPath, [property, nestedPpt]),
+        return arr;
+    }
+    util.Rec_IsValidNestedKey = (obj, level, ...rest) =>// 🐌
+    {
+        if (obj === undefined) 
+        {
+            return false
+        }
+        if (rest.length == 0 && obj.hasOwnProperty(level))
+        {
+            return true
+        }
+        return Rec_IsValidNestedKey(obj[level], ...rest)
+    }
     /* ----------------------------------------------- */
     util.RemoveElsEventListeners = (withEventListeners) =>
     {

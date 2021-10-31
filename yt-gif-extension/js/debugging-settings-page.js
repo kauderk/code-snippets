@@ -105,6 +105,62 @@ function getObjeByKey(keyCheck)
 }
 
 /*
+
+// if (indent == 0)
+            // {
+            //     if (RecIsValidNestedKey(window.YT_GIF_SETTINGS_PAGE, key)) // LEVEL 0 block upt
+            //     {
+            //         //let parentObj = window.YT_GIF_SETTINGS_PAGE[key];
+            //         //const baseKey = parentObj.baseKey;
+
+            //         //const { stringOK, v_string, v_uid } = await validateBlockContent(baseKey, nextStr, splitedStrArr, uid, accObj.nextUID);
+            //         //if (!stringOK)
+            //         //{
+            //         //await RAP.updateBlock(v_uid, v_string);
+            //         //}
+
+            //         //const newBaseKeyObj = assertObjPpt_base(baseKey, v_string, v_uid);
+            //         // parentObj = assignInputTypesToChildren(parentObj); FIXME
+
+            //         //await checkReorderBlock(parentUid, selfOrder, newBaseKeyObj);
+            //         //return true;
+            //     }
+            // }
+            // else if (indent == 1)
+            // {
+            //     if (RecIsValidNestedKey(window.YT_GIF_SETTINGS_PAGE, keyFromLevel0, [key])) // nested LEVEL 1 block upt
+            //     {
+            //         //const targeObj = (join == fmtSplit) ? window.YT_GIF_SETTINGS_PAGE[keyFromLevel0][key] : window.YT_GIF_SETTINGS_PAGE[keyFromLevel0][key].baseKey;
+
+            //         //const crrObjKey = assertObjPpt_base(targeObj, nextStr, uid);
+
+            //         if (join == fmtSplit)
+            //         {
+            //             crrObjKey.sessionValue = value;
+            //             crrObjKey.caputuredValue = caputuredValue;
+            //             if (!caputureValueOk)
+            //             {
+            //                 console.warn(`BUD bud - "${nextStr}" value is looking weird, it will default to false...`);
+            //             }
+            //         }
+
+            //         //await checkReorderBlock(parentUid, selfOrder, crrObjKey);
+
+            //         //return true;
+            //     }
+            // }
+            // debugger;
+            // return false;
+            //#region local func
+
+*/
+
+/*
+Updating block  "((0G8ZVniKu))" ->
+ "(0G8ZVniKu) / joins / either " : " for actual settings or " / " for prompt guidelines / " for prompt guidelines / " for prompt guidelines / " for prompt guidelines / " for prompt guidelines"
+
+ to "((0G8ZVniKu))" -> "(0G8ZVniKu) / joins / either " : " for actual settings or " / " for prompt guidelines / " for prompt guidelines / " for prompt guidelines / " for prompt guidelines / " for prompt guidelines / " for prompt guidelines"
+
 const toDebugObj = {
     Workflow: {
         baseKey: addOrderPmt(`GREEN`),
