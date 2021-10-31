@@ -268,15 +268,15 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
             const targeObj = keyObjMap.get(key);
             if (targeObj)
             {
-                const crrObjKey = assertObjPpt_base(targeObj, nextStr, uid);
 
-                const { stringOK, v_string, v_uid } = await validateBlockContent(crrObjKey, nextStr, splitedStrArr, uid, accObj.nextUID);
+                const { stringOK, v_string, v_uid } = await validateBlockContent(nextStr, splitedStrArr, uid, accObj.nextUID, targeObj);
                 if (!stringOK)
                 {
                     console.log(`Updating block  ((${uid})) -> \n${nextStr} \nﾠ\nto ((${v_uid})) ->  \nﾠ\n${v_string}`)
                     await RAP.updateBlock(v_uid, v_string);
                 }
 
+                const crrObjKey = assertObjPpt_base(targeObj, nextStr, uid);
 
                 if (join == fmtSplit)
                 {
@@ -310,26 +310,25 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
                 }
             }
         }
-        async function validateBlockContent(obj, nextStr, splitedStrArr, caputuredUID, nextUID)
+        async function validateBlockContent(nextStr, splitedStrArr, caputuredUID, nextUID, obj)
         {
             const caputuredString = splitedStrArr[2] || ''; // undefinded means it doens't requieres a third param, that's ok
 
             const uidOk = await RAP.getBlockOrPageInfo(caputuredUID);
             const v_uid = (uidOk) ? caputuredUID : nextUID;
 
-            let v_string = obj.string;
+            const splitedObjStr = obj.string?.split(obj.join);
+            const fromBlockStr = splitedObjStr[2] || '';
+
+            let v_string = nextStr;
             let stringOK = true;
 
-            if (obj.string != caputuredString)
+            if (fromBlockStr != caputuredString)
             {
                 debugger;
-                splitedStrArr.splice(2, 1, obj.string);
+                splitedStrArr.splice(2, 1, fromBlockStr);
                 v_string = splitedStrArr.join(obj.join);
                 stringOK = false;
-            }
-            else
-            {
-                v_string = nextStr;
             }
 
             return {
