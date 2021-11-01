@@ -1,13 +1,14 @@
-const UTILS = window.kauderk.util;
-/*-----------------------------------*/
+// version 36 - semi-refactored
 /**
  * @summary USER INPUTS
  * @type Object
  * @description WILL NOT CONTAIN NESTED OBJECTS, it will read 'strings' as guides then acustom to them, all inside the Ready() function.
  * It's property types will change.
  * - nested object >>> sesionValue
- */
+*/
 const UI = JSON.parse(JSON.stringify(window.YT_GIF_SETTINGS_PAGE));
+const UTILS = window.kauderk.util;
+/*-----------------------------------*/
 /* user doesn't need to see this */
 UI.label = {
     rangeValue: '',
@@ -31,6 +32,7 @@ UI.referenced = {
 }
 /*-----------------------------------*/
 const iframeIDprfx = 'player_';
+let currentFullscreenPlayer = null;
 /*-----------------------------------*/
 const YT_GIF_OBSERVERS_TEMP = {
     masterMutationObservers: [],
