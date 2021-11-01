@@ -3,7 +3,7 @@
 {
     await LoadExternalResources();
     await window.YT_GIF_SETTINGS_PAGE_INIT();
-    await createXload('app.js');
+    await createXload('yt-gif-app.js');
 })();
 
 async function LoadExternalResources()
@@ -42,7 +42,7 @@ async function createXload(src)
 {
     const obj = {
         src: src,
-        id: `script-yt-gif-${src}`
+        id: `script-yt_gif-${src}`
     }
 
     romoveIfany(obj.id);
