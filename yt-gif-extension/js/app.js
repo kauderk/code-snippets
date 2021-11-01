@@ -1,6 +1,5 @@
 // version 35 - semi-refactored
 const UTILS = window.kauderk.util;
-//const RAP = window.kauderk.rap;
 
 /**
  * @summary USER INPUTS
@@ -9,7 +8,6 @@ const UTILS = window.kauderk.util;
  * It's property types will change.
  * - nested object >>> sesionValue
  */
-debugger;
 const UI = JSON.parse(JSON.stringify(window.YT_GIF_SETTINGS_PAGE));
 /*-----------------------------------*/
 /* user doesn't need to see this */
@@ -64,6 +62,7 @@ const YT_GIF_OBSERVERS_TEMP = {
         }
     }
 }
+debugger;
 window.YT_GIF_OBSERVERS = (!window.YT_GIF_OBSERVERS) ? YT_GIF_OBSERVERS_TEMP : window.YT_GIF_OBSERVERS;
 
 /*-----------------------------------*/

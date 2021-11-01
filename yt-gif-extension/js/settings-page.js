@@ -130,7 +130,6 @@ window.YT_GIF_SETTINGS_PAGE_INIT = async () => await init();
 
 async function init()
 {
-    debugger;
     const { acc, keyObjMap } = await assignChildrenMissingValues();
     window.YT_GIF_DIRECT_SETTINGS = keyObjMap;
 
@@ -146,7 +145,6 @@ async function init()
     }
     await RAP.SetNumberedViewWithUid(TARGET_UID);
     await RAP.CollapseDirectcChildren(TARGET_UID, false);
-    debugger;
 }
 
 //#region HIDDEN FUNCTIONS
