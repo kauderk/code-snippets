@@ -135,7 +135,7 @@ async function init()
 
     if (TARGET_UID == null) // Brand new installation
     {
-        TARGET_UID = await RAP.navigateToUiOrCreate(targetPage);
+        TARGET_UID = await RAP.getOrCreatePageUid(targetPage);
         const addedBlocks = await addAllMissingBlocks(); // 🐌
     }
     else // Read and store Session Values
