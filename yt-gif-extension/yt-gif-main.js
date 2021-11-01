@@ -3,7 +3,7 @@
 {
     await LoadExternalResources();
     await window.YT_GIF_SETTINGS_PAGE_INIT();
-    //await createXload('app.js');
+    await createXload('app.js');
 })();
 
 async function LoadExternalResources()
