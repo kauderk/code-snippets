@@ -79,7 +79,8 @@ async function createXload(src)
     {
         return new Promise((resolve, reject) =>
         {
-            script.onload = () => resolve(script)
+            //Script finished loading
+            script.addEventListener('load', () => resolve(script))
         })
     }
 }
