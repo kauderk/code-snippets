@@ -2,7 +2,9 @@
 (async function ()
 {
     await LoadExternalResources();
+    debugger;
     await createXload('app.js');
+    debugger;
 })();
 
 async function LoadExternalResources()
@@ -64,7 +66,7 @@ async function createXload(src)
         const script = document.createElement("script");
         script.src = URLFolderJS(src) + "?" + new Date().getTime();
         script.id = id;
-        //script.async = false;
+        script.async = false;
         script.type = "text/javascript";
         document.getElementsByTagName('head')[0].appendChild(script);
         return script;

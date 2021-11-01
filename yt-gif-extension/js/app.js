@@ -9,6 +9,7 @@ const UTILS = window.kauderk.util;
  * It's property types will change.
  * - nested object >>> sesionValue
  */
+debugger;
 const UI = JSON.parse(JSON.stringify(window.YT_GIF_SETTINGS_PAGE));
 /*-----------------------------------*/
 /* user doesn't need to see this */

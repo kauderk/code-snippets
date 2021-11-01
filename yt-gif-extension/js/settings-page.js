@@ -128,6 +128,7 @@ window.YT_GIF_SETTINGS_PAGE.Workflow.baseKey.string = `The first ${settingsReach
 
 (async function init()
 {
+    debugger;
     const { acc, keyObjMap } = await assignChildrenMissingValues();
     window.YT_GIF_DIRECT_SETTINGS = keyObjMap;
 
@@ -143,6 +144,7 @@ window.YT_GIF_SETTINGS_PAGE.Workflow.baseKey.string = `The first ${settingsReach
     }
     await RAP.SetNumberedViewWithUid(TARGET_UID);
     await RAP.CollapseDirectcChildren(TARGET_UID, false);
+    debugger;
 })();
 
 //#region HIDDEN FUNCTIONS
