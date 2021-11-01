@@ -94,7 +94,6 @@ let currentFullscreenPlayer = '';
 let MasterMutationObservers = [];
 let MasterIntersectionObservers = [];
 /*-----------------------------------*/
-/*-----------------------------------*/
 const allVideoParameters = new Map();
 const lastBlockIDParameters = new Map();
 const videoParams = {
@@ -113,7 +112,6 @@ const videoParams = {
     updateVolume: window.YT_GIF_SETTINGS_PAGE.defaultValues.video_volume.baseValue, // ❗
     volumeURLmapHistory: [],
 };
-debugger;
 //
 const recordedIDs = new Map();
 const sesionIDs = {
@@ -270,149 +268,55 @@ async function Ready()
     await smart_Load_DDM_onTopbar(dropDownMenu); // DDM - drop down menu
 
 
-    // 2.
+    // 2. assign direct values to the main object
     //DDM_to_UI_variables();
     DDM_to_UI_variables_AND_listen_for_update_Block_Settings();
 
-    DDM_IconFocusFlurEvents();
 
-    //Flip DDM item Visibility Based On Linked Input Value
-    DDM_FlipBindedDataAttr_RTM([`${cssData.dropdown__hidden}`]); // RTM runtime
+    // 3. set up events pre observers
+    //#region relevant variables
+    const { ddm_icon, ddm_focus, ddm_info_message_selector, dropdown__hidden } = cssData;
+    const { timestamp_display_scroll_offset, end_loop_sound_volume } = UI.range;
+    const { rangeValue, loop_volume_displayed } = UI.label;
+    //#endregion
 
-    UpdateOnScroll_RTM('timestamp_display_scroll_offset', UI.label.rangeValue);
-    UpdateOnScroll_RTM('end_loop_sound_volume', UI.label.loop_volume_displayed);
+    DDM_IconFocusBlurEvents(ddm_icon, ddm_focus, ddm_info_message_selector);
 
+    DDM_FlipBindedDataAttr_RTM([dropdown__hidden], attrData); // RTM runtime
+
+    UpdateOnScroll_RTM(timestamp_display_scroll_offset, rangeValue);
+    UpdateOnScroll_RTM(end_loop_sound_volume, loop_volume_displayed);
+
+
+    // 3. run extension and events after set up
+    //#region relevant variables
+    const { override_roam_video_component } = UI.defaultValues;
+    const { awaiting_with_video_thumnail_as_bg } = UI.experience;
+    const { awaitng_input_with_thumbnail } = cssData;
+    let { key } = rm_components.current;
+
+    //#endregion
+
+    key = KeyToObserve_UCS(override_roam_video_component);
+
+    await MasterObserver_UCS_RTM(); // listening for changes // BIG BOI FUNCTION
+
+    TogglePlayerThumbnails_DDM_RTM(awaiting_with_video_thumnail_as_bg, awaitng_input_with_thumbnail);
+
+    RunMasterObserverWithKey(key);
 
     // 3.
-    rm_components.current.key = KeyToObserve_UCS();
+    // rm_components.current.key = KeyToObserve_UCS();
 
-    await MasterObserver_UCS_RTM(); // listening for changes
+    // await MasterObserver_UCS_RTM(); // listening for changes
 
-    TogglePlayerThumbnails_DDM_RTM();
+    // TogglePlayerThumbnails_DDM_RTM();
 
-    RunMasterObserverWithKey(rm_components.current.key);
+    // RunMasterObserverWithKey(rm_components.current.key);
 
     console.log('YT GIF extension activated');
 
     //#region hidden functions
-    async function PlayerHtml_UCS()
-    {
-        let htmlText = await UTILS.FetchText(links.html.playerControls);
-        if (window.YT_GIF_SETTINGS_PAGE.defaultValues.end_loop_sound_src.sessionValue != '')
-        {
-            htmlText = htmlText.replace(/(?<=<source src=\")(?=")/gm, window.YT_GIF_SETTINGS_PAGE.defaultValues.end_loop_sound_src.sessionValue);
-        }
-        return htmlText
-    }
-
-    function DDM_to_UI_variables()
-    {
-        // this took a solid hour. thak you thank you
-        for (const parentKey in UI)
-        {
-            for (const childKey in UI[parentKey])
-            {
-                const userValue = UI[parentKey][childKey];
-                const domEl = document.getElementById(childKey);
-                //don't mess up any other variable
-                if (domEl)
-                    UI[parentKey][childKey] = domEl;
-
-                switch (parentKey)
-                {
-                    case 'display':
-                    case 'previous':
-                    case 'referenced':
-                    case 'deploymentStyle':
-                    case 'experience':
-                    case 'inactiveStyle':
-                    case 'fullscreenStyle':
-                    case 'muteStyle':
-                    case 'playStyle':
-                        const binaryInput = UI[parentKey][childKey];
-                        binaryInput.checked = UTILS.isTrue(userValue);
-                        UTILS.linkClickPreviousElement(binaryInput);
-                        break;
-                    case 'range':
-                        UI[parentKey][childKey].value = Number(userValue);
-                        break;
-                    case 'label':
-                        UI[parentKey][childKey].innerHTML = userValue;
-                        break;
-                }
-            }
-        }
-    }
-
-    function DDM_IconFocusFlurEvents()
-    {
-        const mainDDM = document.querySelector("span.yt-gif-drop-down-menu-toolbar .dropdown > .dropdown-content");
-
-        const icon = document.querySelector(".ty-gif-icon");
-        negativeTabIndex(icon);
-
-        const classNames = [cssData.ddm_focus];
-
-        icon.addEventListener("click", function (e) { GainFocus(e, this, mainDDM) }, true);
-        icon.addEventListener("blur", function (e) { LoosedFocus(e, this, mainDDM) }, true);
-
-
-        const infoMessages = document.querySelectorAll('.dropdown .dropdown-info-message');
-        let validFocusMessage = new Map();
-        for (const i of infoMessages)
-        {
-            const possibleSubDdm = i.nextElementSibling;
-            if (possibleSubDdm.classList.contains('dropdown-content'))
-            {
-                negativeTabIndex(i);
-                validFocusMessage.set(i, possibleSubDdm);
-            }
-        }
-        for (const [keyMessageEl, valueEltarget] of validFocusMessage.entries())
-        {
-            keyMessageEl.addEventListener("click", function (e) { GainFocus(e, this, valueEltarget) });
-            keyMessageEl.addEventListener("blur", function (e) { LoosedFocus(e, this, valueEltarget) });
-        }
-
-
-        //#region event handle
-        function GainFocus(e, el, targetEl)
-        {
-            el.focus();
-            UTILS.toggleClasses(true, classNames, targetEl);
-        }
-        function LoosedFocus(e, el, targetEl)
-        {
-            UTILS.toggleClasses(false, classNames, targetEl);
-        }
-        function negativeTabIndex(el)
-        {
-            if (!el.tagName) debugger;
-            el.setAttribute('tabindex', '-1'); // because they are "span"
-        }
-
-        //#endregion
-    }
-
-    function KeyToObserve_UCS()
-    {
-        let currentKey; // this can be shorter for sure, how though?
-        if (UTILS.isTrue(window.YT_GIF_SETTINGS_PAGE.defaultValues.override_roam_video_component.sessionValue)) //video
-        {
-            currentKey = 'video';
-        }
-        else if (window.YT_GIF_SETTINGS_PAGE.defaultValues.override_roam_video_component.sessionValue === 'both') // both
-        {
-            currentKey = 'both';
-        }
-        else // yt-gif
-        {
-            currentKey = 'yt_gif';
-        }
-        return currentKey;
-    }
-
-    //
     function RunMasterObserverWithKey(key)
     {
         const options = {
@@ -443,65 +347,6 @@ async function Ready()
         }
         //#endregion
     }
-    //
-
-    function DDM_FlipBindedDataAttr_RTM(hiddenClass = [])
-    {
-        for (const key in attrData)
-        {
-            const value = attrData[key];
-            const main = document.querySelector(data_MAIN_with(value));
-            const all = [...document.querySelectorAll(data_bind_with(value, '*'))];
-            const valid = all.filter(el => el != main);
-
-            toggleValidItemClasses();
-            main.addEventListener('change', toggleValidItemClasses);
-
-            //#region local utils
-            function toggleValidItemClasses()
-            {
-                for (const i of valid)
-                {
-                    UTILS.toggleClasses(!main.checked, hiddenClass, i);
-                }
-            }
-            //#endregion
-        }
-
-        //#region local utils
-        function data_MAIN_with(value, selector = '')
-        {
-            return `[data-main${selector}='${value}']`;
-        }
-        function data_bind_with(value, selector = '')
-        {
-            return `[data-bind${selector}='${value}']`;
-        }
-
-        //#endregion
-    }
-
-    function TogglePlayerThumbnails_DDM_RTM()
-    {
-        const withThumbnails = UI.experience.awaiting_with_video_thumnail_as_bg;
-        withThumbnails.addEventListener('change', handleIMGbgSwap);
-        function handleIMGbgSwap(e)
-        {
-            const awaitingGifs = [...document.querySelectorAll(`.${cssData.awaitng_input_with_thumbnail}`)];
-            for (const i of awaitingGifs)
-            {
-                if (withThumbnails.checked)
-                {
-                    UTILS.applyIMGbg(i, i.dataset.videoUrl);
-                }
-                else
-                {
-                    UTILS.removeIMGbg(i); // spaguetti
-                }
-            }
-        }
-    }
-
     async function MasterObserver_UCS_RTM()
     {
         const checkMenu = UI.deploymentStyle.suspend_yt_gif_deployment;
@@ -679,8 +524,8 @@ async function Ready()
 
         //#endregion
     }
-
     //#endregion
+
 
     //#region 1. hidden functions
     async function smart_LoadCSS(cssURL, id) // 'cssURL' is the stylesheet's URL, i.e. /css/styles.css
@@ -774,7 +619,17 @@ async function Ready()
 
         rm_moreIcon.insertAdjacentHTML('afterend', htmlText);
     }
+    async function PlayerHtml_UCS()
+    {
+        let htmlText = await UTILS.FetchText(links.html.playerControls);
+        if (window.YT_GIF_SETTINGS_PAGE.defaultValues.end_loop_sound_src.sessionValue != '')
+        {
+            htmlText = htmlText.replace(/(?<=<source src=\")(?=")/gm, window.YT_GIF_SETTINGS_PAGE.defaultValues.end_loop_sound_src.sessionValue);
+        }
+        return htmlText
+    }
     //#endregion
+
 
     //#region 2. hidden functions
     function DDM_to_UI_variables_AND_listen_for_update_Block_Settings()
@@ -866,28 +721,167 @@ async function Ready()
     }
     //#endregion
 
-    //#region uitils
-    function UpdateOnScroll_RTM(key, labelEl)
+
+    //#region 3. hidden functions
+    function DDM_IconFocusBlurEvents(ddm_icon, ddm_focus, ddm_info_message_selector)
     {
-        const scroll = UI.range[key];
-        function UpdateLabel(e, elScroll)
+        // 1. special case
+        //⚠️
+        const mainDDM = document.querySelector('span.yt-gif-drop-down-menu-toolbar .dropdown > .dropdown-content');
+        const icon = document.querySelector('.' + ddm_icon);
+        spanNegativeTabIndex(icon);
+
+        const classNames = [ddm_focus]; // used inside two local func
+
+        icon.addEventListener('click', function (e) { GainFocus(e, this, mainDDM) }, true);
+        icon.addEventListener('blur', function (e) { LoosedFocus(e, this, mainDDM) }, true);
+
+
+        // 2. for all infoMessages in html
+        const infoMessages = document.querySelectorAll(ddm_info_message_selector);
+        let validFocusMessage = new Map();
+
+        for (const i of infoMessages)
         {
-            labelEl.innerHTML = elScroll.value;
+            const possibleSubDdm = i.nextElementSibling;
+            if (possibleSubDdm.classList.contains('dropdown-content'))
+            {
+                spanNegativeTabIndex(i);
+                validFocusMessage.set(i, possibleSubDdm);
+            }
+        }
+        for (const [keyMessageEl, valueEltarget] of validFocusMessage.entries())
+        {
+            keyMessageEl.addEventListener("click", function (e) { GainFocus(e, this, valueEltarget) });
+            keyMessageEl.addEventListener("blur", function (e) { LoosedFocus(e, this, valueEltarget) });
         }
 
-        scroll.addEventListener('change', function (e) { UpdateLabel(e, this) }, true);
-        scroll.addEventListener('wheel', function (e) { volumeOnWheel(e, this) }, true);
-        function volumeOnWheel(e, elScroll)
+
+        //#region event handlers
+        function GainFocus(e, el, targetEl)
         {
+            el.focus();
+            UTILS.toggleClasses(true, classNames, targetEl);
+        }
+        function LoosedFocus(e, el, targetEl)
+        {
+            UTILS.toggleClasses(false, classNames, targetEl);
+        }
+        function spanNegativeTabIndex(el)
+        {
+            if (el.tagName)
+            {
+                el.setAttribute('tabindex', '-1'); // because they are "span"
+            }
+        }
+        //#endregion
+    }
+    function DDM_FlipBindedDataAttr_RTM(toggleClassArr = [], attrData)
+    {
+        for (const key in attrData)
+        {
+            const value = attrData[key];
+            const main = document.querySelector(data_MAIN_with(value));
+            const all = [...document.querySelectorAll(data_bind_with(value, '*'))];
+            const valid = all.filter(el => el != main);
+
+            toggleValidItemClasses();
+            main.addEventListener('change', toggleValidItemClasses);
+
+            //#region local utils
+            function toggleValidItemClasses()
+            {
+                for (const i of valid)
+                {
+                    UTILS.toggleClasses(!main.checked, toggleClassArr, i);
+                }
+            }
+            //#endregion
+        }
+
+        //#region local utils
+        function data_MAIN_with(value, selector = '')
+        {
+            return `[data-main${selector}='${value}']`;
+        }
+        function data_bind_with(value, selector = '')
+        {
+            return `[data-bind${selector}='${value}']`;
+        }
+
+        //#endregion
+    }
+    function UpdateOnScroll_RTM(scroll, labelEl)
+    {
+        // 📦
+        scroll.addEventListener('change', UpdateLabelWithEvent, true);
+        scroll.addEventListener('wheel', ValueOnWheel, true);
+        function ValueOnWheel(e)
+        {
+            const elScroll = e.currentTarget;
             const dir = Math.sign(e.deltaY) * -1;
             const parsed = parseInt(elScroll.value, 10);
             elScroll.value = Number(dir + parsed);
 
-            UpdateLabel(e, elScroll);
+            UpdateLabelWithEvent(e);
+        }
+        function UpdateLabelWithEvent(e)
+        {
+            UptLabel(e.currentTarget);
+            // BIND TO SETTINGS PAGE
+        }
+        function UptLabel(elScroll)
+        {
+            labelEl.innerHTML = elScroll.value; // don't worry about overflowing the counter, html range takes care of it
         }
 
-        UpdateLabel("e", scroll); // javascript?
+        UptLabel(scroll);
     }
+    //#endregion
+
+
+    //#region 4. hidden functions
+    function KeyToObserve_UCS(override_roam_video_component)
+    {
+        // this can be shorter for sure, how though?
+        if (UTILS.isTrue(override_roam_video_component)) //video
+        {
+            return 'video';
+        }
+        else if (override_roam_video_component === 'both') // both
+        {
+            return 'both';
+        }
+        else // yt-gif
+        {
+            return 'yt_gif';
+        }
+    }
+    function TogglePlayerThumbnails_DDM_RTM(awaiting_with_video_thumnail_as_bg, awaitng_input_with_thumbnail)
+    {
+        // BIND TO SETTINGS PAGE
+
+        awaiting_with_video_thumnail_as_bg.addEventListener('change', handleIMGbgSwap);
+        function handleIMGbgSwap(e)
+        {
+            const awaitingGifs = [...document.querySelectorAll(`.${awaitng_input_with_thumbnail}`)];
+            for (const i of awaitingGifs)
+            {
+                if (awaiting_with_video_thumnail_as_bg.checked)
+                {
+                    UTILS.applyIMGbg(i, i.dataset.videoUrl);
+                }
+                else
+                {
+                    UTILS.removeIMGbg(i); // spaguetti
+                }
+            }
+        }
+    }
+    //#endregion
+
+
+    //#region uitils
     function DDM_Els()
     {
         const { ddm_exist } = cssData
@@ -1026,7 +1020,6 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
 
     // 3. weird recursive function... guys...
     const url = await InputBlockVideoParams(uid);
-    debugger;
     allVideoParameters.set(newId, urlConfig(url));
 
 
@@ -1254,7 +1247,6 @@ async function onPlayerReady(event)
 
     const loadingMarginOfError = 1; //seconds
     let updateStartTime = start;
-    debugger;
 
 
     // javascript is crazy
