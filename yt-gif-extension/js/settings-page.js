@@ -1,6 +1,6 @@
 // version 1 - semi-refactored
 const targetPage = 'roam/js/kauderk/yt-gif/settings';
-const UTILS = window.kauderk.util;
+const UTIL_K = window.kauderk.util;
 const RAP = window.kauderk.rap;
 
 let TARGET_UID = RAP.getPageUid(targetPage);
@@ -507,7 +507,7 @@ async function addAllMissingBlocks()
 
                     accKeys: [...accObj.accKeys, property],
 
-                    accHierarchyUids: UTILS.pushSame(accObj.accHierarchyUids, ...HierarchyUids), // this is weird
+                    accHierarchyUids: UTIL_K.pushSame(accObj.accHierarchyUids, ...HierarchyUids), // this is weird
 
                     accStr: accStr,
                     tab: `\t`.repeat(0),
