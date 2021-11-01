@@ -64,7 +64,7 @@ kauderk.rap = ((rap) =>
     }
     rap.CollapseDirectcChildren = async (block_uid, block_expanded) =>
     {
-        const firstGen = await ccc.util.allChildrenInfo(block_uid);
+        const firstGen = await rap.allChildrenInfo(block_uid);
         const children = rap.sortObjectsByOrder(firstGen[0][0].children);
 
         for (const child of children)
@@ -282,6 +282,15 @@ kauderk.rap = ((rap) =>
                 rap.createChildBlock(pageUid, 0, initString, rap.createUid());
         }
         return pageUid;
+    }
+    rap.allChildrenInfo = (blockUid) =>
+    {
+        let results = window.roamAlphaAPI.q(
+            `[:find (pull ?parent 
+                [* {:block/children [:block/string :block/uid :block/order]}])
+      :where
+          [?parent :block/uid \"${blockUid}\"]]`)
+        return (results.length == 0) ? undefined : results
     }
     return rap;
 })(kauderk.rap || {});
