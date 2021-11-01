@@ -65,7 +65,7 @@ window.YTGIF = {
         end_loop_sound_src: 'https://freesound.org/data/previews/256/256113_3263906-lq.mp3',
     },
 }
-const UI = window.YTGIF;
+const UI = JSON.parse(JSON.stringify(window.YT_GIF_SETTINGS_PAGE));
 /* user doesn't need to see this */
 UI.label = {
     rangeValue: '',
@@ -94,6 +94,7 @@ let currentFullscreenPlayer = '';
 let MasterMutationObservers = [];
 let MasterIntersectionObservers = [];
 /*-----------------------------------*/
+/*-----------------------------------*/
 const allVideoParameters = new Map();
 const lastBlockIDParameters = new Map();
 const videoParams = {
@@ -108,10 +109,11 @@ const videoParams = {
 
     speed: 1,
 
-    volume: UI.default.video_volume,
-    updateVolume: UI.default.video_volume,
+    volume: window.YT_GIF_SETTINGS_PAGE.defaultValues.video_volume.baseValue, // ❗
+    updateVolume: window.YT_GIF_SETTINGS_PAGE.defaultValues.video_volume.baseValue, // ❗
     volumeURLmapHistory: [],
 };
+debugger;
 //
 const recordedIDs = new Map();
 const sesionIDs = {
@@ -137,8 +139,8 @@ function URLFolderJS(f)
 };
 const links = {
     css: {
-        dropDownMenu: URLFolderCSS('drop-down-menu.css'),
-        player: URLFolderCSS('player.css'),
+        dropDownMenuStyle: URLFolderCSS('drop-down-menu.css'),
+        playerStyle: URLFolderCSS('player.css'),
         themes: {
             dark_dropDownMenu: URLFolderCSS('themes/dark-drop-down-menu.css'),
             light_dropDownMenu: URLFolderCSS('themes/light-drop-down-menu.css'),
@@ -169,6 +171,9 @@ const cssData = {
     awaitng_input_with_thumbnail: 'yt-gif-awaiting-for-user-input-with-thumbnail',
 
 
+    ddm_icon: 'ty-gif-icon',
+
+
     dwn_no_input: 'dropdown_not-allowed_input',
     dropdown_fadeIt_bg_animation: 'dropdown_fadeIt-bg_animation',
     dropdown_forbidden_input: 'dropdown_forbidden-input',
@@ -177,6 +182,7 @@ const cssData = {
     dropdown__hidden: 'dropdown--hidden',
     dropdown_deployment_style: 'dropdown_deployment-style',
     dwp_message: 'dropdown-info-message',
+    ddm_info_message_selector: `.dropdown .dropdown-info-message`,
 
     dwn_pulse_anim: 'drodown_item-pulse-animation',
 
@@ -245,21 +251,28 @@ async function Ready()
     if (document.querySelector('.' + cssData.ddm_exist))
         return console.log('YT Extension was already installed');
 
-    // the objects "UI", "links" and "cssData" are binded to all of these functions
-    // 1.
-    await LoadCSS(links.css.dropDownMenu);
-    await LoadCSS(links.css.player);
+    // 1. set up looks
+    //#region relevant variables
+    const { css_theme, player_span, end_loop_sound_src } = window.YT_GIF_SETTINGS_PAGE.defaultValues;
+    const { themes, playerStyle, dropDownMenuStyle } = links.css;
+    const { playerControls, dropDownMenu } = links.html;
+    const { yt_gif } = cssData; // CssThemes_UCS
+    //#endregion
 
-    await CssThemes_UCS(); // UCS - user customizations
-    await CssPlayer_UCS();
+    await smart_LoadCSS(dropDownMenuStyle, `${yt_gif}-dropDownMenuStyle`);
+    await smart_LoadCSS(playerStyle, `${yt_gif}-playerStyle`);
 
-    links.html.fetched.playerControls = await PlayerHtml_UCS();
+    await smart_CssThemes_UCS(css_theme.baseValue, themes, yt_gif); // UCS - user customizations
+    await smart_CssPlayer_UCS(player_span.baseValue, cssData);
 
-    await Load_DDM_onTopbar(); // DDM - drop down menu
+    links.html.fetched.playerControls = await PlayerHtml_UCS(playerControls, end_loop_sound_src.baseValue);
+
+    await smart_Load_DDM_onTopbar(dropDownMenu); // DDM - drop down menu
 
 
     // 2.
-    DDM_to_UI_variables();
+    //DDM_to_UI_variables();
+    DDM_to_UI_variables_AND_listen_for_update_Block_Settings();
 
     DDM_IconFocusFlurEvents();
 
@@ -282,60 +295,15 @@ async function Ready()
     console.log('YT GIF extension activated');
 
     //#region hidden functions
-    async function CssThemes_UCS()
-    {
-        if (UI.default.css_theme === 'dark')
-        {
-            await LoadCSS(links.css.themes.dark_dropDownMenu);
-        }
-        else // light
-        {
-            await LoadCSS(links.css.themes.light_dropDownMenu);
-        }
-    }
-
-    function CssPlayer_UCS()
-    {
-        if (UTILS.isValidCSSUnit(UI.default.player_span)) // i could've use a css variable. fuck! jaja
-        {
-            const css_rule = `.${cssData.yt_gif_wrapper}, .${cssData.yt_gif_iframe_wrapper} {
-                    width: ${UI.default.player_span};
-                }`;
-
-            const id = `${cssData.ty_gif_custom_player_span}-${UI.default.player_span}`
-
-            create_css_rule(css_rule, id);
-
-            //#region util
-            function create_css_rule(css_rules = 'starndard css rules', id = `${cssData.yt_gif}-custom`)
-            {
-                const style = document.createElement('style'); // could be it's own function
-                style.id = id;
-                style.setAttribute('type', 'text/css');
-                style.innerHTML = css_rules;
-                document.getElementsByTagName('head')[0].appendChild(style);
-            }
-            //#endregion
-        }
-    }
-
     async function PlayerHtml_UCS()
     {
         let htmlText = await UTILS.FetchText(links.html.playerControls);
-        if (UI.default.end_loop_sound_src != '')
+        if (window.YT_GIF_SETTINGS_PAGE.defaultValues.end_loop_sound_src.sessionValue != '')
         {
-            htmlText = htmlText.replace(/(?<=<source src=\")(?=")/gm, UI.default.end_loop_sound_src);
+            htmlText = htmlText.replace(/(?<=<source src=\")(?=")/gm, window.YT_GIF_SETTINGS_PAGE.defaultValues.end_loop_sound_src.sessionValue);
         }
         return htmlText
     }
-
-    async function Load_DDM_onTopbar()
-    {
-        const rm_moreIcon = document.querySelector('.bp3-icon-more').closest('.rm-topbar .rm-topbar__spacer-sm + .bp3-popover-wrapper');
-        const htmlText = await UTILS.FetchText(links.html.dropDownMenu);
-        rm_moreIcon.insertAdjacentHTML('afterend', htmlText);
-    }
-
 
     function DDM_to_UI_variables()
     {
@@ -429,11 +397,11 @@ async function Ready()
     function KeyToObserve_UCS()
     {
         let currentKey; // this can be shorter for sure, how though?
-        if (UTILS.isTrue(UI.default.override_roam_video_component)) //video
+        if (UTILS.isTrue(window.YT_GIF_SETTINGS_PAGE.defaultValues.override_roam_video_component.sessionValue)) //video
         {
             currentKey = 'video';
         }
-        else if (UI.default.override_roam_video_component === 'both') // both
+        else if (window.YT_GIF_SETTINGS_PAGE.defaultValues.override_roam_video_component.sessionValue === 'both') // both
         {
             currentKey = 'both';
         }
@@ -714,23 +682,191 @@ async function Ready()
 
     //#endregion
 
-
-    //#region uitils
-    async function LoadCSS(cssURL) // 'cssURL' is the stylesheet's URL, i.e. /css/styles.css
+    //#region 1. hidden functions
+    async function smart_LoadCSS(cssURL, id) // 'cssURL' is the stylesheet's URL, i.e. /css/styles.css
     {
-        if (await !UTILS.isValidFetch(cssURL)) return;
+        if (!(await UTILS.isValidFetch(cssURL))) 
+        {
+            return;
+        }
 
         return new Promise(function (resolve, reject)
         {
+            const stylesAlready = document.querySelectorAll(`[id='${id}']`);
+            if (stylesAlready?.length > 0) // well well well - we don't like duplicates
+            {
+                SytleSheetExistAlready(cssURL);
+                for (const el of stylesAlready)
+                {
+                    el.parentElement.removeChild(el);
+                }
+            }
             const link = document.createElement('link');
             link.rel = 'stylesheet';
             link.href = UTILS.NoCash(cssURL);
+            link.id = id;
             document.head.appendChild(link);
 
             link.onload = () => resolve();
         });
     }
+    async function smart_CssThemes_UCS(currentTheme, CSSThemes, prefixID)
+    {
+        const themToLoad = (currentTheme === 'dark') ?
+            'dark_dropDownMenu' : 'light_dropDownMenu';
 
+        await smart_LoadCSS(CSSThemes[themToLoad], `${prefixID}-main-theme`);
+    }
+    function smart_CssPlayer_UCS(player_span, cssData)
+    {
+        const { yt_gif_wrapper, yt_gif_iframe_wrapper, ty_gif_custom_player_span, yt_gif } = cssData;
+
+        if (!UTILS.isValidCSSUnit(player_span)) 
+        {
+            return null;
+        }
+
+        const css_rule = `.${yt_gif_wrapper}, .${yt_gif_iframe_wrapper} {
+                    width: ${player_span};
+                }`;
+
+        const id = `${ty_gif_custom_player_span}-${player_span}`
+
+        smart_Create_css_rule(css_rule, id); // i could've used a css variable. fuck! jaja
+
+        //#region util
+        function smart_Create_css_rule(css_rules = 'starndard css rules', id = `${yt_gif}-custom`)
+        {
+            if (document.querySelector(`[id='${id}']`))
+            {
+                SytleSheetExistAlready(id);
+            }
+            else
+            {
+                const style = document.createElement('style'); // could be it's own function
+                style.id = id;
+                style.setAttribute('type', 'text/css');
+                style.innerHTML = css_rules;
+                document.getElementsByTagName('head')[0].appendChild(style);
+            }
+        }
+        //#endregion
+
+    }
+    function SytleSheetExistAlready(id)
+    {
+        console.log(`The stylesheet ${id} already exist.`);
+    }
+    async function smart_Load_DDM_onTopbar(dropDownMenu)
+    {
+        //⚠️
+        const rm_moreIcon = document.querySelector('.bp3-icon-more').closest('.rm-topbar .rm-topbar__spacer-sm + .bp3-popover-wrapper');
+        const htmlText = await UTILS.FetchText(dropDownMenu);
+        const previousList = DDM_Els();
+        if (previousList?.length > 0)
+        {
+            for (const el of previousList)
+            {
+                el.parentElement.removeChild(el);
+            }
+            UTILS.RemoveElsEventListeners(previousList);
+        }
+
+        rm_moreIcon.insertAdjacentHTML('afterend', htmlText);
+    }
+    //#endregion
+
+    //#region 2. hidden functions
+    function DDM_to_UI_variables_AND_listen_for_update_Block_Settings()
+    {
+        // this took a solid hour. thak you thank you
+        // also, how would this looks like with the array functions? Hmmm
+        for (const parentKey in UI)
+        {
+            const parentObj = UI[parentKey];
+            let siblingKeys = [];
+            for (const childKey in parentObj)
+            {
+                const sessionValue = parentObj[childKey].sessionValue;
+
+                const domEl = document.getElementById(childKey); // ❗❗❗
+
+                if (domEl)
+                {
+                    parentObj[childKey] = domEl;
+
+                    switch (parentKey)
+                    { // ❗
+                        case 'range':
+                            parentObj[childKey].value = Number(sessionValue);
+                            parentObj[childKey].addEventListener('wheel', function (e) { changeOnWeeel(e, this, childKey) }, true);
+                            break;
+                        case 'label':
+                            parentObj[childKey].innerHTML = sessionValue;
+                            break;
+                        default:
+                            const binaryInput = parentObj[childKey];
+                            binaryInput.checked = UTILS.isTrue(sessionValue);
+                            UTILS.linkClickPreviousElement(binaryInput);
+                    }
+                    if (parentKey != 'label')
+                    {
+                        siblingKeys = UTILS.pushSame(siblingKeys, childKey);
+                        parentObj[childKey].addEventListener('change', function (e) { updateSettingsPageBlock(e, this, childKey, siblingKeys) }, true);
+                    }
+                    function updateSettingsPageBlock(e, el, keyObj, siblingKeys)
+                    {
+                        // ⚠ 🤔
+                        let replaceWith = (el.value).toString(); // range
+
+                        if (el.type == 'checkbox' || el.type == 'radio')
+                        {
+                            replaceWith = (el.checked).toString();
+                        }
+                        if (el.type == 'radio') // special case...
+                        {
+                            for (const key of siblingKeys)
+                            {
+                                window.YT_GIF_DIRECT_SETTINGS.get(key).UpdateSettingsBlockValue('');
+                            }
+                        }
+
+                        window.YT_GIF_DIRECT_SETTINGS.get(keyObj).UpdateSettingsBlockValue(replaceWith);
+                    }
+                    function changeOnWeeel(e, el, keyObj)
+                    {
+                        // How do I check values in the future? This looks expensive...
+                        el.dispatchEvent(new Event('change'));
+                    }
+                }
+                else
+                {
+                    if (childKey == 'baseKey' || parentObj[childKey].hasOwnProperty('domEl'))
+                    { // ❗
+
+                        if (childKey == 'ctrlKey' || childKey == 'altKey' || childKey == 'shiftKey')
+                        { // ❗❗❗
+                            parentObj[childKey] = parentObj[childKey].baseValue;
+                            console.warn(`FIXME add ${childKey} to the DDM... avoiding deletion`);
+                        }
+                        else
+                        {
+                            delete parentObj[childKey];
+                        }
+                    }
+                    else if (parentObj[childKey].hasOwnProperty('baseValue'))
+                    { // ❗
+                        parentObj[childKey] = parentObj[childKey].baseValue;
+                    }
+                    continue; //don't mess up any other variable
+                }
+
+            }
+        }
+    }
+    //#endregion
+
+    //#region uitils
     function UpdateOnScroll_RTM(key, labelEl)
     {
         const scroll = UI.range[key];
@@ -752,7 +888,11 @@ async function Ready()
 
         UpdateLabel("e", scroll); // javascript?
     }
-
+    function DDM_Els()
+    {
+        const { ddm_exist } = cssData
+        return document.querySelectorAll('.' + ddm_exist);
+    }
     //#endregion
 }
 
@@ -886,6 +1026,7 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
 
     // 3. weird recursive function... guys...
     const url = await InputBlockVideoParams(uid);
+    debugger;
     allVideoParameters.set(newId, urlConfig(url));
 
 
@@ -1113,6 +1254,7 @@ async function onPlayerReady(event)
 
     const loadingMarginOfError = 1; //seconds
     let updateStartTime = start;
+    debugger;
 
 
     // javascript is crazy
@@ -1140,7 +1282,7 @@ async function onPlayerReady(event)
     {
         const sesion = lastBlockIDParameters.get(blockID);
 
-        if (UI.previous.strict_start_timestamp.checked)
+        if (UI.previousTimestamp.strict_start_timestamp.checked)
         {
             const timeHis = sesion.timeURLmapHistory;
             if (timeHis[timeHis.length - 1] != start) // new entry is valid ≡ user updated "?t="
@@ -1153,18 +1295,18 @@ async function onPlayerReady(event)
                 seekToUpdatedTime(sesion.updateTime);
             }
         }
-        else if (UI.previous.start_timestamp.checked && bounded(sesion.updateTime))
+        else if (UI.previousTimestamp.start_timestamp.checked && bounded(sesion.updateTime))
         {
             seekToUpdatedTime(sesion.updateTime);
         }
-        else if (UI.previous.fixed_start_timestamp.checked)
+        else if (UI.previousTimestamp.fixed_start_timestamp.checked)
         {
             // don't seek you are already there, it's just semantics and a null option
         }
 
         /* ------------------------------------------------------- */
 
-        if (UI.previous.strict_start_volume.checked)
+        if (UI.previousVolume.strict_start_volume.checked)
         {
             const vlHis = sesion.volumeURLmapHistory;
             if (vlHis[vlHis.length - 1] != entryVolume) // new entry is valid ≡ user updated "&vl="
@@ -1177,11 +1319,11 @@ async function onPlayerReady(event)
                 t.__proto__.newVol = sesion.updateVolume;
             }
         }
-        else if (UI.previous.start_volume.checked)
+        else if (UI.previousVolume.start_volume.checked)
         {
             t.__proto__.newVol = sesion.updateVolume;
         }
-        else if (UI.previous.fixed_start_volume.checked)
+        else if (UI.previousVolume.fixed_start_volume.checked)
         {
             t.__proto__.newVol = validVolumeURL(); // distiguish between volume and updatevolume
         }
@@ -1814,11 +1956,11 @@ function onStateChange(state)
     {
         t.seekTo(map?.start || 0);
 
-        if (UTILS.isValidUrl(UI.default.end_loop_sound_src))
+        if (UTILS.isValidUrl(window.YT_GIF_SETTINGS_PAGE.defaultValues.end_loop_sound_src.sessionValue))
         {
             if (UI.experience.sound_when_video_loops.checked)
             {
-                play(UI.default.end_loop_sound_src);
+                play(window.YT_GIF_SETTINGS_PAGE.defaultValues.end_loop_sound_src.sessionValue);
                 //#region util
                 function play(url)
                 {
@@ -1868,40 +2010,71 @@ function onStateChange(state)
 
 
 
-    // I want to add ☐ ☑
-    // radios : mute pause when document is inactive ☑ ✘
-    // click the item checks the btn ☑ ☑
-    // an util class ☑ ☑
-    // focus & blus for sub ddm ☐ ☐
-    // features on hold btn at the bottom ☐ ☐
+/*
 
-    // use only one audio?? ☑ ☑ url so is customizable by nature
-    // loop sound adjusment with slider hidden inside sub menu | ohhhh bind main checkbox to hidde it's "for"
-    // deploy on mouse enter ☑ ☑
-    // scrolwheel is broke, fix ☑ ☑
-
-    // to apply volume on end loop audio ☑ ☑
-    // http vs https ☑ ☑
-    // coding train shifman mouse inside div, top, left ✘ ☑ ☑
-
-    // bind thumbnail input element hiddeness to initialize checkbox ☑ . what? jaja
-
-    // play a sound to indicate the current gif makes loop ☑ ☑
-    // https://freesound.org/people/candy299p/sounds/250091/          * film ejected *
-    // https://freesound.org/data/previews/250/250091_4586102-lq.mp3
-
-    // https://freesound.org/people/nckn/sounds/256113/               * param ram *
-    // https://freesound.org/data/previews/256/256113_3263906-lq.mp3
-
-    // https://freesound.org/data/previews/35/35631_18799-lq.mp3 - roam research podoro ding -
+user requested ☐ ☑
+    yt iframe customizable ui language ☐
 
 
-    // Discarted
-    // shortcuts for any btn ✘
-    // all hoverable actions, after 500ms the item it's checked // and this feature own btn ofcourse ✘
-    // add yt_api customizable settings ✘
+I want to add ☐ ☑
+    Refactoring mode, don't load the yt gif, in fact don't create the btn
+        just show the user the raw text, so they don't have to go and re enter the block
+
+    10 head big monkey brain roam idea boiiii ☐
+        paste text form the yt gif browser extension to roam, if the exact same string
+        already exist in the DB, a promt message will
+
+    an inline editor for ajusting the litle miscalculations in the clips ☐
+        a litle bit earlier, a litle bit after...
+        and inplement the changes, when the user the user enter the real edit block mode
 
 
-    // Bugs to fix
-    // hover a frame > mouse leave with sound > focus on another window > go back to roam & and mouse enter a new frame, both videos play unmuted even with strict_mute_everything_except_current enabled ☐
-    // work around > mouse enter a new frame holding middle mouse > mutes the previous, but the previous video still plays unmuted even though play_on_mouse_over enebled ☐
+TODO ☐ ☑
+    bind event and update settings_page obj ☐
+        and update the actual block on the actual page
+
+features on hold btn at the bottom ☑ ☑
+    focus & blus for sub ddm ☑ ☑
+    an util class ☑ ☑
+    click the item checks the btn ☑ ☑
+    radios : mute pause when document is inactive ☑ ✘
+
+    use only one audio?? ☑ ☑ url so is customizable by nature
+    loop sound adjusment with slider hidden inside sub menu | ohhhh bind main checkbox to hidde it's "for"
+    deploy on mouse enter ☑ ☑
+    scrolwheel is broke, fix ☑ ☑
+
+    to apply volume on end loop audio ☑ ☑
+    http vs https ☑ ☑
+    coding train shifman mouse inside div, top, left ✘ ☑ ☑
+
+    bind thumbnail input element hiddeness to initialize checkbox ☑ . what? jaja
+
+    play a sound to indicate the current gif makes loop ☑ ☑
+    https://freesound.org/people/candy299p/sounds/250091/          * film ejected *
+    https://freesound.org/data/previews/250/250091_4586102-lq.mp3
+
+    https://freesound.org/people/nckn/sounds/256113/               * param ram *
+    https://freesound.org/data/previews/256/256113_3263906-lq.mp3
+
+    https://freesound.org/data/previews/35/35631_18799-lq.mp3 - roam research podoro ding -
+
+
+Discarted
+    shortcuts for any btn ✘
+    all hoverable actions, after 500ms the item it's checked // and this feature own btn ofcourse ✘
+    add yt_api customizable settings ✘
+
+
+Bugs
+    hover a frame > mouse leave with sound > focus on another window > go back to roam & and mouse enter a new frame, both videos play unmuted even with strict_mute_everything_except_current enabled ☐
+        work around > mouse enter a new frame holding middle mouse > mutes the previous, but the previous video still plays unmuted even though play_on_mouse_over enebled ☐
+
+    initizlizing any video
+        it's volume is 100 always
+
+    videoParams
+        default volume is mistaken as string
+            it should be an integer
+
+*/

@@ -249,8 +249,8 @@ async function Ready()
     await smart_LoadCSS(dropDownMenuStyle, `${yt_gif}-dropDownMenuStyle`);
     await smart_LoadCSS(playerStyle, `${yt_gif}-playerStyle`);
 
-    await CssThemes_UCS(css_theme.baseValue, themes, yt_gif); // UCS - user customizations
-    await CssPlayer_UCS(player_span.baseValue, cssData);
+    await smart_CssThemes_UCS(css_theme.baseValue, themes, yt_gif); // UCS - user customizations
+    await smart_CssPlayer_UCS(player_span.baseValue, cssData);
 
     links.html.fetched.playerControls = await PlayerHtml_UCS(playerControls, end_loop_sound_src.baseValue);
 
@@ -299,7 +299,7 @@ async function Ready()
 
 
     //#region hidden functions
-    async function CssThemes_UCS(currentTheme, CSSThemes, prefixID)
+    async function smart_CssThemes_UCS(currentTheme, CSSThemes, prefixID)
     {
         const themToLoad = (currentTheme === 'dark') ?
             'dark_dropDownMenu' : 'light_dropDownMenu';
@@ -307,7 +307,7 @@ async function Ready()
         await smart_LoadCSS(CSSThemes[themToLoad], `${prefixID}-main-theme`);
     }
 
-    function CssPlayer_UCS(player_span, cssData)
+    function smart_CssPlayer_UCS(player_span, cssData)
     {
         const { yt_gif_wrapper, yt_gif_iframe_wrapper, ty_gif_custom_player_span, yt_gif } = cssData;
 
