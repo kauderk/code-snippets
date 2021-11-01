@@ -247,10 +247,10 @@ async function Ready()
     await smart_LoadCSS(dropDownMenuStyle, `${yt_gif}-dropDownMenuStyle`);
     await smart_LoadCSS(playerStyle, `${yt_gif}-playerStyle`);
 
-    await smart_CssThemes_UCS(css_theme.baseValue, themes, yt_gif); // UCS - user customizations
-    await smart_CssPlayer_UCS(player_span.baseValue, cssData);
+    await smart_CssThemes_UCS(css_theme.sessionValue, themes, yt_gif); // UCS - user customizations
+    await smart_CssPlayer_UCS(player_span.sessionValue, cssData);
 
-    links.html.fetched.playerControls = await PlayerHtml_UCS(playerControls, end_loop_sound_src.baseValue);
+    links.html.fetched.playerControls = await PlayerHtml_UCS(playerControls, end_loop_sound_src.sessionValue);
 
     await smart_Load_DDM_onTopbar(dropDownMenu); // DDM - drop down menu
 
@@ -471,7 +471,7 @@ async function Ready()
 
                         if (childKey == 'ctrlKey' || childKey == 'altKey' || childKey == 'shiftKey')
                         { // ❗❗❗
-                            parentObj[childKey] = parentObj[childKey].baseValue;
+                            parentObj[childKey] = parentObj[childKey].sessionValue || parentObj[childKey].baseValue;
                             console.warn(`FIXME add ${childKey} to the DDM... avoiding deletion`);
                         }
                         else
@@ -481,7 +481,7 @@ async function Ready()
                     }
                     else if (parentObj[childKey].hasOwnProperty('baseValue'))
                     { // ❗
-                        parentObj[childKey] = parentObj[childKey].baseValue;
+                        parentObj[childKey] = parentObj[childKey].sessionValue || parentObj[childKey].baseValue;
                     }
                     continue; //don't mess up any other variable
                 }
