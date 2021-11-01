@@ -1641,7 +1641,7 @@ async function onPlayerReady(event)
         // BIND TO SETTINGS PAGE
     }
 
-    function muteStyleDDMO(muted_on_any_mouse_interaction, muted_on_any_mouse_interaction)
+    function muteStyleDDMO(strict_mute_everything_except_current, muted_on_any_mouse_interaction)
     {
         if (!UTILS.inViewport(iframe)) return; //mute all VISIBLE Players, this will be called on all visible iframes
 
