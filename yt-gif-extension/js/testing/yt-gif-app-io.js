@@ -1,6 +1,12 @@
 const UTILS = window.kauderk.util;
 /*-----------------------------------*/
-/* USER SETTINGS  */
+/**
+ * @summary USER INPUTS
+ * @type Object
+ * @description WILL NOT CONTAIN NESTED OBJECTS, it will read 'strings' as guides then acustom to them, all inside the Ready() function.
+ * It's property types will change.
+ * - nested object >>> sesionValue
+ */
 const UI = JSON.parse(JSON.stringify(window.YT_GIF_SETTINGS_PAGE));
 /* user doesn't need to see this */
 UI.label = {
@@ -72,10 +78,11 @@ const videoParams = {
 
     speed: 1,
 
-    volume: window.YT_GIF_SETTINGS_PAGE.defaultValues.video_volume.baseValue, // ❗
-    updateVolume: window.YT_GIF_SETTINGS_PAGE.defaultValues.video_volume.baseValue, // ❗
+    volume: window.YT_GIF_SETTINGS_PAGE.defaultValues.video_volume.baseValue,
+    updateVolume: 30, // 'this' will be set afterwards
     volumeURLmapHistory: [],
 };
+videoParams.updateVolume = videoParams.volume;
 //
 const recordedIDs = new Map();
 const sesionIDs = {
@@ -117,6 +124,9 @@ const links = {
     },
     js: {
         main: URLFolder('yt-gif-main.js')
+    },
+    help: {
+        github_isuues: `https://github.com/kauderk/kauderk.github.io/issues`,
     }
 }
 const cssData = {
@@ -195,7 +205,6 @@ rm_components.both = {
 /*-----------------------------------*/
 
 
-
 if (
     typeof (UTILS) !== 'undefined' &&
     typeof (YT) != 'undefined'
@@ -205,7 +214,7 @@ if (
 }
 else
 {
-    console.log('Yo error bruh');
+    console.log(`The YT GIF Extension won't be installed, major scripts are missing... submit you issue here: ${links.help.github_isuues}`);
 }
 
 async function Ready()
@@ -222,6 +231,8 @@ async function Ready()
         }
         console.log('Reinstalling the YT GIF Extension');
     }
+
+
 
     // 1. set up looks
     //#region relevant variables
@@ -242,8 +253,10 @@ async function Ready()
     await smart_Load_DDM_onTopbar(dropDownMenu); // DDM - drop down menu
 
 
+
     // 2. assign direct values to the main object
     DDM_to_UI_variables_AND_listen_for_update_Block_Settings();
+
 
 
     // 3. set up events pre observers
@@ -259,6 +272,7 @@ async function Ready()
 
     UpdateOnScroll_RTM(timestamp_display_scroll_offset, rangeValue);
     UpdateOnScroll_RTM(end_loop_sound_volume, loop_volume_displayed);
+
 
 
     // 4. run extension and events after set up
@@ -375,9 +389,10 @@ async function Ready()
     async function PlayerHtml_UCS()
     {
         let htmlText = await UTILS.FetchText(links.html.playerControls);
-        if (window.YT_GIF_SETTINGS_PAGE.defaultValues.end_loop_sound_src.sessionValue != '')
+        const soundSrc = validSoundURL();
+        if (soundSrc)
         {
-            htmlText = htmlText.replace(/(?<=<source src=\")(?=")/gm, window.YT_GIF_SETTINGS_PAGE.defaultValues.end_loop_sound_src.sessionValue);
+            htmlText = htmlText.replace(/(?<=<source src=\")(?=")/gm, soundSrc);
         }
         return htmlText
     }
@@ -962,7 +977,7 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
 
 
     // 4. to record a target's point of reference
-    const record = Object.create(sesionIDs);
+    const record = JSON.parse(JSON.stringify(sesionIDs)); //Object.create(sesionIDs);
     sesionIDs.uid = uid;
     const blockID = UTILS.closestBlockID(wrapper);
     if (blockID != null)
@@ -1054,7 +1069,7 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
     function urlConfig(url)
     {
         let success = false;
-        const media = Object.create(videoParams);
+        const media = JSON.parse(JSON.stringify(videoParams));
         if (url.match('https://(www.)?youtube|youtu\.be'))
         {
             media.id = YouTubeGetID(url);
@@ -1613,7 +1628,7 @@ async function onPlayerReady(event)
 
 
         //🚧 UpdateNextSesionValues
-        const media = Object.create(videoParams);
+        const media = JSON.parse(JSON.stringify(videoParams));
         media.updateTime = bounded(tick()) ? tick() : start;
         media.updateVolume = isValidVolNumber(t.__proto__.newVol) ? t.__proto__.newVol : validUpdateVolume();
         if (media.timeURLmapHistory.length == 0) // kinda spaguetti, but it's super necesary - This will not ignore the first block editing - stack change
@@ -1883,11 +1898,12 @@ function onStateChange(state)
     {
         t.seekTo(map?.start || 0);
 
-        if (UTILS.isValidUrl(window.YT_GIF_SETTINGS_PAGE.defaultValues.end_loop_sound_src.sessionValue))
+        const soundSrc = validSoundURL();
+        if (soundSrc)
         {
             if (UI.experience.sound_when_video_loops.checked)
             {
-                play(window.YT_GIF_SETTINGS_PAGE.defaultValues.end_loop_sound_src.sessionValue);
+                play(soundSrc);
                 //#region util
                 function play(url)
                 {
@@ -1935,6 +1951,18 @@ function onStateChange(state)
     }
 }
 
+
+//#region Utils
+function validSoundURL()
+{
+    const src = window.YT_GIF_SETTINGS_PAGE.defaultValues.end_loop_sound_src.sessionValue;
+    if (UTILS.isValidUrl(src))
+    {
+        return src
+    }
+    return null
+}
+//#endregion
 
 
 /*
