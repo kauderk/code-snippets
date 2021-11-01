@@ -120,13 +120,15 @@ window.YT_GIF_SETTINGS_PAGE = {
         baseKey: addOrderPmt(`Everything looks alright :D`),
     },
 }
-window.YT_GIF_DIRECT_SETTINGS = null; // this looks like a bad idea...
 const settingsReach = Object.keys(window.YT_GIF_SETTINGS_PAGE).length;
 // THE ORDER DOES MATTER, because of the counter
 window.YT_GIF_SETTINGS_PAGE.Workflow.baseKey.string = `The first ${settingsReach} blocks will be -added on updates- and -removed if drepreacted- automatically. The last parameters "<>" are customizable. 🐕 👋`;
 
+// this looks like a bad idea...
+window.YT_GIF_DIRECT_SETTINGS = null;
+window.YT_GIF_SETTINGS_PAGE_INIT = async () => await init();
 
-(async function init()
+async function init()
 {
     debugger;
     const { acc, keyObjMap } = await assignChildrenMissingValues();
@@ -145,7 +147,7 @@ window.YT_GIF_SETTINGS_PAGE.Workflow.baseKey.string = `The first ${settingsReach
     await RAP.SetNumberedViewWithUid(TARGET_UID);
     await RAP.CollapseDirectcChildren(TARGET_UID, false);
     debugger;
-})();
+}
 
 //#region HIDDEN FUNCTIONS
 async function assignChildrenMissingValues()

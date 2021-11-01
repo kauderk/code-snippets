@@ -2,9 +2,8 @@
 (async function ()
 {
     await LoadExternalResources();
-    debugger;
+    await window.YT_GIF_SETTINGS_PAGE_INIT();
     await createXload('app.js');
-    debugger;
 })();
 
 async function LoadExternalResources()
