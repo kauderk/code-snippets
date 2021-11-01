@@ -80,7 +80,7 @@ const videoParams = {
 
     speed: 1,
 
-    volume: window.YT_GIF_SETTINGS_PAGE.defaultValues.video_volume.baseValue,
+    volume: window.YT_GIF_SETTINGS_PAGE.defaultValues.video_volume.sessionValue,
     updateVolume: 30, // 'this' will be set afterwards
     volumeURLmapHistory: [],
 };

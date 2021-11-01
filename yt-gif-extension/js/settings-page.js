@@ -298,7 +298,7 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
             const targeObj = keyObjMap.get(key);
             if (targeObj)
             {
-
+                let p_string = nextStr, p_uid = uid;
                 if (join == PmtSplit)
                 {
                     const { stringOK, v_string, v_uid } = await validateBlockContent(targeObj, nextStr, splitedStrArr, uid, accObj.nextUID);
@@ -306,19 +306,26 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
                     {
                         console.log(`Updating block  ((${uid})) -> \n${nextStr} \nﾠ\nto ((${v_uid})) ->  \nﾠ\n${v_string}`)
                         await RAP.updateBlock(v_uid, v_string);
+                        p_string = v_string;
+                        p_uid = uid;
                     }
                 }
 
-                const crrObjKey = assertObjPpt_base(targeObj, nextStr, uid);
+                const crrObjKey = assertObjPpt_base(targeObj, p_string, p_uid);
 
                 if (join == fmtSplit)
                 {
                     crrObjKey.sessionValue = value;
                     crrObjKey.caputuredValue = caputuredValue;
 
+                    if (crrObjKey.inputType == int)
+                    {
+                        crrObjKey.sessionValue = parseInt(crrObjKey.sessionValue, 10);
+                    }
+
                     if (!caputureValueOk && splitedStrArr[2]) // caputured string too
                     {
-                        console.warn(`BUD bud - "${nextStr}" value is looking weird, it will default to false...`);
+                        console.warn(`"${nextStr}" value is looks weird, it will default to false...`);
                     }
                 }
 
