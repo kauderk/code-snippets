@@ -1,5 +1,7 @@
 // version 35 - semi-refactored
 const UTILS = window.kauderk.util;
+//const RAP = window.kauderk.rap;
+
 /**
  * @summary USER INPUTS
  * @type Object
@@ -7,7 +9,7 @@ const UTILS = window.kauderk.util;
  * It's property types will change.
  * - nested object >>> sesionValue
  */
-const UI = window.YT_GIF_SETTINGS_PAGE;
+const UI = JSON.parse(JSON.stringify(window.YT_GIF_SETTINGS_PAGE));
 /*-----------------------------------*/
 /* user doesn't need to see this */
 UI.label = {
@@ -226,7 +228,7 @@ async function Ready()
     {
         try
         {
-            window.YT_GIF_OBSERVERS.CleanMasterObservers();
+            window.YT_GIF_OBSERVERS.CleanMasterObservers(); // I was planing on using "code snippets" but the observer api doesn't work there... man...
         } catch (error)
         {
             console.log('The Masters observers are not defined.');
@@ -255,32 +257,8 @@ async function Ready()
     await smart_Load_DDM_onTopbar(dropDownMenu); // DDM - drop down menu
 
 
-    // 2. RoamAPI to load/read users values on load
-
-    /*
-
-    getOrCreatePageUid | 'roam/js/kauderk/yt-gif/settings' YT GIF Extension Settings
-
-    ccc.util.queryAllTxtInChildren('---------'); | works with pages UIDs also - that's cool
-
-    for each UISettings parent property 
-    
-        if it doesn't exist 
-            create block with it's name
-            assign the newly created block uid to the UISettings parent's sub property blockUID:
-
-    for each child property create a block with it's name
-
-    getBlockWithStringFromPageUid
-    get string form each block child
-    check if value value != base
-    asign valid sessionValue | base will be assign to sessionValue regarless
-    
-    */
-
-
-    // 0. assign direct values to the main object
-    DDM_to_UI_variables(); // the 'UI' variables are HIGHLY dependent on this, because they will change from //string to //Element - cringe I know, but how else?
+    // 2. assign direct values to the main object
+    DDM_to_UI_variables_AND_listen_for_update_Block_Settings(); // the 'UI' variables are HIGHLY dependent on this, because they will change from //string to //Element - cringe I know, but how else?
 
     //#region relevant variables
     const { ddm_icon, ddm_focus, ddm_info_message_selector, dropdown__hidden } = cssData;
@@ -299,7 +277,7 @@ async function Ready()
 
 
 
-    // 4. run extension and events after set up
+    // 3. run extension and events after set up
     //#region relevant variables
     const { override_roam_video_component } = UI.defaultValues;
     const { awaiting_with_video_thumnail_as_bg } = UI.experience;
@@ -317,9 +295,7 @@ async function Ready()
     RunMasterObserverWithKey(key);
 
 
-
     console.log('YT GIF extension activated');
-
 
 
     //#region hidden functions
@@ -402,49 +378,86 @@ async function Ready()
     }
 
 
-    function DDM_to_UI_variables()
+    function DDM_to_UI_variables_AND_listen_for_update_Block_Settings()
     {
         // this took a solid hour. thak you thank you
         // also, how would this looks like with the array functions? Hmmm
         for (const parentKey in UI)
         {
-            for (const childKey in UI[parentKey])
+            const parentObj = UI[parentKey];
+            let siblingKeys = [];
+            for (const childKey in parentObj)
             {
-                const sessionValue = UI[parentKey][childKey]['sessionValue'];
+                const sessionValue = parentObj[childKey].sessionValue;
 
                 const domEl = document.getElementById(childKey); // ❗❗❗
 
                 if (domEl)
                 {
-                    UI[parentKey][childKey] = domEl;
+                    parentObj[childKey] = domEl;
 
                     switch (parentKey)
                     { // ❗
                         case 'range':
-                            UI[parentKey][childKey].value = Number(sessionValue);
+                            parentObj[childKey].value = Number(sessionValue);
+                            parentObj[childKey].addEventListener('wheel', function (e) { changeOnWeeel(e, this, childKey) }, true);
                             break;
                         case 'label':
-                            UI[parentKey][childKey].innerHTML = sessionValue;
+                            parentObj[childKey].innerHTML = sessionValue;
                             break;
                         default:
-                            const binaryInput = UI[parentKey][childKey];
+                            const binaryInput = parentObj[childKey];
                             binaryInput.checked = UTILS.isTrue(sessionValue);
                             UTILS.linkClickPreviousElement(binaryInput);
+                    }
+                    if (parentKey != 'label')
+                    {
+                        siblingKeys = UTILS.pushSame(siblingKeys, childKey);
+                        parentObj[childKey].addEventListener('change', function (e) { updateSettingsPageBlock(e, this, childKey, siblingKeys) }, true);
+                    }
+                    function updateSettingsPageBlock(e, el, keyObj, siblingKeys)
+                    {
+                        // ⚠ 🤔
+                        let replaceWith = (el.value).toString(); // range
+
+                        if (el.type == 'checkbox' || el.type == 'radio')
+                        {
+                            replaceWith = (el.checked).toString();
+                        }
+                        if (el.type == 'radio') // special case...
+                        {
+                            for (const key of siblingKeys)
+                            {
+                                window.YT_GIF_DIRECT_SETTINGS.get(key).UpdateSettingsBlockValue('');
+                            }
+                        }
+
+                        window.YT_GIF_DIRECT_SETTINGS.get(keyObj).UpdateSettingsBlockValue(replaceWith);
+                    }
+                    function changeOnWeeel(e, el, keyObj)
+                    {
+                        // How do I check values in the future? This looks expensive...
+                        el.dispatchEvent(new Event('change'));
                     }
                 }
                 else
                 {
-                    if (childKey == 'baseKey')
+                    if (childKey == 'baseKey' || parentObj[childKey].hasOwnProperty('domEl'))
                     { // ❗
-                        //console.log(`deleting [${parentKey} > ${childKey}] from UI OBJ`);
-                        delete UI[parentKey][childKey];
-                    }
-                    else
-                    {// ❗
-                        if (UI[parentKey][childKey].hasOwnProperty('baseValue'))
-                        {
-                            UI[parentKey][childKey] = UI[parentKey][childKey].baseValue;
+
+                        if (childKey == 'ctrlKey' || childKey == 'altKey' || childKey == 'shiftKey')
+                        { // ❗❗❗
+                            parentObj[childKey] = parentObj[childKey].baseValue;
+                            console.warn(`FIXME add ${childKey} to the DDM... avoiding deletion`);
                         }
+                        else
+                        {
+                            delete parentObj[childKey];
+                        }
+                    }
+                    else if (parentObj[childKey].hasOwnProperty('baseValue'))
+                    { // ❗
+                        parentObj[childKey] = parentObj[childKey].baseValue;
                     }
                     continue; //don't mess up any other variable
                 }
@@ -592,15 +605,15 @@ async function Ready()
 
     function TogglePlayerThumbnails_DDM_RTM(awaiting_with_video_thumnail_as_bg, awaitng_input_with_thumbnail)
     {
-        const withThumbnails = awaiting_with_video_thumnail_as_bg;
+        // BIND TO SETTINGS PAGE
 
-        withThumbnails.addEventListener('change', handleIMGbgSwap);
+        awaiting_with_video_thumnail_as_bg.addEventListener('change', handleIMGbgSwap);
         function handleIMGbgSwap(e)
         {
             const awaitingGifs = [...document.querySelectorAll(`.${awaitng_input_with_thumbnail}`)];
             for (const i of awaitingGifs)
             {
-                if (withThumbnails.checked)
+                if (awaiting_with_video_thumnail_as_bg.checked)
                 {
                     UTILS.applyIMGbg(i, i.dataset.videoUrl);
                 }
@@ -712,12 +725,12 @@ async function Ready()
             labelTxt(deployInfo.deploy);
         }
         // somewhat local
-        function ChargeMasterObservers()
+        function ChargeMasterObservers({ deployment_style_video, deployment_style_yt_gif, deployment_style_both } = UI.deploymentStyle)
         {
             const deploymentRadioStates = {
-                video: () => UI.deploymentStyle.deployment_style_video.checked,
-                yt_gif: () => UI.deploymentStyle.deployment_style_yt_gif.checked,
-                both: () => UI.deploymentStyle.deployment_style_both.checked,
+                video: () => deployment_style_video.checked,
+                yt_gif: () => deployment_style_yt_gif.checked,
+                both: () => deployment_style_both.checked,
             }
 
             for (const key in deploymentRadioStates)
@@ -815,7 +828,7 @@ async function Ready()
         scroll.addEventListener('wheel', ValueOnWheel, true);
         function ValueOnWheel(e)
         {
-            elScroll = e.currentTarget;
+            const elScroll = e.currentTarget;
             const dir = Math.sign(e.deltaY) * -1;
             const parsed = parseInt(elScroll.value, 10);
             elScroll.value = Number(dir + parsed);
@@ -825,6 +838,7 @@ async function Ready()
         function UpdateLabelWithEvent(e)
         {
             UptLabel(e.currentTarget);
+            // BIND TO SETTINGS PAGE
         }
         function UptLabel(elScroll)
         {
@@ -833,6 +847,7 @@ async function Ready()
 
         UptLabel(scroll);
     }
+
     function DDM_Els()
     {
         const { ddm_exist } = cssData
@@ -986,10 +1001,10 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
         recordedIDs.set(blockID, record);
 
 
-
+    const { awaiting_for_mouseenter_to_initialize, awaiting_with_video_thumnail_as_bg } = UI.experience;
     //console.count(message);
     //🌿
-    if (UI.experience.awaiting_for_mouseenter_to_initialize.checked)
+    if (awaiting_for_mouseenter_to_initialize.checked)
     {
         const awaitingAnimation = [cssData.awiting_player_pulse_anim, cssData.awaitng_player_user_input];
         const awaitingAnimationThumbnail = [...awaitingAnimation, cssData.awaitng_input_with_thumbnail];
@@ -997,7 +1012,7 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
         let mainAnimation = awaitingAnimationThumbnail
         wrapper.setAttribute(attrInfo.videoUrl, url);
 
-        if (UI.experience.awaiting_with_video_thumnail_as_bg.checked)
+        if (awaiting_with_video_thumnail_as_bg.checked)
         {
             UTILS.applyIMGbg(wrapper, url);
         }
@@ -1485,6 +1500,7 @@ async function onPlayerReady(event)
     }
     function fullscreenStyle_Handler(params)
     {
+        // BIND TO SETTINGS PAGE
         currentFullscreenPlayer = t.h.id;
 
         if (!document.fullscreenElement && isParentHover()) //https://stackoverflow.com/questions/36767196/check-if-mouse-is-inside-div#:~:text=if%20(element.parentNode.matches(%22%3Ahover%22))%20%7B
@@ -1514,6 +1530,7 @@ async function onPlayerReady(event)
     //#region hidden play and puse styles functions
     function InAndOutHoverStatesDDMO(e)
     {
+        // BIND TO SETTINGS PAGE
         //🌿
         if (e.type == 'mouseenter')
         {
@@ -1620,6 +1637,7 @@ async function onPlayerReady(event)
         {
             togglePlay(!AnyPlayOnHover());
         }
+        // BIND TO SETTINGS PAGE
     }
 
     function muteStyleDDMO(muted_on_any_mouse_interaction, muted_on_any_mouse_interaction)
@@ -1630,6 +1648,7 @@ async function onPlayerReady(event)
         {
             isSoundingFine(false);
         }
+        // BIND TO SETTINGS PAGE
     }
     //#endregion
 
@@ -1940,6 +1959,7 @@ function onStateChange(state)
 
         if (UI.fullscreenStyle.smoll_vid_when_big_ends.checked && (currentFullscreenPlayer === t.h.id)) // let's not talk about that this took at least 30 mins. Don't. Ughhhh
         {
+            // BIND TO SETTINGS PAGE
             if (document.fullscreenElement)
             {
                 UTILS.exitFullscreen();
@@ -1984,6 +2004,10 @@ I want to add ☐ ☑
         a litle bit earlier, a litle bit after...
         and inplement the changes, when the user the user enter the real edit block mode
 
+
+TODO ☐ ☑
+    bind event and update settings_page obj ☐
+        and update the actual block on the actual page
 
 features on hold btn at the bottom ☑ ☑
     focus & blus for sub ddm ☑ ☑
