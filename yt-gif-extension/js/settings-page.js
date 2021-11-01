@@ -23,23 +23,27 @@ window.YT_GIF_SETTINGS_PAGE = {
     Workflow: {
         baseKey: addOrderPmt(`BIP BOP . . .`),
         joins: {
-            baseKey: addOrderPmt(`either "ﾠ:ﾠ" for actual settings or "ﾠ/ﾠ" for prompt guidelines`), // he doesn't know... he knows "ﾠ" != " "
+            baseKey: addOrderPmt(`either "ﾠ:ﾠ" for actual settings or "ﾠ/ﾠ" for prompt guidelines`), // he doesn't know... wait- he knows "ﾠ" != " "
         },
         parameters: {
-            baseKey: addOrderPmt(`(xxxuidxxx) : yt_gif_settings_key : <value>`),
+            baseKey: addOrderPmt("\n`(xxxuidxxx)` : `yt_gif_settings_key` : `<value>`"),
             uid: {
-                baseKey: addOrderPmt(`(xxxuidxxx) unique per user data base, without it the settings can't be written on this page`),
+                baseKey: addOrderPmt("\n`(xxxuidxxx)`\nunique per user data base, without it the settings can't be written on this page"),
             },
             key: {
-                baseKey: addOrderPmt(`yt_gif_settings_key second way to know which setting to change`),
+                baseKey: addOrderPmt("\n`yt_gif_settings_key`\nsecond way to know which setting to change"),
             },
             value: {
-                baseKey: addOrderPmt(`<value> in many cases optional and most of the time a binary switch, on - off`),
+                baseKey: addOrderPmt("\n`<value>`\nin many cases optional and most of the time a binary switch, on - off"),
             },
         },
         reach: {
             baseKey: addOrderPmt(`Blocks below "LogStatus" will be ignored`),
         },
+    },
+    display: {
+        baseKey: addOrder(chk),
+        clip_life_span_format: dom('1'),
     },
     previousTimestamp: {
         baseKey: addOrder(rad),
@@ -116,14 +120,16 @@ window.YT_GIF_SETTINGS_PAGE = {
         baseKey: addOrderPmt(`Everything looks alright :D`),
     },
 }
-
+window.YT_GIF_DIRECT_SETTINGS = null; // this looks like a bad idea...
+const settingsReach = Object.keys(window.YT_GIF_SETTINGS_PAGE).length;
 // THE ORDER DOES MATTER, because of the counter
-window.YT_GIF_SETTINGS_PAGE.Workflow.baseKey.string = `The first ${Object.keys(window.YT_GIF_SETTINGS_PAGE).length} blocks will be -added on updates- and -removed if drepreacted- automatically. The last parameters "<>" are customizable. 🐕 👋`;
+window.YT_GIF_SETTINGS_PAGE.Workflow.baseKey.string = `The first ${settingsReach} blocks will be -added on updates- and -removed if drepreacted- automatically. The last parameters "<>" are customizable. 🐕 👋`;
 
 
 (async function init()
 {
     const { acc, keyObjMap } = await assignChildrenMissingValues();
+    window.YT_GIF_DIRECT_SETTINGS = keyObjMap;
 
     if (TARGET_UID == null) // Brand new installation
     {
@@ -182,6 +188,25 @@ async function assignChildrenMissingValues()
                 if (property != 'baseKey') // there are too many, filter a litle bit
                 {
                     const directObjPpts = (nestedPpt?.baseKey) ? nestedPpt.baseKey : nestedPpt;
+
+                    if (directObjPpts.UpdateSettingsBlockValue) //an actual setting
+                    {
+                        directObjPpts.UpdateSettingsBlockValue = function (replaceWith)
+                        {
+                            const rgxValue = new RegExp(/<(.*?)>/, 'gm'); // "<XXX>"
+                            const postChange = directObjPpts.string + "";
+
+                            const preString = directObjPpts.string.replace(rgxValue, `<${replaceWith}>`);
+
+                            if (preString != directObjPpts.string) // well. don't make extra api calls
+                            {
+                                directObjPpts.string = preString;
+                                RAP.updateBlock(directObjPpts.uid, directObjPpts.string);
+                                //console.log(`Setting ${property} was, \n${postChange} \nnow is \n${window.YT_GIF_DIRECT_SETTINGS.get(property).string}`)
+                            }
+                        }
+                    }
+
                     keyObjMap.set(property, directObjPpts);
                 }
 
@@ -255,7 +280,8 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
                     keyFromLevel0: key,
                     selfOrder: child.order,
                 };
-                if (!nextStr.includes('LogStatus'))
+
+                if (child.order < settingsReach)
                 {
                     accStr = await Rec_Read_Write_SettingsPage(child, nextAccObj);
                 }
@@ -606,6 +632,7 @@ function subTemp(baseValue = '', inputType)
         sessionValue: null,
         caputuredValue: '<>',
         join: fmtSplit,
+        UpdateSettingsBlockValue: function () { console.warn(`Update block not implemented... ${this.uid} ${this.string}`) }
     }
     return Object.assign(baseTmp(inputType), subSub);
 }
