@@ -1,14 +1,13 @@
-// version 35 - semi-refactored
-const UTILS = window.kauderk.util;
-
+// version 36 - semi-refactored
 /**
  * @summary USER INPUTS
  * @type Object
  * @description WILL NOT CONTAIN NESTED OBJECTS, it will read 'strings' as guides then acustom to them, all inside the Ready() function.
  * It's property types will change.
  * - nested object >>> sesionValue
- */
+*/
 const UI = JSON.parse(JSON.stringify(window.YT_GIF_SETTINGS_PAGE));
+const UTILS = window.kauderk.util;
 /*-----------------------------------*/
 /* user doesn't need to see this */
 UI.label = {
@@ -31,6 +30,9 @@ UI.referenced = {
     block_timestamp: '',
     block_volume: '',
 }
+/*-----------------------------------*/
+const iframeIDprfx = 'player_';
+let currentFullscreenPlayer = null;
 /*-----------------------------------*/
 const YT_GIF_OBSERVERS_TEMP = {
     masterMutationObservers: [],
@@ -62,12 +64,7 @@ const YT_GIF_OBSERVERS_TEMP = {
         }
     }
 }
-debugger;
 window.YT_GIF_OBSERVERS = (!window.YT_GIF_OBSERVERS) ? YT_GIF_OBSERVERS_TEMP : window.YT_GIF_OBSERVERS;
-
-/*-----------------------------------*/
-const iframeIDprfx = 'player_';
-let currentFullscreenPlayer = '';
 /*-----------------------------------*/
 const allVideoParameters = new Map();
 const lastBlockIDParameters = new Map();
@@ -83,10 +80,11 @@ const videoParams = {
 
     speed: 1,
 
-    volume: UI.defaultValues.video_volume,
-    updateVolume: UI.defaultValues.video_volume,
+    volume: window.YT_GIF_SETTINGS_PAGE.defaultValues.video_volume.sessionValue,
+    updateVolume: 30, // 'this' will be set afterwards
     volumeURLmapHistory: [],
 };
+videoParams.updateVolume = videoParams.volume;
 //
 const recordedIDs = new Map();
 const sesionIDs = {
@@ -128,6 +126,9 @@ const links = {
     },
     js: {
         main: URLFolder('yt-gif-main.js')
+    },
+    help: {
+        github_isuues: `https://github.com/kauderk/kauderk.github.io/issues`,
     }
 }
 const cssData = {
@@ -207,7 +208,7 @@ rm_components.both = {
 
 
 if (
-    typeof kauderk?.util !== 'undefined' &&
+    typeof (UTILS) !== 'undefined' &&
     typeof (YT) != 'undefined'
 )
 {
@@ -215,11 +216,8 @@ if (
 }
 else
 {
-    console.log('Yooo error bruh');
+    console.log(`The YT GIF Extension won't be installed, major scripts are missing... submit you issue here: ${links.help.github_isuues}`);
 }
-
-
-
 
 async function Ready()
 {
@@ -229,12 +227,13 @@ async function Ready()
         try
         {
             window.YT_GIF_OBSERVERS.CleanMasterObservers(); // I was planing on using "code snippets" but the observer api doesn't work there... man...
-        } catch (error)
+        } catch (err)
         {
             console.log('The Masters observers are not defined.');
         }
         console.log('Reinstalling the YT GIF Extension');
     }
+
 
 
     // 1. set up looks
@@ -245,7 +244,6 @@ async function Ready()
     const { yt_gif } = cssData; // CssThemes_UCS
     //#endregion
 
-    //const a1 = await smart_LoadCSS(dropDownMenuStyle, `${yt_gif}-dropDownMenuStyle`);
     await smart_LoadCSS(dropDownMenuStyle, `${yt_gif}-dropDownMenuStyle`);
     await smart_LoadCSS(playerStyle, `${yt_gif}-playerStyle`);
 
@@ -257,16 +255,18 @@ async function Ready()
     await smart_Load_DDM_onTopbar(dropDownMenu); // DDM - drop down menu
 
 
-    // 2. assign direct values to the main object
-    DDM_to_UI_variables_AND_listen_for_update_Block_Settings(); // the 'UI' variables are HIGHLY dependent on this, because they will change from //string to //Element - cringe I know, but how else?
 
+    // 2. assign direct values to the main object
+    DDM_to_UI_variables_AND_listen_for_update_Block_Settings();
+
+
+
+    // 3. set up events pre observers
     //#region relevant variables
     const { ddm_icon, ddm_focus, ddm_info_message_selector, dropdown__hidden } = cssData;
     const { timestamp_display_scroll_offset, end_loop_sound_volume } = UI.range;
     const { rangeValue, loop_volume_displayed } = UI.label;
-
     //#endregion
-
 
     DDM_IconFocusBlurEvents(ddm_icon, ddm_focus, ddm_info_message_selector);
 
@@ -277,13 +277,12 @@ async function Ready()
 
 
 
-    // 3. run extension and events after set up
+    // 4. run extension and events after set up
     //#region relevant variables
     const { override_roam_video_component } = UI.defaultValues;
     const { awaiting_with_video_thumnail_as_bg } = UI.experience;
     const { awaitng_input_with_thumbnail } = cssData;
     let { key } = rm_components.current;
-
     //#endregion
 
     key = KeyToObserve_UCS(override_roam_video_component);
@@ -294,11 +293,37 @@ async function Ready()
 
     RunMasterObserverWithKey(key);
 
-
     console.log('YT GIF extension activated');
 
 
-    //#region hidden functions
+    //#region 1. hidden functions
+    async function smart_LoadCSS(cssURL, id) // 'cssURL' is the stylesheet's URL, i.e. /css/styles.css
+    {
+        if (!(await UTILS.isValidFetch(cssURL))) 
+        {
+            return;
+        }
+
+        return new Promise(function (resolve, reject)
+        {
+            const stylesAlready = document.querySelectorAll(`[id='${id}']`);
+            if (stylesAlready?.length > 0) // well well well - we don't like duplicates
+            {
+                SytleSheetExistAlready(cssURL);
+                for (const el of stylesAlready)
+                {
+                    el.parentElement.removeChild(el);
+                }
+            }
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = UTILS.NoCash(cssURL);
+            link.id = id;
+            document.head.appendChild(link);
+
+            link.onload = () => resolve();
+        });
+    }
     async function smart_CssThemes_UCS(currentTheme, CSSThemes, prefixID)
     {
         const themToLoad = (currentTheme === 'dark') ?
@@ -306,7 +331,6 @@ async function Ready()
 
         await smart_LoadCSS(CSSThemes[themToLoad], `${prefixID}-main-theme`);
     }
-
     function smart_CssPlayer_UCS(player_span, cssData)
     {
         const { yt_gif_wrapper, yt_gif_iframe_wrapper, ty_gif_custom_player_span, yt_gif } = cssData;
@@ -343,22 +367,10 @@ async function Ready()
         //#endregion
 
     }
-
     function SytleSheetExistAlready(id)
     {
         console.log(`The stylesheet ${id} already exist.`);
     }
-
-    async function PlayerHtml_UCS(playerControls, end_loop_sound_src)
-    {
-        let htmlText = await UTILS.FetchText(playerControls);
-        if (end_loop_sound_src != '')
-        {
-            htmlText = htmlText.replace(/(?<=<source src=\")(?=")/gm, end_loop_sound_src);
-        }
-        return htmlText
-    }
-
     async function smart_Load_DDM_onTopbar(dropDownMenu)
     {
         //⚠️
@@ -376,8 +388,20 @@ async function Ready()
 
         rm_moreIcon.insertAdjacentHTML('afterend', htmlText);
     }
+    async function PlayerHtml_UCS()
+    {
+        let htmlText = await UTILS.FetchText(links.html.playerControls);
+        const soundSrc = validSoundURL();
+        if (soundSrc)
+        {
+            htmlText = htmlText.replace(/(?<=<source src=\")(?=")/gm, soundSrc);
+        }
+        return htmlText
+    }
+    //#endregion
 
 
+    //#region 2. hidden functions
     function DDM_to_UI_variables_AND_listen_for_update_Block_Settings()
     {
         // this took a solid hour. thak you thank you
@@ -465,7 +489,10 @@ async function Ready()
             }
         }
     }
+    //#endregion
 
+
+    //#region 3. hidden functions
     function DDM_IconFocusBlurEvents(ddm_icon, ddm_focus, ddm_info_message_selector)
     {
         // 1. special case
@@ -519,54 +546,6 @@ async function Ready()
         }
         //#endregion
     }
-
-    function KeyToObserve_UCS(override_roam_video_component)
-    {
-        // this can be shorter for sure, how though?
-
-        if (UTILS.isTrue(override_roam_video_component)) //video
-        {
-            return 'video';
-        }
-        else if (override_roam_video_component === 'both') // both
-        {
-            return 'both';
-        }
-        else // yt-gif
-        {
-            return 'yt_gif';
-        }
-    }
-
-    function RunMasterObserverWithKey(key)
-    {
-        const options = {
-            video: () =>
-            { //video_MasterObserver
-                window.YT_GIF_OBSERVERS.masterMutationObservers.push(ObserveIframesAndDelployYTPlayers(rm_components.video.classToObserve));
-            },
-            yt_gif: () =>
-            { //yt_gif_MasterObserver
-                window.YT_GIF_OBSERVERS.masterMutationObservers.push(ObserveIframesAndDelployYTPlayers(rm_components.yt_gif.classToObserve));
-            },
-            both: () =>
-            { //both_MasterObserver
-                for (const classValue of rm_components.both.classesToObserve)
-                {
-                    window.YT_GIF_OBSERVERS.masterMutationObservers.push(ObserveIframesAndDelployYTPlayers(classValue));
-                }
-            },
-        }
-        rm_components.current.key = key;
-
-        options[key](); // THIS IS INSANE!!!
-    }
-
-    /**
-     * The [data-main] attribute search for their [data-bind] equivalents (attrData)
-     * And On the [data-main] element changes, toogle the binded classes on the [data-bind] elements
-     * @param {Array<String>} toggleClassArr 
-     */
     function DDM_FlipBindedDataAttr_RTM(toggleClassArr = [], attrData)
     {
         for (const key in attrData)
@@ -602,225 +581,6 @@ async function Ready()
 
         //#endregion
     }
-
-    function TogglePlayerThumbnails_DDM_RTM(awaiting_with_video_thumnail_as_bg, awaitng_input_with_thumbnail)
-    {
-        // BIND TO SETTINGS PAGE
-
-        awaiting_with_video_thumnail_as_bg.addEventListener('change', handleIMGbgSwap);
-        function handleIMGbgSwap(e)
-        {
-            const awaitingGifs = [...document.querySelectorAll(`.${awaitng_input_with_thumbnail}`)];
-            for (const i of awaitingGifs)
-            {
-                if (awaiting_with_video_thumnail_as_bg.checked)
-                {
-                    UTILS.applyIMGbg(i, i.dataset.videoUrl);
-                }
-                else
-                {
-                    UTILS.removeIMGbg(i); // spaguetti
-                }
-            }
-        }
-    }
-
-    async function MasterObserver_UCS_RTM()
-    {
-        // 1. chekMenu and it's relevant nodes
-        const { suspend_yt_gif_deployment: checkMenu, deploy_yt_gifs: subMenuCheck } = UI.deploymentStyle;
-
-        const checkMenuParent = checkMenu.parentElement;
-        const labelCheckMenu = checkMenu.previousElementSibling;
-        //#region labelCheckMenu utils
-        function islabel(str) { return labelCheckMenu.innerHTML == str; }
-        function labelTxt(str) { return labelCheckMenu.innerHTML = str; }
-        //#endregion
-
-        // 2. sub DDM to toggle hide/unhide later
-        const { dropdown__hidden, dropdown_deployment_style, dwp_message } = cssData;
-
-        const subHiddenDDM = document.querySelector(`.${dropdown__hidden}.${dropdown_deployment_style}`);
-        const subHiddenDDM_message = subHiddenDDM.querySelector(`.${dwp_message}`);
-
-        // 3. subcheckMenu inside the sub DDM to submit settings
-        const subMenuCheckParent = subMenuCheck.parentElement;
-
-
-        //#region checkboxes utils
-        const DeployCheckboxes = [checkMenu, subMenuCheck];
-        function DeployCheckboxesDisabled(b) { DeployCheckboxes.forEach(check => check.disabled = b) }
-        function DeployCheckboxesChecked(b) { DeployCheckboxes.forEach(check => check.checked = b) }
-        //#endregion
-
-
-        // 4. CSS animations ready
-        const { dwn_no_input, dropdown_fadeIt_bg_animation, dropdown_forbidden_input, dropdown_allright_input } = cssData;
-
-        const noInputAnimation = [dwn_no_input]
-        const baseAnimation = [dropdown_fadeIt_bg_animation, ...noInputAnimation];
-        const redAnimationNoInputs = [...baseAnimation, dropdown_forbidden_input];
-        const greeAnimationInputReady = [...baseAnimation, dropdown_allright_input];
-
-
-
-
-        const deployInfo = {
-            suspend: `Suspend Observers`,
-            deploy: `Deploy Observers`,
-            discharging: `** Disconecting Observers **`,
-            loading: `** Setting up Observers **`,
-        }
-
-
-
-        labelCheckMenu.innerHTML = deployInfo.suspend; // default state, meaning the extension was running
-
-        checkMenu.addEventListener('change', handleAnimationsInputRestriction);
-        subMenuCheck.addEventListener('change', handleSubmitOptional_rm_comp);
-
-
-        //#region event handelers
-        async function handleAnimationsInputRestriction(e)
-        {
-            if (checkMenu.checked)
-            {
-                if (islabel(deployInfo.suspend))
-                {
-                    await redAnimationCombo(); //after the 10 seconds allow inputs again
-                }
-                else if (islabel(deployInfo.deploy))
-                {
-                    await greenAnimationCombo();
-                }
-            }
-        }
-
-
-        async function handleSubmitOptional_rm_comp(e)
-        {
-            if (subMenuCheck.checked && (islabel(deployInfo.deploy)))
-            {
-                await greenAnimationCombo();
-            }
-        }
-
-
-        //#region utils
-
-        async function greenAnimationCombo()
-        {
-            ChargeMasterObservers();
-            labelTxt(deployInfo.loading); //change label to suspend
-            isVisualFeedbackPlaying(true)
-            await restricInputsfor10SecMeanWhile(greeAnimationInputReady);
-            labelTxt(deployInfo.suspend);
-        }
-        async function redAnimationCombo()
-        {
-            labelTxt(deployInfo.discharging);
-            isVisualFeedbackPlaying(false)
-            window.YT_GIF_OBSERVERS.CleanMasterObservers();
-            await restricInputsfor10SecMeanWhile(redAnimationNoInputs); //showing the red animation, because you are choosing to suspend
-            labelTxt(deployInfo.deploy);
-        }
-        // somewhat local
-        function ChargeMasterObservers({ deployment_style_video, deployment_style_yt_gif, deployment_style_both } = UI.deploymentStyle)
-        {
-            const deploymentRadioStates = {
-                video: () => deployment_style_video.checked,
-                yt_gif: () => deployment_style_yt_gif.checked,
-                both: () => deployment_style_both.checked,
-            }
-
-            for (const key in deploymentRadioStates)
-            {
-                if (UTILS.isTrue(deploymentRadioStates[key]())) // THIS IS CRAZY
-                {
-                    RunMasterObserverWithKey(key)
-                    return;
-                }
-            }
-        }
-        function isVisualFeedbackPlaying(bol)
-        {
-            isSubMenuHidden(bol);
-            isSubDDMpulsing(!bol);
-            //#region local utils
-            function isSubMenuHidden(bol)
-            {
-                const hiddenClass = [`${cssData.dropdown__hidden}`]
-                UTILS.toggleClasses(bol, hiddenClass, subHiddenDDM);
-            }
-            function isSubDDMpulsing(bol)
-            {
-                const pulseAnim = [cssData.dwn_pulse_anim]; // spagguetti
-                UTILS.toggleClasses(bol, pulseAnim, subHiddenDDM_message); // spagguetti
-            }
-            //#endregion
-        }
-        //
-        function restricInputsfor10SecMeanWhile(animation, duration = 10000)
-        {
-            return new Promise(function (resolve, reject)
-            {
-                DeployCheckboxesDisabled(true);
-                DeployCheckboxesChecked(false);
-                DeployCheckboxesToggleAnims(true, animation);
-
-                setTimeout(() =>
-                {
-                    DeployCheckboxesDisabled(false);
-                    DeployCheckboxesChecked(false);
-                    DeployCheckboxesToggleAnims(false, animation);
-                    resolve();
-
-                }, duration);
-            });
-        }
-        function DeployCheckboxesToggleAnims(bol, animation)
-        {
-            UTILS.toggleClasses(bol, animation, checkMenuParent);
-            UTILS.toggleClasses(bol, noInputAnimation, subMenuCheckParent);
-        }
-        //#endregion
-
-
-        //#endregion
-    }
-
-    //#endregion
-
-
-    //#region uitils
-    async function smart_LoadCSS(cssURL, id) // 'cssURL' is the stylesheet's URL, i.e. /css/styles.css
-    {
-        if (!(await UTILS.isValidFetch(cssURL))) 
-        {
-            return;
-        }
-
-        return new Promise(function (resolve, reject)
-        {
-            const stylesAlready = document.querySelectorAll(`[id='${id}']`);
-            if (stylesAlready?.length > 0) // well well well - we don't like duplicates
-            {
-                SytleSheetExistAlready(cssURL);
-                for (const el of stylesAlready)
-                {
-                    el.parentElement.removeChild(el);
-                }
-            }
-            const link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.href = UTILS.NoCash(cssURL);
-            link.id = id;
-            document.head.appendChild(link);
-
-            link.onload = () => resolve();
-        });
-    }
-
     function UpdateOnScroll_RTM(scroll, labelEl)
     {
         // 📦
@@ -847,14 +607,241 @@ async function Ready()
 
         UptLabel(scroll);
     }
+    //#endregion
 
+
+    //#region 4. hidden functions
+    function KeyToObserve_UCS(override_roam_video_component)
+    {
+        // this can be shorter for sure, how though?
+        if (UTILS.isTrue(override_roam_video_component)) //video
+        {
+            return 'video';
+        }
+        else if (override_roam_video_component === 'both') // both
+        {
+            return 'both';
+        }
+        else // yt-gif
+        {
+            return 'yt_gif';
+        }
+    }
+    function TogglePlayerThumbnails_DDM_RTM(awaiting_with_video_thumnail_as_bg, awaitng_input_with_thumbnail)
+    {
+        // BIND TO SETTINGS PAGE
+
+        awaiting_with_video_thumnail_as_bg.addEventListener('change', handleIMGbgSwap);
+        function handleIMGbgSwap(e)
+        {
+            const awaitingGifs = [...document.querySelectorAll(`.${awaitng_input_with_thumbnail}`)];
+            for (const i of awaitingGifs)
+            {
+                if (awaiting_with_video_thumnail_as_bg.checked)
+                {
+                    UTILS.applyIMGbg(i, i.dataset.videoUrl);
+                }
+                else
+                {
+                    UTILS.removeIMGbg(i); // spaguetti
+                }
+            }
+        }
+    }
+    function RunMasterObserverWithKey(key)
+    {
+        const options = {
+            video: () =>
+            { //video_MasterObserver
+                window.YT_GIF_OBSERVERS.masterMutationObservers.push(ObserveIframesAndDelployYTPlayers(rm_components.video.classToObserve));
+            },
+            yt_gif: () =>
+            { //yt_gif_MasterObserver
+                window.YT_GIF_OBSERVERS.masterMutationObservers.push(ObserveIframesAndDelployYTPlayers(rm_components.yt_gif.classToObserve));
+            },
+            both: () =>
+            { //both_MasterObserver
+                for (const classValue of rm_components.both.classesToObserve)
+                {
+                    window.YT_GIF_OBSERVERS.masterMutationObservers.push(ObserveIframesAndDelployYTPlayers(classValue));
+                }
+            },
+        }
+        rm_components.current.key = key;
+
+        options[key](); // THIS IS INSANE!!!
+    }
+    //#endregion
+
+
+    //#region BIG BOI FUNCTION
+    async function MasterObserver_UCS_RTM()
+    {
+        const checkMenu = UI.deploymentStyle.suspend_yt_gif_deployment;
+
+        const checkMenuParent = checkMenu.parentElement;
+        const labelCheckMenu = checkMenu.previousElementSibling;
+        //#region labelCheckMenu utils
+        function islabel(str) { return labelCheckMenu.innerHTML == str; }
+        function labelTxt(str) { return labelCheckMenu.innerHTML = str; }
+        //#endregion
+
+        const subHiddenDDM = document.querySelector(`.${cssData.dropdown__hidden}.${cssData.dropdown_deployment_style}`);
+        const subHiddenDDM_message = subHiddenDDM.querySelector(`.${cssData.dwp_message}`);
+
+        const subMenuCheck = UI.deploymentStyle.deploy_yt_gifs;
+        const subMenuCheckParent = subMenuCheck.parentElement;
+
+        //#region checkboxes utils
+        const DeployCheckboxes = [checkMenu, subMenuCheck];
+        function DeployCheckboxesDisabled(b) { DeployCheckboxes.forEach(check => check.disabled = b) }
+        function DeployCheckboxesChecked(b) { DeployCheckboxes.forEach(check => check.checked = b) }
+        //#endregion
+
+
+        //animations css classes
+        const noInputAnimation = [cssData.dwn_no_input]
+        const baseAnimation = [cssData.dropdown_fadeIt_bg_animation, cssData.dwn_no_input];
+        const redAnimationNoInputs = [...baseAnimation, cssData.dropdown_forbidden_input];
+        const greeAnimationInputReady = [...baseAnimation, cssData.dropdown_allright_input];
+
+
+
+
+        const deployInfo = {
+            suspend: `Suspend Observers`,
+            deploy: `Deploy Observers`,
+            discharging: `** Disconecting Observers **`,
+            loading: `** Setting up Observers **`,
+        }
+
+
+
+        labelCheckMenu.innerHTML = deployInfo.suspend;
+
+        checkMenu.addEventListener('change', handleAnimationsInputRestriction);
+        subMenuCheck.addEventListener('change', handleSubmitOptional_rm_comp);
+
+
+        //#region event handelers
+        async function handleAnimationsInputRestriction(e)
+        {
+            if (checkMenu.checked)
+            {
+                if (islabel(deployInfo.suspend))
+                {
+                    await redAnimationCombo(); //after the 10 seconds allow inputs again
+                }
+                else if (islabel(deployInfo.deploy))
+                {
+                    await greenAnimationCombo();
+                }
+            }
+            //#region local util
+            async function redAnimationCombo()
+            {
+                labelTxt(deployInfo.discharging);
+                isVisualFeedbackPlaying(false)
+                window.YT_GIF_OBSERVERS.CleanMasterObservers();
+                await restricInputsfor10SecMeanWhile(redAnimationNoInputs); //showing the red animation, because you are choosing to suspend
+                labelTxt(deployInfo.deploy);
+            }
+            //#endregion
+        }
+
+
+        async function handleSubmitOptional_rm_comp(e)
+        {
+            if (subMenuCheck.checked && (islabel(deployInfo.deploy)))
+            {
+                await greenAnimationCombo();
+            }
+        }
+
+
+        //#region utils
+        function ChargeMasterObservers()
+        {
+            const deploymentRadioStates = {
+                video: () => UI.deploymentStyle.deployment_style_video.checked,
+                yt_gif: () => UI.deploymentStyle.deployment_style_yt_gif.checked,
+                both: () => UI.deploymentStyle.deployment_style_both.checked,
+            }
+
+            for (const key in deploymentRadioStates)
+            {
+                if (UTILS.isTrue(deploymentRadioStates[key]())) // THIS IS CRAZY
+                {
+                    RunMasterObserverWithKey(key)
+                    return;
+                }
+            }
+        }
+        async function greenAnimationCombo()
+        {
+            ChargeMasterObservers();
+            labelTxt(deployInfo.loading); //change label to suspend
+            isVisualFeedbackPlaying(true)
+            await restricInputsfor10SecMeanWhile(greeAnimationInputReady);
+            labelTxt(deployInfo.suspend);
+        }
+        function isVisualFeedbackPlaying(bol)
+        {
+            isSubMenuHidden(bol);
+            isSubDDMpulsing(!bol);
+            //#region local utils
+            function isSubMenuHidden(bol)
+            {
+                const hiddenClass = [`${cssData.dropdown__hidden}`]
+                UTILS.toggleClasses(bol, hiddenClass, subHiddenDDM);
+            }
+            function isSubDDMpulsing(bol)
+            {
+                const pulseAnim = [cssData.dwn_pulse_anim]; // spagguetti
+                UTILS.toggleClasses(bol, pulseAnim, subHiddenDDM_message); // spagguetti
+            }
+            //#endregion
+        }
+        function restricInputsfor10SecMeanWhile(animation, duration = 10000)
+        {
+            return new Promise(function (resolve, reject)
+            {
+                DeployCheckboxesDisabled(true);
+                DeployCheckboxesChecked(false);
+                DeployCheckboxesToggleAnims(true, animation);
+
+                setTimeout(() =>
+                {
+                    DeployCheckboxesDisabled(false);
+                    DeployCheckboxesChecked(false);
+                    DeployCheckboxesToggleAnims(false, animation);
+                    resolve();
+
+                }, duration);
+            });
+        }
+
+        function DeployCheckboxesToggleAnims(bol, animation)
+        {
+            UTILS.toggleClasses(bol, animation, checkMenuParent);
+            UTILS.toggleClasses(bol, noInputAnimation, subMenuCheckParent);
+        }
+        //#endregion
+
+
+        //#endregion
+    }
+    //#endregion
+
+
+    //#region uitils
     function DDM_Els()
     {
         const { ddm_exist } = cssData
         return document.querySelectorAll('.' + ddm_exist);
     }
-
     //#endregion
+
 }
 
 function ObserveIframesAndDelployYTPlayers(targetClass)
@@ -866,7 +853,7 @@ function ObserveIframesAndDelployYTPlayers(targetClass)
         onYouTubePlayerAPIReady(component, 'first wave');
     }
 
-    // 2. IntersectionObserver attache, to deploy when visible
+    // 2. IntersectionObserver attached, to deploy when visible
     const hidden = AvoidAllZoomChilds();
     for (const component of hidden)
     {
@@ -883,16 +870,14 @@ function ObserveIframesAndDelployYTPlayers(targetClass)
     return observer
 
     //#region observer utils
-    function ObserveIntersectToSetUpPlayer(iterator, message = 'deployed for YscrollObserver')
+    function ObserveIntersectToSetUpPlayer(iterator, message = 'YscrollObserver')
     {
         const yobs = new IntersectionObserver(Intersection_callback, { threshold: [0] });
 
         function Intersection_callback(entries)
         {
             if (!entries[0])
-            {
                 yobs.disconnect();
-            }
 
             for (const entry of entries)
             {
@@ -949,7 +934,7 @@ function ObserveIframesAndDelployYTPlayers(targetClass)
     }
     function isNotZoomPath(el)
     {
-        return !el.closest("[class*='rm-zoom']"); //⚠️
+        return !el.closest("[class*='rm-zoom']");
     }
     //#endregion
 }
@@ -994,17 +979,17 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
 
 
     // 4. to record a target's point of reference
-    const record = Object.create(sesionIDs);
+    const record = JSON.parse(JSON.stringify(sesionIDs)); //Object.create(sesionIDs);
     sesionIDs.uid = uid;
     const blockID = UTILS.closestBlockID(wrapper);
     if (blockID != null)
         recordedIDs.set(blockID, record);
 
 
-    const { awaiting_for_mouseenter_to_initialize, awaiting_with_video_thumnail_as_bg } = UI.experience;
+
     //console.count(message);
     //🌿
-    if (awaiting_for_mouseenter_to_initialize.checked)
+    if (UI.experience.awaiting_for_mouseenter_to_initialize.checked)
     {
         const awaitingAnimation = [cssData.awiting_player_pulse_anim, cssData.awaitng_player_user_input];
         const awaitingAnimationThumbnail = [...awaitingAnimation, cssData.awaitng_input_with_thumbnail];
@@ -1012,7 +997,7 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
         let mainAnimation = awaitingAnimationThumbnail
         wrapper.setAttribute(attrInfo.videoUrl, url);
 
-        if (awaiting_with_video_thumnail_as_bg.checked)
+        if (UI.experience.awaiting_with_video_thumnail_as_bg.checked)
         {
             UTILS.applyIMGbg(wrapper, url);
         }
@@ -1086,7 +1071,7 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
     function urlConfig(url)
     {
         let success = false;
-        const media = Object.create(videoParams);
+        const media = JSON.parse(JSON.stringify(videoParams));
         if (url.match('https://(www.)?youtube|youtu\.be'))
         {
             media.id = YouTubeGetID(url);
@@ -1196,10 +1181,10 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
 async function onPlayerReady(event)
 {
     const t = event.target;
-    const key = t.h.id;
-    const iframe = document.querySelector('#' + key) || t.getIframe();
+    const iframe = document.querySelector('#' + t.h.id) || t.getIframe();
     const parent = iframe.closest('.' + cssData.yt_gif_wrapper) || iframe.parentElement;
 
+    const key = t.h.id;
     const map = allVideoParameters.get(key); //videoParams
     const start = map?.start || 0;
     const end = map?.end || t.getDuration();
@@ -1218,7 +1203,7 @@ async function onPlayerReady(event)
     let updateStartTime = start;
 
 
-    // javascript is crazy // I'm treating this variables as 'let'
+    // javascript is crazy
     t.__proto__.changedVolumeOnce = false;
     t.__proto__.readyToChangeVolumeOnce = readyToChangeVolumeOnce;
     t.__proto__.newVol = entryVolume;
@@ -1237,137 +1222,79 @@ async function onPlayerReady(event)
 
     const timeDisplay = parent.querySelector('div.' + cssData.yt_gif_timestamp);
 
+    // 1. previous parameters if available
     const { previousTimestamp, previousVolume } = UI; // still inner objects
-
-
-    // 🚧? because this object is only relevant when a block with the same id has been destroyed... Hmmmm?
     if (lastBlockIDParameters.has(blockID))
     {
+        // 🚧? because, this object/functionalities are only relevant when a frame destroyed ≡ or when the script goes full cricle... Hmmmm?
         const sesion = lastBlockIDParameters.get(blockID);
         RunWithPrevious_TimestampStyle(sesion, previousTimestamp);
         RunWithPrevious_VolumeStyle(sesion, previousVolume);
     }
 
 
-    //#region variables
-    const { visible_clips_start_to_play_unmuted } = UI.playStyle;
-    const { strict_mute_everything_except_current, muted_on_any_mouse_interaction } = UI.playStyle;
+
+    // Used inside many functions 
+    const { playStyle, muteStyle } = UI;
+
+    // 2. play style | pause style
+    //#region variables used inside the 'change' callbacks - play/mute Styles
+    const { visible_clips_start_to_play_unmuted } = playStyle;
+    const { strict_mute_everything_except_current, muted_on_any_mouse_interaction } = muteStyle;
     //#endregion
-    // play style | pause style
-    for (const p in UI.playStyle)
+    for (const p in playStyle)
     {
-        UI.playStyle[p].addEventListener('change', function () { playStyleDDMO(visible_clips_start_to_play_unmuted) });
+        playStyle[p].addEventListener('change', playStyleDDMO);
     }
-    for (const m in UI.muteStyle)
+    for (const m in muteStyle)
     {
-        UI.muteStyle[m].addEventListener('change', function () { muteStyleDDMO(strict_mute_everything_except_current, muted_on_any_mouse_interaction) });
+        muteStyle[m].addEventListener('change', muteStyleDDMO);
     }
 
+
+
+    // 3. Mouse over the frame functionality
     parent.addEventListener('mouseenter', InAndOutHoverStatesDDMO);
     parent.addEventListener('mouseleave', InAndOutHoverStatesDDMO);
 
 
 
-
-    // scroll wheel feature
+    // 4. scroll wheel - timestamp display feature
     timeDisplay.addEventListener('wheel', BoundWheelValueToSeek);
     timeDisplay.addEventListener('mouseenter', ContinuouslyUpdateTimeDisplay);
     timeDisplay.addEventListener('mouseleave', ClearTimers);
 
 
 
-    // fullscreenStyle
+    // 5. fullscreenStyle
     iframe.addEventListener('fullscreenchange', fullscreenStyle_Handler);
 
 
 
-
+    // 6. store relevant elements with event event listeners to clean them later
     const withEventListeners = [parent, parent.parentNode, timeDisplay, iframe]; // ready to be cleaned
 
 
 
-
+    // 7. clean data and ready 'previous' paramaters for next sesion with IframeRemmovedFromDom_callback
     const config = { subtree: true, childList: true };
-    const RemovedObserver = new MutationObserver(IframeMutationRemoval_callback); //IframeRemmovedFromDom_callback acutal logic
+    const RemovedObserver = new MutationObserver(IframeMutationRemoval_callback); // will fire IframeRemmovedFromDom_callback... the acutal logic
     RemovedObserver.observe(document.body, config);
 
 
-    function IframeRemmovedFromDom_callback(observer)
-    {
-        // expensive for sure 🙋 removeEventListeners
-        UTILS.RemoveElsEventListeners(withEventListeners);
-        for (const p in UI.playStyle)
-        {
-            UI.playStyle[p].removeEventListener('change', playStyleDDMO); // all valid, toggle play state
-        }
-        for (const m in UI.muteStyle)
-        {
-            UI.muteStyle[m].removeEventListener('change', muteStyleDDMO); // all valid, toggle play state
-        }
 
-
-
-
-        //🚧 UpdateNextSesionValues
-        const media = Object.create(videoParams);
-        media.updateTime = bounded(tick()) ? tick() : start;
-        media.updateVolume = isValidVolNumber(t.__proto__.newVol) ? t.__proto__.newVol : validUpdateVolume();
-        if (media.timeURLmapHistory.length == 0) // kinda spaguetti, but it's super necesary - This will not ignore the first block editing - stack change
-        {
-            media.timeURLmapHistory.push(start);
-        }
-        if (blockID != null)
-        {
-            lastBlockIDParameters.set(blockID, media);
-        }
-
-
-
-
-        // clean... video maps
-        ClearTimers();
-        recordedIDs.delete(blockID);
-        allVideoParameters.delete(key);
-        observer.disconnect();
-        t.__proto__.enter = () => { };
-
-
-
-
-        // either save the target
-        const targetExist = document.querySelector('#' + key) == iframe;
-        if (targetExist)
-        {
-            return console.log(`${key} is displaced, not removed, thus is not destroyed.`);
-        }
-
-        // or destroy it
-        const afterT = setTimeout(() => destroyTarget(afterT), 1000);
-        function destroyTarget()
-        {
-            if (!targetExist)
-            {
-                t.destroy();
-                console.count('Destroyed! ' + key);
-            }
-        }
-    }
-
-
-
-
+    // 8. 'auto pause' when an iframe goes out the viewport... stop playing and mute
     const yConfig = { threshold: [0] };
     const ViewportObserver = new IntersectionObserver(PauseOffscreen_callback, yConfig);
     ViewportObserver.observe(iframe);
 
 
 
-
+    // 9. well well well - pause if user doesn't intents to watch
     HumanInteraction_AutopalyFreeze(); // this being the last one, does matter
 
 
-
-    //#region hidden functions
+    //#region 1. previous parameters
     function RunWithPrevious_VolumeStyle(sesion, { strict_start_volume, start_volume, fixed_start_volume })
     {
         if (strict_start_volume.checked)
@@ -1417,120 +1344,39 @@ async function onPlayerReady(event)
             // don't seek you are already there, it's just semantics and a null option
         }
     }
-    /* ----------------------------------------------- */
-    function HumanInteraction_AutopalyFreeze()
+    //#endregion
+
+
+    //#region 2. play/mute styles
+    function playStyleDDMO()
     {
-        const autoplayParent = iframe.closest('.rm-alias-tooltip__content') || //tooltip
-            iframe.closest('.bp3-card') || //card
-            iframe.closest('.myPortal'); //myPortal
+        if (!UTILS.inViewport(iframe)) return; //play all VISIBLE Players, this will be called on all visible iframes
 
-        if (autoplayParent) //simulate hover
+        if (visible_clips_start_to_play_unmuted.checked)
         {
-            const simHover = new MouseEvent('mouseenter',
-                {
-                    'view': window,
-                    'bubbles': true,
-                    'cancelable': true
-                });
-
-            parent.dispatchEvent(simHover);
+            togglePlay(true);
+            isSoundingFine(false);
         }
-        else if (isParentHover()) // human wants to hear and watch
+        else if (AnyPlayOnHover())
         {
-            videoIsPlayingWithSound(true);
-        }
-        else //Freeze
-        {
-            const OneFrame = setInterval(() =>
-            {
-                if (tick() > updateStartTime + loadingMarginOfError)
-                {
-                    // or if mouse is inside parent
-                    if (t.__proto__.globalHumanInteraction) // usees is listening, don't interrupt
-                    {
-                        videoIsPlayingWithSound(true);
-                    }
-                    else if (UTILS.inViewport(iframe) && !t.__proto__.globalHumanInteraction)
-                    {
-                        togglePlay(UI.playStyle.visible_clips_start_to_play_unmuted.checked); // pause
-                    }
-
-                    clearInterval(OneFrame);
-                }
-            }, 200);
+            togglePlay(!AnyPlayOnHover());
         }
     }
-    function IframeMutationRemoval_callback(mutationsList, observer)
+    function muteStyleDDMO()
     {
-        mutationsList.forEach(function (mutation)
-        {
-            const nodes = Array.from(mutation.removedNodes);
-            const directMatch = nodes.indexOf(iframe) > -1
-            const parentMatch = nodes.some(parentEl => parentEl.contains(iframe));
+        if (!UTILS.inViewport(iframe)) return; //mute all VISIBLE Players, this will be called on all visible iframes
 
-            if (directMatch)
-            {
-                observer.disconnect();
-                console.log(`node ${iframe} was directly removed!`);
-            }
-            else if (parentMatch)
-            {
-                IframeRemmovedFromDom_callback(observer);
-            }
-        });
-    };
-    function PauseOffscreen_callback(entries)
-    {
-        if (!entries[0])
+        if (strict_mute_everything_except_current.checked || muted_on_any_mouse_interaction.checked)
         {
-            ViewportObserver.disconnect();
-        }
-
-        if (tick() > updateStartTime + loadingMarginOfError && !t.__proto__.globalHumanInteraction) // and the interval function 'OneFrame' to prevent the loading black screen
-        {
-            if (UI.playStyle.visible_clips_start_to_play_unmuted.checked)
-            {
-                togglePlay(entries[0]?.isIntersecting);
-            }
-            else
-            {
-                togglePlay(false);
-            }
-        }
-    }
-    function fullscreenStyle_Handler(params)
-    {
-        // BIND TO SETTINGS PAGE
-        currentFullscreenPlayer = t.h.id;
-
-        if (!document.fullscreenElement && isParentHover()) //https://stackoverflow.com/questions/36767196/check-if-mouse-is-inside-div#:~:text=if%20(element.parentNode.matches(%22%3Ahover%22))%20%7B
-        {
-            if (UI.fullscreenStyle.mute_on_exit_fullscreenchange.checked)
-            {
-                isSoundingFine(false);
-            }
-            if (UI.fullscreenStyle.pause_on_exit_fullscreenchange.checked)
-            {
-                togglePlay(false);
-            }
-        }
-    }
-    function readyToChangeVolumeOnce()
-    {
-        if (!t.__proto__.changedVolumeOnce)
-        {
-            t.__proto__.changedVolumeOnce = true;
-            t.setVolume(t.__proto__.newVol);
+            isSoundingFine(false);
         }
     }
     //#endregion
 
 
-
-    //#region hidden play and puse styles functions
+    //#region 3. hover over the frame
     function InAndOutHoverStatesDDMO(e)
     {
-        // BIND TO SETTINGS PAGE
         //🌿
         if (e.type == 'mouseenter')
         {
@@ -1623,39 +1469,11 @@ async function onPlayerReady(event)
             }
         }
     }
-
-    function playStyleDDMO(visible_clips_start_to_play_unmuted)
-    {
-        if (!UTILS.inViewport(iframe)) return; //play all VISIBLE Players, this will be called on all visible iframes
-
-        if (visible_clips_start_to_play_unmuted.checked)
-        {
-            togglePlay(true);
-            isSoundingFine(false);
-        }
-        else if (AnyPlayOnHover())
-        {
-            togglePlay(!AnyPlayOnHover());
-        }
-        // BIND TO SETTINGS PAGE
-    }
-
-    function muteStyleDDMO(strict_mute_everything_except_current, muted_on_any_mouse_interaction)
-    {
-        if (!UTILS.inViewport(iframe)) return; //mute all VISIBLE Players, this will be called on all visible iframes
-
-        if (strict_mute_everything_except_current.checked || muted_on_any_mouse_interaction.checked)
-        {
-            isSoundingFine(false);
-        }
-        // BIND TO SETTINGS PAGE
-    }
     //#endregion
 
 
-
-    //#region Control UI hideen functions
-    // for the timeDisplay
+    //#region 4. Controls - timedisplay
+    // timeDisplay
     function ContinuouslyUpdateTimeDisplay()
     {
         //🙋 this is too uggly
@@ -1732,7 +1550,7 @@ async function onPlayerReady(event)
         }, tickOffset); //nice delay to show feedback
     }
 
-    //utils for the timeDisplay
+    //utils timeDisplay
     function ClearTimers()
     {
         window.clearInterval(t.__proto__.timerID);
@@ -1754,6 +1572,189 @@ async function onPlayerReady(event)
     }
     //#endregion
 
+
+    //#region 5. fullscreen
+    function fullscreenStyle_Handler(params)
+    {
+        currentFullscreenPlayer = t.h.id;
+
+        if (!document.fullscreenElement && isParentHover()) //https://stackoverflow.com/questions/36767196/check-if-mouse-is-inside-div#:~:text=if%20(element.parentNode.matches(%22%3Ahover%22))%20%7B
+        {
+            if (UI.fullscreenStyle.mute_on_exit_fullscreenchange.checked)
+            {
+                isSoundingFine(false);
+            }
+            if (UI.fullscreenStyle.pause_on_exit_fullscreenchange.checked)
+            {
+                togglePlay(false);
+            }
+        }
+    }
+    //#endregion
+
+
+    //#region 7. on destroyed
+    function IframeMutationRemoval_callback(mutationsList, observer)
+    {
+        mutationsList.forEach(function (mutation)
+        {
+            const nodes = Array.from(mutation.removedNodes);
+            const directMatch = nodes.indexOf(iframe) > -1
+            const parentMatch = nodes.some(parentEl => parentEl.contains(iframe));
+
+            if (directMatch)
+            {
+                observer.disconnect();
+                console.log(`node ${iframe} was directly removed!`);
+            }
+            else if (parentMatch)
+            {
+                IframeRemmovedFromDom_callback(observer);
+            }
+        });
+    };
+    function IframeRemmovedFromDom_callback(observer)
+    {
+        // expensive for sure 🙋
+        UTILS.RemoveElsEventListeners(withEventListeners);
+        for (const p in playStyle)
+        {
+            playStyle[p].removeEventListener('change', playStyleDDMO); // all valid, toggle play state
+        }
+        for (const m in muteStyle)
+        {
+            muteStyle[m].removeEventListener('change', muteStyleDDMO); // all valid, toggle play state
+        }
+
+
+
+
+        //🚧 UpdateNextSesionValues
+        const media = JSON.parse(JSON.stringify(videoParams));
+        media.updateTime = bounded(tick()) ? tick() : start;
+        media.updateVolume = isValidVolNumber(t.__proto__.newVol) ? t.__proto__.newVol : validUpdateVolume();
+        if (media.timeURLmapHistory.length == 0) // kinda spaguetti, but it's super necesary - This will not ignore the first block editing - stack change
+        {
+            media.timeURLmapHistory.push(start);
+        }
+        if (blockID != null)
+        {
+            lastBlockIDParameters.set(blockID, media);
+        }
+
+
+
+
+        // clean... video maps
+        ClearTimers();
+        recordedIDs.delete(blockID);
+        allVideoParameters.delete(key);
+        observer.disconnect();
+        t.__proto__.enter = () => { };
+
+
+
+
+        // either save the target
+        const targetExist = document.querySelector('#' + key) == iframe;
+        if (targetExist)
+        {
+            return console.log(`${key} is displaced, not removed, thus is not destroyed.`);
+        }
+
+        // or destroy it
+        const afterT = setTimeout(() => destroyTarget(afterT), 1000);
+        function destroyTarget()
+        {
+            if (!targetExist)
+            {
+                t.destroy();
+                console.count('Destroyed! ' + key);
+            }
+        }
+    }
+    //#endregion
+
+
+    //#region 8. pause off screen
+    function PauseOffscreen_callback(entries)
+    {
+        if (!entries[0])
+        {
+            ViewportObserver.disconnect();
+        }
+
+        if (tick() > updateStartTime + loadingMarginOfError && !t.__proto__.globalHumanInteraction) // and the interval function 'OneFrame' to prevent the loading black screen
+        {
+            if (UI.playStyle.visible_clips_start_to_play_unmuted.checked)
+            {
+                togglePlay(entries[0]?.isIntersecting);
+            }
+            else
+            {
+                togglePlay(false);
+            }
+        }
+    }
+    //#endregion
+
+
+    //#region 9. last
+    function HumanInteraction_AutopalyFreeze()
+    {
+        const autoplayParent = iframe.closest('.rm-alias-tooltip__content') || //tooltip
+            iframe.closest('.bp3-card') || //card
+            iframe.closest('.myPortal'); //myPortal
+
+        if (autoplayParent) //simulate hover
+        {
+            const simHover = new MouseEvent('mouseenter',
+                {
+                    'view': window,
+                    'bubbles': true,
+                    'cancelable': true
+                });
+
+            parent.dispatchEvent(simHover);
+        }
+        else if (isParentHover()) // human wants to hear and watch
+        {
+            videoIsPlayingWithSound(true);
+        }
+        else //Freeze
+        {
+            const OneFrame = setInterval(() =>
+            {
+                if (tick() > updateStartTime + loadingMarginOfError)
+                {
+                    // or if mouse is inside parent
+                    if (t.__proto__.globalHumanInteraction) // usees is listening, don't interrupt
+                    {
+                        videoIsPlayingWithSound(true);
+                    }
+                    else if (UTILS.inViewport(iframe) && !t.__proto__.globalHumanInteraction)
+                    {
+                        togglePlay(UI.playStyle.visible_clips_start_to_play_unmuted.checked); // pause
+                    }
+
+                    clearInterval(OneFrame);
+                }
+            }, 200);
+        }
+    }
+    //#endregion
+
+
+    //#region closure to change volume on load
+    function readyToChangeVolumeOnce()
+    {
+        if (!t.__proto__.changedVolumeOnce)
+        {
+            t.__proto__.changedVolumeOnce = true;
+            t.setVolume(t.__proto__.newVol);
+        }
+    }
+    //#endregion
 
 
     //#region local utils
@@ -1883,41 +1884,7 @@ async function onPlayerReady(event)
 
     //#endregion
 
-
-
-    //#region load referenced values | feature on hold
-    /*
-        //Future Brand new adition to 'lastBlockIDParameters' map
-        
-        //slice at least 'widgetid=··' so they reconize each other
- 
-        //closest referecnce key
-        
-        
-        if (UI.referenced.block_timestamp.checked == "F")
-        {
-            //ignore itself
- 
-            // desiredTarget = recordedIDs.get(closest referecnce key)
- 
-            // desiredTime = isValidVolNumber(tTime) ? tTime : updateStartTime;
- 
-            // seekToUpdatedTime(desiredTime);
-        }
-        if (UI.referenced.block_volume.checked)
-        {
-            // tVol = desiredTarget?.__proto__.newVol;
- 
-            // desiredVolume = isValidVolNumber(tVol) ? tVol : t.__proto__.newVol;
- 
-            //t.__proto__.newVol = desiredVolume;
-        }
-    */
-    //#endregion
-
 }
-
-
 //
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -1933,11 +1900,12 @@ function onStateChange(state)
     {
         t.seekTo(map?.start || 0);
 
-        if (UTILS.isValidUrl(UI.defaultValues.end_loop_sound_src))
+        const soundSrc = validSoundURL();
+        if (soundSrc)
         {
             if (UI.experience.sound_when_video_loops.checked)
             {
-                play(UI.defaultValues.end_loop_sound_src);
+                play(soundSrc);
                 //#region util
                 function play(url)
                 {
@@ -1959,7 +1927,6 @@ function onStateChange(state)
 
         if (UI.fullscreenStyle.smoll_vid_when_big_ends.checked && (currentFullscreenPlayer === t.h.id)) // let's not talk about that this took at least 30 mins. Don't. Ughhhh
         {
-            // BIND TO SETTINGS PAGE
             if (document.fullscreenElement)
             {
                 UTILS.exitFullscreen();
@@ -1985,6 +1952,20 @@ function onStateChange(state)
         t.__proto__.ClearTimers();
     }
 }
+
+
+//#region Utils
+function validSoundURL()
+{
+    const src = window.YT_GIF_SETTINGS_PAGE.defaultValues.end_loop_sound_src.sessionValue;
+    if (UTILS.isValidUrl(src))
+    {
+        return src
+    }
+    return null
+}
+//#endregion
+
 
 /*
 
@@ -2048,4 +2029,9 @@ Bugs
 
     initizlizing any video
         it's volume is 100 always
+
+    videoParams
+        default volume is mistaken as string
+            it should be an integer
+
 */
