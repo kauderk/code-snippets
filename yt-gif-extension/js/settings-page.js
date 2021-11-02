@@ -21,64 +21,54 @@ const rad = 'radio',
 
 window.YT_GIF_SETTINGS_PAGE = {
     Workflow: {
-        baseKey: addOrderPmt(`BIP BOP . . .`),
-        joins: {
-            baseKey: addOrderPmt(`either "ﾠ:ﾠ" for actual settings or "ﾠ/ﾠ" for prompt guidelines`), // he doesn't know... wait- he knows "ﾠ" != " "
-        },
+        baseKey: BasePmt(`BIP BOP . . .`),
+        joins: InlinePmt(`either "ﾠ:ﾠ" for actual settings or "ﾠ/ﾠ" for prompt guidelines`), // he doesn't know... wait- he knows "ﾠ" != " "
         parameters: {
-            baseKey: addOrderPmt("\n`(xxxuidxxx)` : `yt_gif_settings_key` : `<value>`"),
-            uid: {
-                baseKey: addOrderPmt("\n`(xxxuidxxx)`\nunique per user data base, without it the settings can't be written on this page"),
-            },
-            key: {
-                baseKey: addOrderPmt("\n`yt_gif_settings_key`\nsecond way to know which setting to change"),
-            },
-            value: {
-                baseKey: addOrderPmt("\n`<value>`\nin many cases optional and most of the time a binary switch, on - off"),
-            },
+            baseKey: BasePmt("\n`(xxxuidxxx)` : `yt_gif_settings_key` : `<value>`"),
+            uid: InlinePmt("\n`(xxxuidxxx)`\nunique per user data base, without it the settings can't be written on this page"),
+            key: InlinePmt("\n`yt_gif_settings_key`\nsecond way to know which setting to change"),
+            value: InlinePmt("\n`<value>`\nin many cases optional and most of the time a binary switch, on - off"),
         },
-        reach: {
-            baseKey: addOrderPmt(`Blocks below "LogStatus" will be ignored`),
-        },
+        reach: InlinePmt(`Blocks below "LogStatus" will be ignored`),
     },
     display: {
-        baseKey: addOrder(chk),
+        baseKey: BaseSetting(chk),
         clip_life_span_format: dom('1'),
     },
     previousTimestamp: {
-        baseKey: addOrder(rad),
+        baseKey: BaseSetting(rad),
         /* one a time */
         strict_start_timestamp: dom('1'),
         start_timestamp: dom(),
         fixed_start_timestamp: dom(),
     },
     previousVolume: {
-        baseKey: addOrder(rad),
+        baseKey: BaseSetting(rad),
         /* one a time */
         strict_start_volume: dom('1'),
         start_volume: dom(),
         fixed_start_volume: dom(),
     },
     experience: {
-        baseKey: addOrder(chk),
+        baseKey: BaseSetting(chk),
         sound_when_video_loops: dom('1'),
         awaiting_for_mouseenter_to_initialize: dom(),
         awaiting_with_video_thumnail_as_bg: dom('1'),
     },
     fullscreenStyle: {
-        baseKey: addOrder(chk),
+        baseKey: BaseSetting(chk),
         smoll_vid_when_big_ends: dom('1'),
         mute_on_exit_fullscreenchange: dom(),
         pause_on_exit_fullscreenchange: dom(),
     },
     muteStyle: {
-        baseKey: addOrder(chk),
+        baseKey: BaseSetting(chk),
         strict_mute_everything_except_current: dom('1'),
         muted_on_mouse_over: dom(),
         muted_on_any_mouse_interaction: dom(),
     },
     playStyle: {
-        baseKey: addOrder(chk),
+        baseKey: BaseSetting(chk),
         strict_play_current_on_mouse_over: dom('1'),
         play_on_mouse_over: dom(),
         visible_clips_start_to_play_unmuted: dom(),
@@ -86,39 +76,41 @@ window.YT_GIF_SETTINGS_PAGE = {
         yikesyikes: dom(),
     },
     range: {
-        baseKey: addOrder(rng),
+        baseKey: BaseSetting(rng),
         /*seconds up to 60*/
         timestamp_display_scroll_offset: dom('5', int),
         /* integers from 0 to 100 */
         end_loop_sound_volume: dom('50', int),
     },
     InAndOutKeys: {
-        baseKey: addOrder(chk),
+        baseKey: BaseSetting(chk),
         /* middle mouse button is on by default */
         ctrlKey: dom('1'),
         shiftKey: dom(),
         altKey: dom(),
     },
     defaultValues: {
-        baseKey: addOrder(),
+        baseKey: BaseSetting(),
 
-        video_volume: subInputType(40, int),
+        video_volume: initSetting(40, int),
 
         /* 'dark' or 'light' */
-        css_theme: subInputType('dark', str),
+        //css_theme: initSetting('dark', str),
+        css_theme: {
+            baseKey: BasePmt(`BIP BOP . . .`),//initSetting('dark', str), // inline true + baseKey... force to place third parameter next to key in the actual Block
+            guide: InlinePmt("'dark' or 'light'"),
+        },
 
         /* empty means 50% - only valid css units like px  %  vw */
-        player_span: subInputType('50%', str),
+        player_span: initSetting('50%', str),
 
         /* distinguish between {{[[video]]:}} from {{[[yt-gif]]:}} or 'both' which is also valid*/
-        override_roam_video_component: subInputType('', [bol, str]),
+        override_roam_video_component: initSetting('', [bol, str]),
 
         /* src sound when yt gif makes a loop, empty if unwanted */
-        end_loop_sound_src: subInputType('https://freesound.org/data/previews/256/256113_3263906-lq.mp3', url),
+        end_loop_sound_src: initSetting('https://freesound.org/data/previews/256/256113_3263906-lq.mp3', url),
     },
-    LogStatus: {
-        baseKey: addOrderPmt(`Everything looks alright :D`),
-    },
+    LogStatus: InlinePmt(`Everything looks alright :D`),
 }
 const settingsReach = Object.keys(window.YT_GIF_SETTINGS_PAGE).length;
 // THE ORDER DOES MATTER, because of the counter
@@ -128,6 +120,7 @@ window.YT_GIF_SETTINGS_PAGE.Workflow.baseKey.string = `The first ${settingsReach
 window.YT_GIF_DIRECT_SETTINGS = null;
 window.YT_GIF_SETTINGS_PAGE_INIT = async () => await init();
 
+init();
 async function init()
 {
     const { acc, keyObjMap } = await assignChildrenMissingValues();
@@ -135,7 +128,7 @@ async function init()
 
     if (TARGET_UID == null) // Brand new installation
     {
-        TARGET_UID = await RAP.getOrCreatePageUid(targetPage);
+        TARGET_UID = await RAP.navigateToUiOrCreate(targetPage);
         const addedBlocks = await addAllMissingBlocks(); // 🐌
     }
     else // Read and store Session Values
@@ -217,19 +210,19 @@ async function assignChildrenMissingValues()
 
 
                 /*  this took two straight days ... thank you thank you */
-                if (nestedPpt.baseValue != undefined) // inline object ≡ no baseKey
+                if (nestedPpt.baseKey != undefined) // implied that inlineObj = false
+                {// the ptt is a wrapper, look on it's level to access the baseKey
+                    // 1.
+                    nestedPpt.baseKey.order = Number(++funcGeneralOrder);
+                    nestedPpt.baseKey.indent = nextAccObj.indent;
+                }
+                else if (nestedPpt.inlineObj == true)
                 {
                     // 1.
                     nestedPpt.order = Number(++funcGeneralOrder);
                     nestedPpt.indent = nextAccObj.indent;
                     // 2.
                     nestedPpt.inputType = (accObj.inputTypeFromBaseKey) ? accObj.inputTypeFromBaseKey : nestedPpt.inputType; // valid form baseKey? no, then keep same
-                }
-                else if (nestedPpt.baseKey != undefined) // the ptt is a wrapper, look on it's level to access the baseKey
-                {
-                    // 1.
-                    nestedPpt.baseKey.order = Number(++funcGeneralOrder);
-                    nestedPpt.baseKey.indent = nextAccObj.indent;
                 }
             }
         }
@@ -480,15 +473,9 @@ async function addAllMissingBlocks()
 
         for (const property in nextObj)
         {
-            if (nextObj.hasOwnProperty(property) && typeof nextObj[property] === "object" && nextObj[property] != null)
+            let nestedPpt = nextObj[property];
+            if (nextObj.hasOwnProperty(property) && typeof nextObj[property] === "object" && nextObj[property] != null && !(nestedPpt instanceof Array))
             {
-                if (property == 'sessionValue')
-                {
-                    //console.log(`avoiding ${property}`);
-                    continue;
-                }
-
-                let nestedPpt = nextObj[property];
 
                 // 1. indent = 0
                 if (property == 'baseKey')
@@ -602,7 +589,7 @@ function assertObjPpt_base(baseKeyObj, string, uid)
 
 //#region sub OBJECTS
 /*---------------------------------------------*/
-function addOrderPmt(blockContent = '')
+function BasePmt(blockContent = '')
 {
     const promptObj = {
         join: PmtSplit,
@@ -611,8 +598,16 @@ function addOrderPmt(blockContent = '')
     }
     return Object.assign(baseTmp(), promptObj);
 }
+function InlinePmt(blockContent = '')
+{
+    const promptObj = {
+        inlineObj: true,
+        string: blockContent
+    }
+    return Object.assign(BasePmt(), promptObj);
+}
 /*---------------------------------------------*/
-function addOrder(inputType)
+function BaseSetting(inputType)
 {
     return baseTmp(inputType);
 }
@@ -625,7 +620,8 @@ function dom(baseValue = '', inputType)
     }
     return Object.assign(subTemp(), domObj);
 }
-function subInputType(baseValue = '', inputType)
+/*---------------------------------------------*/
+function initSetting(baseValue = '', inputType)
 {
     const subInputObj = {
         baseValue: baseValue,
@@ -641,6 +637,7 @@ function subTemp(baseValue = '', inputType)
         sessionValue: null,
         caputuredValue: '<>',
         join: fmtSplit,
+        inlineObj: true,
         UpdateSettingsBlockValue: function () { console.warn(`Update block not implemented... ${this.uid} ${this.string}`) }
     }
     return Object.assign(baseTmp(inputType), subSub);
@@ -658,6 +655,8 @@ function baseTmp(_inputType, _string = '')
         indent: null,
         child: null,
         order: null,
+
+        inlineObj: false,
     }
 }
 /*---------------------------------------------*/
