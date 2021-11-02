@@ -122,7 +122,7 @@ window.YT_GIF_SETTINGS_PAGE = {
 }
 const settingsReach = Object.keys(window.YT_GIF_SETTINGS_PAGE).length;
 // THE ORDER DOES MATTER, because of the counter
-window.YT_GIF_SETTINGS_PAGE.Workflow.baseKey.string = `The first ${settingsReach} blocks will be -added on updates- and -removed if drepreacted- automatically. The last parameters "<>" are customizable. 🐕 👋`;
+window.YT_GIF_SETTINGS_PAGE.Workflow.baseKey.string = `The first ${settingsReach} blocks will be -added on updates- and -removed if drepreacted- automatically. The last parameters "<>" are customizable. 🐕 👋 `;
 
 // this looks like a bad idea...
 window.YT_GIF_DIRECT_SETTINGS = null;
