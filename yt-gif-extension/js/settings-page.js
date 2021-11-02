@@ -84,32 +84,33 @@ window.YT_GIF_SETTINGS_PAGE = {
     },
     InAndOutKeys: {
         baseKey: BaseSetting(chk),
-        /* middle mouse button is on by default */
         ctrlKey: dom('1'),
         shiftKey: dom(),
         altKey: dom(),
+        iaok_opt: InlinePmt(`middle mouse button is on by default`),
     },
     defaultValues: {
         baseKey: BaseSetting(),
-
-        video_volume: initSetting(40, int),
-
-        /* 'dark' or 'light' */
-        //css_theme: initSetting('dark', str),
-        css_theme: {
-            //BasePmt(`BIP BOP . . .`),//
-            baseKey: BaseInitSetting('dark', str), // inline true + baseKey... force to place third parameter next to key in the actual Block
-            ct_opt: InlinePmt("'dark' or 'light'"),
+        video_volume: {
+            baseKey: BaseInitSetting(40, int),
+            vv_opt: InlinePmt(`from 0 to 100`),
         },
-
-        /* empty means 50% - only valid css units like px  %  vw */
-        player_span: initSetting('50%', str),
-
-        /* distinguish between {{[[video]]:}} from {{[[yt-gif]]:}} or 'both' which is also valid*/
-        override_roam_video_component: initSetting('', [bol, str]),
-
-        /* src sound when yt gif makes a loop, empty if unwanted */
-        end_loop_sound_src: initSetting('https://freesound.org/data/previews/256/256113_3263906-lq.mp3', url),
+        css_theme: {
+            baseKey: BaseInitSetting('dark', str),
+            ct_opt: InlinePmt(`"dark" or "light"`),
+        },
+        player_span: {
+            baseKey: BaseInitSetting('50%', str),
+            ps_opt: InlinePmt(`empty means 50% - only valid css units like px  %  vw`),
+        },
+        override_roam_video_component: {
+            baseKey: BaseInitSetting('', [bol, str]),
+            orvc_opt: InlinePmt('distinguish between `{{[[video]]:}}` from `{{[[yt-gif]]:}}` or "both" which is also valid'),
+        },
+        end_loop_sound_src: {
+            baseKey: BaseInitSetting('https://freesound.org/data/previews/256/256113_3263906-lq.mp3', url),
+            elss_opt: InlinePmt(`src sound when yt gif makes a loop, empty if unwanted`),
+        },
     },
     LogStatus: InlinePmt(`Everything looks alright :D`),
 }
