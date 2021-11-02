@@ -97,8 +97,9 @@ window.YT_GIF_SETTINGS_PAGE = {
         /* 'dark' or 'light' */
         //css_theme: initSetting('dark', str),
         css_theme: {
-            baseKey: BasePmt(`BIP BOP . . .`),//initSetting('dark', str), // inline true + baseKey... force to place third parameter next to key in the actual Block
-            guide: InlinePmt("'dark' or 'light'"),
+            //BasePmt(`BIP BOP . . .`),//
+            baseKey: BaseInitSetting('dark', str), // inline true + baseKey... force to place third parameter next to key in the actual Block
+            ct_opt: InlinePmt("'dark' or 'light'"),
         },
 
         /* empty means 50% - only valid css units like px  %  vw */
@@ -211,12 +212,12 @@ async function assignChildrenMissingValues()
 
                 /*  this took two straight days ... thank you thank you */
                 if (nestedPpt.baseKey != undefined) // implied that inlineObj = false
-                {// the ptt is a wrapper, look on it's level to access the baseKey
+                { // the property (name) is a wrapper, look on it's level to access the baseKey
                     // 1.
                     nestedPpt.baseKey.order = Number(++funcGeneralOrder);
                     nestedPpt.baseKey.indent = nextAccObj.indent;
                 }
-                else if (nestedPpt.inlineObj == true)
+                else if (nestedPpt.inlineObj == true) // InlinePmt & dom/setting so far
                 {
                     // 1.
                     nestedPpt.order = Number(++funcGeneralOrder);
@@ -276,9 +277,9 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
                     selfOrder: child.order,
                 };
 
+                accStr = await Rec_Read_Write_SettingsPage(child, nextAccObj);
                 if (child.order < settingsReach)
                 {
-                    accStr = await Rec_Read_Write_SettingsPage(child, nextAccObj);
                 }
             }
         }
@@ -297,6 +298,7 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
                     const { stringOK, v_string, v_uid } = await validateBlockContent(targeObj, nextStr, splitedStrArr, uid, accObj.nextUID);
                     if (!stringOK)
                     {
+                        debugger;
                         console.log(`Updating block  ((${uid})) -> \n${nextStr} \nﾠ\nto ((${v_uid})) ->  \nﾠ\n${v_string}`)
                         await RAP.updateBlock(v_uid, v_string);
                         p_string = v_string;
@@ -482,8 +484,17 @@ async function addAllMissingBlocks()
                 {
                     if (nestedPpt.examined == false)
                     {
-                        const preStr = nestedPpt.string;
+                        let preStr = null;
                         const prntKey = accObj.parentKey;
+
+                        if (nestedPpt.baseValue != undefined) // in most cases it't children will add up information about it
+                        {
+                            preStr = validThirdParameterSplit(nestedPpt);
+                        }
+                        else // conventional - a property that wraps others
+                        {
+                            preStr = nestedPpt.string;
+                        }
 
                         const manualStt = {
                             m_uid: accObj.accHierarchyUids[accObj.accHierarchyUids.length - 1] || TARGET_UID,
@@ -516,16 +527,13 @@ async function addAllMissingBlocks()
                 // 3. indent = 1
                 if (nestedPpt.examined == false)
                 {
-                    const value = nestedPpt.sessionValue = nestedPpt.baseValue;
-                    const caputuredValue = nestedPpt.caputuredValue = `${cptrPrfx}${value}${cptrSufx}`; // BIG BOI  <value>
-
                     const manualStt = {
                         m_uid: HierarchyUids[HierarchyUids.length - 1], // parent key to create under
                         m_strArr:
                             [
                                 nextAccObj.accKeys[nextAccObj.accKeys.length - 1],
-                                caputuredValue
-                            ], // "key_description" : "<value>"
+                                validThirdParameterSplit(nestedPpt)
+                            ], // uid... x "key_description" x "thirdParameter"
                         m_order: nestedPpt.order,
                     }
 
@@ -572,6 +580,22 @@ async function addAllMissingBlocks()
             }
             //#endregion
         }
+    }
+
+    function validThirdParameterSplit(nestedPpt)
+    {
+        let thirdParameter = null;
+
+        if (nestedPpt.join == fmtSplit)
+        {
+            const value = nestedPpt.sessionValue = nestedPpt.baseValue;
+            thirdParameter = nestedPpt.caputuredValue = `${cptrPrfx}${value}${cptrSufx}`; // BIG BOI  <value>
+        }
+        else if (nestedPpt.join == PmtSplit)
+        {
+            thirdParameter = nestedPpt.string;
+        }
+        return thirdParameter;
     }
 }
 function assertObjPpt_base(baseKeyObj, string, uid)
@@ -621,13 +645,18 @@ function dom(baseValue = '', inputType)
     return Object.assign(subTemp(), domObj);
 }
 /*---------------------------------------------*/
-function initSetting(baseValue = '', inputType)
+function BaseInitSetting(baseValue = '', inputType)
 {
     const subInputObj = {
         baseValue: baseValue,
         inputType: inputType,
+        inlineObj: false,
     }
     return Object.assign(subTemp(), subInputObj);
+}
+function initSetting(baseValue = '', inputType)
+{
+    return subTemp(baseValue, inputType);
 }
 /*---------------------------------------------*/
 function subTemp(baseValue = '', inputType)
@@ -713,4 +742,14 @@ solved ☐ ☑
 
     moving around above the prompt mss, ☑ ☑
         the injected block if any ---- that block inherits that string
+
+    deleting huge chunks of settings blocks
+        and because of the settingsPageReach, if they get clauded beyond that threshold
+        they instantlly become useless and just a waste of space
+            implement
+                a recylce bin block
+                a toogle for full control of the page
+                and alternetavely a two smart bin blocks
+                    one for deprecated settings (keys)
+                    and another one for uknown blocks, most defenetly user blocks, because they lack the keys
 */
