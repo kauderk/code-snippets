@@ -1,4 +1,4 @@
-// version 3 - semi-refactored
+// version 1 - semi-refactored
 const TARGET_PAGE = 'roam/js/kauderk/yt-gif/settings';
 const UTIL_K = window.kauderk.util;
 const RAP = window.kauderk.rap;
@@ -18,7 +18,6 @@ const rad = 'radio',
     bol = 'boolean',
     url = 'url',
     rng = 'range';
-
 
 window.YT_GIF_SETTINGS_PAGE = {
     Workflow: {
@@ -128,24 +127,24 @@ window.YT_GIF_SETTINGS_PAGE = {
         ls_: InlinePmt(`End of settings`),
     },
 }
-window.YT_GIF_SETTINGS_PAGE.Workflow.baseKey.string = `The ${Object.keys(window.YT_GIF_SETTINGS_PAGE).length} blocks will be -added on updates- and -removed if drepreacted- automatically. The last parameters "<>" are customizable. 🐕 👋 `;
-
-
+const settingsReach = Object.keys(window.YT_GIF_SETTINGS_PAGE).length;
+// THE ORDER DOES MATTER, because of the counter
+window.YT_GIF_SETTINGS_PAGE.Workflow.baseKey.string = `The ${settingsReach} blocks will be -added on updates- and -removed if drepreacted- automatically. The last parameters "<>" are customizable. 🐕 👋 `;
 
 // this looks like a bad idea...
 window.YT_GIF_DIRECT_SETTINGS = null;
 window.YT_GIF_SETTINGS_PAGE_INIT = async () => await init();
 
-
-
+init();
 async function init()
 {
     const { acc, keyObjMap } = await assignChildrenMissingValues();
-    window.YT_GIF_DIRECT_SETTINGS = keyObjMap;    // the performance will increase dramatically if ONLY un-examined keyObjs are reviewd inside addAllMissingBlocks  keyObjMap.fiter(x=>!examined) or something like that...
+    window.YT_GIF_DIRECT_SETTINGS = keyObjMap;
+    // the performance can increase dramatically if ONLY un-examined keyObjMap are reviewd inside addAllMissingBlocks  map.fiter(x=>!examined) or something like that
 
     if (TARGET_UID == null) // Brand new installation
     {
-        TARGET_UID = await RAP.getOrCreatePageUid(TARGET_PAGE); //navigateToUiOrCreate
+        TARGET_UID = await RAP.navigateToUiOrCreate(TARGET_PAGE);
         const addedBlocks = await addAllMissingBlocks(); // 🐌
     }
     else // Read and store Session Values
@@ -161,7 +160,6 @@ async function init()
 //#region HIDDEN FUNCTIONS
 async function assignChildrenMissingValues()
 {
-    // 0.
     let = keyObjMap = new Map(); // acc inside the Rec_func
     const passAccObj = {
         accStr: '',
@@ -170,35 +168,28 @@ async function assignChildrenMissingValues()
         accKeys: [],
     };
 
-
-    // 1.
     return {
         acc: await Rec_assignChildrenMissingValues(window.YT_GIF_SETTINGS_PAGE, passAccObj),
         keyObjMap
     };
-
-
     async function Rec_assignChildrenMissingValues(nextObj, accObj = passAccObj)
     {
-        // 0. this Rec_Func won't return nothing per se
         let { accStr } = accObj;
         let funcGeneralOrder = -1;
 
         const { nextStr, indent, accKeys } = accObj;
         const tab = `\t`.repeat((indent < 0) ? 0 : indent);
 
-        accStr = accStr + '\n' + tab + nextStr; //accStr = accStr + '\n' + tab + accKeys.join(" ");
-
+        //accStr = accStr + '\n' + tab + accKeys.join(" ");
+        accStr = accStr + '\n' + tab + nextStr;
 
         for (const property in nextObj)
         {
             const nestedPpt = nextObj[property];
             if (nextObj.hasOwnProperty(property) && nestedPpt && typeof nestedPpt === "object" && !(nestedPpt instanceof Array))
             {
-                // 0.
                 const nextAccObj = {
                     parentKey: property,
-
                     indent: indent + 1,
                     inputTypeFromBaseKey: nestedPpt?.baseKey?.inputType,
 
@@ -206,15 +197,13 @@ async function assignChildrenMissingValues()
                     nextStr: nestedPpt.string || '',
                 };
 
-
-                // 1. store for later
+                /* store for later */
                 if (property != 'baseKey') // there are too many, filter a litle bit
                 {
                     const directObjPpts = (nestedPpt?.baseKey) ? nestedPpt.baseKey : nestedPpt;
 
-                    if (directObjPpts.UpdateSettingsBlockValue) //an actual setting ... most definitely an inlineObj
+                    if (directObjPpts.UpdateSettingsBlockValue) //an actual setting
                     {
-                        // 1.1
                         directObjPpts.UpdateSettingsBlockValue = function (replaceWith)
                         {
                             const rgxValue = new RegExp(/<(.*?)>/, 'gm'); // "<XXX>"
@@ -228,36 +217,32 @@ async function assignChildrenMissingValues()
                                 RAP.updateBlock(directObjPpts.uid, directObjPpts.string);
                                 //console.log(`Setting ${property} was, \n${postChange} \nnow is \n${window.YT_GIF_DIRECT_SETTINGS.get(property).string}`)
                             }
-                        };
+                        }
                     }
-
                     directObjPpts.parentKey = accObj.parentKey || TARGET_PAGE;
+
                     keyObjMap.set(property, directObjPpts);
                 }
 
-
-                // 2. 
+                /* the order to acc does matter */
                 accStr = await Rec_assignChildrenMissingValues(nextObj[property], nextAccObj);
 
 
-                // 3.                                                                // this took two straight days ... thank you thank you
+                /*  this took two straight days ... thank you thank you */
                 if (nestedPpt.baseKey != undefined) // implied that inlineObj = false
-                {
-                    // 3.1
-                    nestedPpt.baseKey.order = Number(++funcGeneralOrder); // the property (name) is a wrapper, look on it's level to access the baseKey
+                { // the property (name) is a wrapper, look on it's level to access the baseKey
+                    // 1.
+                    nestedPpt.baseKey.order = Number(++funcGeneralOrder);
                     nestedPpt.baseKey.indent = nextAccObj.indent;
                 }
-                else if (nestedPpt.inlineObj == true) // InlinePmt and dom/setting so far
+                else if (nestedPpt.inlineObj == true) // InlinePmt & dom/setting so far
                 {
-                    // 3.1
+                    // 1.
                     nestedPpt.order = Number(++funcGeneralOrder);
                     nestedPpt.indent = nextAccObj.indent;
-                    // 3.2
+                    // 2.
                     nestedPpt.inputType = (accObj.inputTypeFromBaseKey) ? accObj.inputTypeFromBaseKey : nestedPpt.inputType; // valid form baseKey? no, then keep same
                 }
-
-                // 1.1
-
             }
         }
         return accStr;
@@ -265,24 +250,19 @@ async function assignChildrenMissingValues()
 }
 async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
 {
-    // 0.
     const ChildrenHierarchy = await RAP.getBlockOrPageInfo(UID, true);
-    const accObj = { accStr: '' };
-    let FinishRec_thenDisplace_cbArr = []; // acc inside the Rec_Func
-
 
     if (!ChildrenHierarchy)
     {
         return 'Page is empty';
     }
 
+    const accObj = { accStr: '' };
+    let FinishRec_ThenDiplaceCallbacksArr = []; // acc inside the Rec_Func
 
-    // 1.
     const entirePageText = await Rec_Read_Write_SettingsPage(ChildrenHierarchy[0][0], accObj);
 
-
-    // 2.
-    for (const displaceBlock_cb of FinishRec_thenDisplace_cbArr)
+    for (const displaceBlock_cb of FinishRec_ThenDiplaceCallbacksArr)
     {
         await displaceBlock_cb(); // this is fucking CRAZY!!
     }
@@ -292,36 +272,54 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
 
     async function Rec_Read_Write_SettingsPage(nextObj, accObj)
     {
-        // 0.
         let { accStr } = accObj;
         let parentState = {
             displaced: false, // can loop throughout its children
         }
 
         const { nextUID, keyFromLevel0, selfOrder } = accObj;
-        const { tab, nextStr, indent, parentUid } = await RelativeChildInfo(nextObj); // vs .1
-        const { uid, key, value, caputuredValue, caputureValueOk, splitedStrArr, join } = getKeywordsFromBlockString(nextStr); // vs .2
+        const { tab, nextStr, indent, parentUid } = await RelativeChildInfo(nextObj);
+        const { uid, key, value, caputuredValue, caputureValueOk, splitedStrArr, join } = getKeywordsFromBlockString(nextStr);
 
-        // 1.
-        if (! await SuccessfulSettingsUpt(indent))
+        if (! await SuccessfulSttgUpt(indent)) // remove it
         {
-            // 1.1
-            HandleMoveOrDeletion();
+            const uidToMove = uid || nextObj.uid || nextUID;
+            if (uidToMove != TARGET_UID) // the nature of the recursive func makes it so the page uid can't be avoided, you don't want that - exit
+            {
+                if (accObj?.parentState?.displaced === true)
+                {
+                    // don't move anything because it's parent was already displaced
+                }
+                else
+                {
+                    let Recylce_cb = null;
+                    if (key)
+                    {
+                        Recylce_cb = async () => await tryToRecyleSettingsBlock(uidToMove, nextStr); // this is craziest shit I've ever seen--
+                    }
+                    else
+                    {
+                        Recylce_cb = async () => await tryToRecyleUnknownBlock(uidToMove, nextStr); // ...come on now
+                        // this is deleteling blocks for no reason... man...
+                    }
+                    FinishRec_ThenDiplaceCallbacksArr.push(Recylce_cb)
+                }
+                parentState = {
+                    displaced: true, // it's children can't loop anymore - also you want to set this whitin the Rec_Fuc so there are no hanging clousures expecting values
+                }
+            }
         }
         else
         {
-            // 1.2
-            accStr = accStr + '\n' + tab + nextStr; // outside of here, you'll the page before the delitions
+            accStr = accStr + '\n' + tab + nextStr; // outside of here, you'll the page after the delitions
         }
 
 
-        // 2.
         if (nextObj.children)
         {
             const object = await RAP.getBlockOrPageInfo(nextObj.uid);
             const children = RAP.sortObjectsByOrder(object[0][0].children);
 
-            // 3. rec
             for (const child of children)
             {
                 const nextAccObj = {
@@ -339,7 +337,107 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
 
         return accStr;
 
-        // vs .1
+        //#region local uitils
+        async function SuccessfulSttgUpt()
+        {
+            const targeObj = keyObjMap.get(key);
+            if (targeObj)
+            {
+                let p_string = nextStr, p_uid = uid;
+                if (join == PmtSplit)
+                {
+                    const { stringOK, v_string, v_uid } = await validateBlockContent(targeObj, nextStr, splitedStrArr, uid, accObj.nextUID);
+                    if (!stringOK)
+                    {
+                        console.log(`Updating block  ((${uid})) -> \n${nextStr} \nﾠ\nto ((${v_uid})) ->  \nﾠ\n${v_string}`)
+                        await RAP.updateBlock(v_uid, v_string);
+                        p_string = v_string;
+                        p_uid = v_uid;
+                    }
+                }
+
+                const crrObjKey = assertObjPpt_base(targeObj, p_string, p_uid);
+
+                if (join == fmtSplit)
+                {
+                    crrObjKey.sessionValue = value;
+                    crrObjKey.caputuredValue = caputuredValue;
+
+                    if (crrObjKey.inputType == int)
+                    {
+                        crrObjKey.sessionValue = parseInt(crrObjKey.sessionValue, 10);
+                    }
+
+                    if (!caputureValueOk && splitedStrArr[2]) // caputured string too
+                    {
+                        console.warn(`"${nextStr}" value looks weird, it will default to false...`);
+                    }
+                }
+
+                FinishRec_ThenDiplaceCallbacksArr.push(async function () 
+                {
+                    const relevantParentUID = (targeObj.indent == indent) ? parentUid : keyObjMap.get(targeObj.parentKey).uid; // block with proper indent? no, then nest it under it's most relevant parent
+                    await checkReorderBlockObj(relevantParentUID, selfOrder, crrObjKey);
+                    // sometimes the nested blocks get reviwed before it's actual parents
+                    // finish Rec_Fun then reorder them
+                })
+
+                return true;
+            }
+            return false;
+        }
+        async function validateBlockContent(obj, nextStr, splitedStrArr, caputuredUID, nextUID)
+        {
+            const caputuredString = splitedStrArr[2] || ''; // undefinded means it doens't requieres a third param, that's ok
+
+            const uidOk = await RAP.getBlockOrPageInfo(caputuredUID);
+            const v_uid = (uidOk) ? caputuredUID : nextUID;
+
+            let v_string = nextStr;
+            let stringOK = true;
+
+            if (obj.string != caputuredString)
+            {
+                splitedStrArr.splice(2, 1, obj.string);
+                v_string = splitedStrArr.join(obj.join);
+                stringOK = false;
+            }
+
+            return {
+                v_string,
+                v_uid,
+                stringOK
+            }
+        }
+        /* -------------------- */
+        async function tryToRecyleSettingsBlock(uid, nextStr)
+        {
+            await TryToMoveBlock(keyObjMap.get('DisplacedBlocks').uid, 0, uid); // I only want to move one block at a time and it's children along with it
+            //console.log(`${nextStr}           <= deprecated YT GIF setting!`);
+            // this could be expensive...
+        }
+        async function tryToRecyleUnknownBlock(uid, nextStr)
+        {
+            await TryToMoveBlock(keyObjMap.get('UnknownBlocks').uid, 0, uid); // well well well don't delete if you don't know what it is
+            console.log(`${nextStr}           <= unknown block on the YT GIF Page Settings!`);
+        }
+        async function TryToMoveBlock(parentUid, order, selfUid)
+        {
+            try
+            {
+                if (parentUid == selfUid)
+                {
+                    debugger;
+                    return
+                }
+                RAP.moveBlock(parentUid, order, selfUid);
+            }
+            catch (err)
+            {
+                debugger;
+            }
+        }
+        /* -------------------- */
         async function RelativeChildInfo(obj)
         {
             const nextStr = obj.string || obj.title || '';
@@ -354,7 +452,6 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
                     ? parentsHierarchy[0][0]?.uid : TARGET_UID, // if undefined - most defenetly it's the direct child (level 0) of the page
             }
         }
-        // vs .2
         function getKeywordsFromBlockString(nextStr)
         {
             const rgxUid = new RegExp(/\(([^\)]+)\)/, 'gm'); //(XXXXXXXX)
@@ -409,133 +506,11 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
                 return fmtSplit;
             }
         }
-        /* ********************************************* */
-        // 1.
-        async function SuccessfulSettingsUpt()
-        {
-            const targeObj = keyObjMap.get(key);
-            if (targeObj)
-            {
-                let p_string = nextStr, p_uid = uid;
-                if (join == PmtSplit)
-                {
-                    const { stringOK, v_string, v_uid } = await validateBlockContent(targeObj, nextStr, splitedStrArr, uid, accObj.nextUID);
-                    if (!stringOK)
-                    {
-                        console.log(`Updating block  ((${uid})) -> \n${nextStr} \nﾠ\nto ((${v_uid})) ->  \nﾠ\n${v_string}`)
-                        await RAP.updateBlock(v_uid, v_string);
-                        p_string = v_string;
-                        p_uid = v_uid;
-                    }
-                }
-
-                const crrObjKey = assertObjPpt_base(targeObj, p_string, p_uid);
-
-                if (join == fmtSplit)
-                {
-                    crrObjKey.sessionValue = value;
-                    crrObjKey.caputuredValue = caputuredValue;
-
-                    if (crrObjKey.inputType == int)
-                    {
-                        crrObjKey.sessionValue = parseInt(crrObjKey.sessionValue, 10);
-                    }
-
-                    if (!caputureValueOk && splitedStrArr[2]) // caputured string too
-                    {
-                        console.warn(`"${nextStr}" value looks weird, it will default to false...`);
-                    }
-                }
-
-                FinishRec_thenDisplace_cbArr.push(async function () 
-                {
-                    const relevantParentUID = (targeObj.indent == indent) ? parentUid : keyObjMap.get(targeObj.parentKey).uid; // block with proper indent? no, then nest it under it's most relevant parent
-                    await checkReorderBlockObj(relevantParentUID, selfOrder, crrObjKey);
-                    // sometimes the nested blocks get reviwed before it's actual parents
-                    // finish Rec_Fun then reorder them
-                })
-
-                return true;
-            }
-            return false;
-            async function validateBlockContent(obj, nextStr, splitedStrArr, caputuredUID, nextUID)
-            {
-                const caputuredString = splitedStrArr[2] || ''; // undefinded means it doens't requieres a third param, that's ok
-
-                const uidOk = await RAP.getBlockOrPageInfo(caputuredUID);
-                const v_uid = (uidOk) ? caputuredUID : nextUID;
-
-                let v_string = nextStr;
-                let stringOK = true;
-
-                if (obj.string != caputuredString)
-                {
-                    splitedStrArr.splice(2, 1, obj.string);
-                    v_string = splitedStrArr.join(obj.join);
-                    stringOK = false;
-                }
-
-                return {
-                    v_string,
-                    v_uid,
-                    stringOK
-                }
-            }
-        }
-        // 1.1
-        function HandleMoveOrDeletion()
-        {
-            const uidToMove = uid || nextObj.uid || nextUID;
-            if (uidToMove != TARGET_UID) // the nature of the recursive func makes it so the page uid can't be avoided, you don't want that - exit
-            {
-                if (accObj?.parentState?.displaced === true)
-                {
-                    // don't move anything because it's parent was already displaced
-                }
-                else
-                {
-                    let Recylce_cb = null;
-                    if (key)
-                    {
-                        Recylce_cb = async () => await TryToMoveBlock(keyObjMap.get('DisplacedBlocks').uid, 0, uidToMove); // move one block at a time and it's children along with it
-
-                        //console.log(`${nextStr}           <= deprecated YT GIF setting!`);
-                    }
-
-                    else
-                    {
-                        Recylce_cb = async () => await TryToMoveBlock(keyObjMap.get('UnknownBlocks').uid, 0, uidToMove); // well well well don't delete it if you don't know what it is
-
-                        //console.log(`${nextStr}           <= unknown block on the YT GIF Page Settings!`);
-                    }
-                    FinishRec_thenDisplace_cbArr.push(Recylce_cb);
-                }
-                parentState = {
-                    displaced: true,
-                };
-            }
-            async function TryToMoveBlock(parentUid, order, selfUid)
-            {
-                try
-                {
-                    if (parentUid == selfUid)
-                    {
-                        debugger;
-                        return
-                    }
-                    RAP.moveBlock(parentUid, order, selfUid);
-                }
-                catch (err)
-                {
-                    debugger;
-                }
-            }
-        }
+        //#endregion
     }
 }
 async function addAllMissingBlocks()
 {
-    // 0.
     const accObj = {
         accStr: '',
         nextStr: this.accStr,
@@ -544,12 +519,9 @@ async function addAllMissingBlocks()
         accHierarchyUids: [],
     };
 
-    // 1.
     return await Rec_addAllMissingBlocks(window.YT_GIF_SETTINGS_PAGE, accObj);
-
     async function Rec_addAllMissingBlocks(nextObj, accObj = {})
     {
-        // 0.
         let { accStr } = accObj;
         const { tab, nextStr } = accObj;
 
@@ -563,19 +535,37 @@ async function addAllMissingBlocks()
             if (nextObj.hasOwnProperty(property) && typeof nextObj[property] === "object" && nextObj[property] != null && !(nestedPpt instanceof Array))
             {
 
-                // 1.
+                // 1. indent = 0
                 if (property == 'baseKey')
                 {
                     if (nestedPpt.examined == false)
                     {
-                        nestedPpt = await createBaseKey(nestedPpt);
+                        let preStr = null;
+                        const prntKeyToInlineKey = accObj.parentKey;
+
+                        if (nestedPpt.baseValue != undefined) // in most cases it't children will add up information about it
+                        {
+                            preStr = validThirdParameterSplit(nestedPpt);
+                        }
+                        else // conventional - a property that wraps others
+                        {
+                            preStr = nestedPpt.string;
+                        }
+
+                        const manualStt = {
+                            m_uid: accObj.accHierarchyUids[accObj.accHierarchyUids.length - 1] || TARGET_UID,
+                            m_strArr: (preStr)
+                                ? [prntKeyToInlineKey, preStr] : [prntKeyToInlineKey], // extra join? no, then ignore it
+                            m_order: nestedPpt.order,
+                        };
+                        nestedPpt = await UIBlockCreation(nestedPpt, manualStt);
+                        await checkReorderBlockObj(manualStt.m_uid, manualStt.m_order, nestedPpt);
                     }
 
                     HierarchyUids = [...HierarchyUids, nestedPpt?.uid];
                 }
 
-
-                // 2.
+                // 2. the order does matter
                 const nextAccObj = {
                     parentKey: property,
 
@@ -591,60 +581,30 @@ async function addAllMissingBlocks()
 
                 accStr = await Rec_addAllMissingBlocks(nextObj[property], nextAccObj); // recursion with await - 🤯
 
-
-                // 3.
+                // 3. indent = 1
                 if (nestedPpt.examined == false)
                 {
-                    nestedPpt = await createInlineSetting(nextAccObj, nestedPpt);
+                    const manualStt = {
+                        m_uid: HierarchyUids[HierarchyUids.length - 1], // parent key to create under
+                        m_strArr:
+                            [
+                                nextAccObj.accKeys[nextAccObj.accKeys.length - 1],
+                                validThirdParameterSplit(nestedPpt)
+                            ], // uid... x "key_description" x "thirdParameter"
+                        m_order: nestedPpt.order,
+                    }
+
+                    nestedPpt = await UIBlockCreation(nestedPpt, manualStt);
+                    await checkReorderBlockObj(manualStt.m_uid, manualStt.m_order, nestedPpt);
                 }
             }
         }
         return accStr;
-        // 1.
-        async function createBaseKey(nestedPpt)
-        {
-            let preStr = null;
-            const prntKeyToInlineKey = accObj.parentKey;
-
-            if (nestedPpt.baseValue != undefined) // in most cases it't children will add up information about it
-            {
-                preStr = validThirdParameterSplit(nestedPpt);
-            }
-            else // conventional - property that wraps others
-            {
-                preStr = nestedPpt.string;
-            }
-
-            const manualStt = {
-                m_uid: accObj.accHierarchyUids[accObj.accHierarchyUids.length - 1] || TARGET_UID,
-                m_strArr: (preStr)
-                    ? [prntKeyToInlineKey, preStr] : [prntKeyToInlineKey],
-                m_order: nestedPpt.order,
-            };
-            nestedPpt = await UIBlockCreation(nestedPpt, manualStt);
-            return nestedPpt;
-        }
-        // 3.
-        async function createInlineSetting(nextAccObj, nestedPpt)
-        {
-            const manualStt = {
-                m_uid: HierarchyUids[HierarchyUids.length - 1],
-                m_strArr: [
-                    nextAccObj.accKeys[nextAccObj.accKeys.length - 1],
-                    validThirdParameterSplit(nestedPpt)
-                ],
-                m_order: nestedPpt.order,
-            };
-
-            nestedPpt = await UIBlockCreation(nestedPpt, manualStt);
-            return nestedPpt;
-        }
-        /* ********************** */
-        async function UIBlockCreation(keyObj, manual = {})
+        async function UIBlockCreation(baseKeyObj, manual = {})
         {
             const { m_order, m_uid, m_join, m_strArr } = manual;
-            const { uid, string } = fmtSettings(m_strArr, m_join || keyObj.join);
-            const { order: selfOrder } = keyObj;
+            const { uid, string } = fmtSettings(m_strArr, m_join || baseKeyObj.join);
+            const { order: selfOrder } = baseKeyObj;
 
             await RAP.createBlock(
                 m_uid || TARGET_UID,
@@ -652,8 +612,8 @@ async function addAllMissingBlocks()
                 string,
                 uid,
             );
-            await checkReorderBlockObj(m_uid, m_order, keyObj);
-            return assertObjPpt_base(keyObj, string, uid);
+
+            return assertObjPpt_base(baseKeyObj, string, uid);
             //#region local utils
             function fmtSettings(strArr = [], splitter = fmtSplit)
             {
@@ -667,24 +627,24 @@ async function addAllMissingBlocks()
             }
             //#endregion
         }
-        function validThirdParameterSplit(nestedPpt)
-        {
-            let thirdParameter = null;
+    }
 
-            if (nestedPpt.join == fmtSplit)
-            {
-                const value = nestedPpt.sessionValue = nestedPpt.baseValue;
-                thirdParameter = nestedPpt.caputuredValue = `${cptrPrfx}${value}${cptrSufx}`; // BIG BOI  <value>
-            }
-            else if (nestedPpt.join == PmtSplit)
-            {
-                thirdParameter = nestedPpt.string;
-            }
-            return thirdParameter;
+    function validThirdParameterSplit(nestedPpt)
+    {
+        let thirdParameter = null;
+
+        if (nestedPpt.join == fmtSplit)
+        {
+            const value = nestedPpt.sessionValue = nestedPpt.baseValue;
+            thirdParameter = nestedPpt.caputuredValue = `${cptrPrfx}${value}${cptrSufx}`; // BIG BOI  <value>
         }
+        else if (nestedPpt.join == PmtSplit)
+        {
+            thirdParameter = nestedPpt.string;
+        }
+        return thirdParameter;
     }
 }
-/*-----------------------*/
 function assertObjPpt_base(baseKeyObj, string, uid)
 {
     const obj = {
