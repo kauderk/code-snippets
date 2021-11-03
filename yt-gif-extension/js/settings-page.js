@@ -1,9 +1,9 @@
 // version 1 - semi-refactored
-const targetPage = 'roam/js/kauderk/yt-gif/settings';
+const TARGET_PAGE = 'roam/js/kauderk/yt-gif/settings';
 const UTIL_K = window.kauderk.util;
 const RAP = window.kauderk.rap;
 
-let TARGET_UID = RAP.getPageUid(targetPage);
+let TARGET_UID = RAP.getPageUid(TARGET_PAGE);
 
 const fmtSplit = ' : ';
 const PmtSplit = ' / ';
@@ -136,12 +136,13 @@ async function init()
     if (TARGET_UID == null) // Brand new installation
     {
         console.log("*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*");
-        TARGET_UID = await RAP.navigateToUiOrCreate(targetPage);
+        TARGET_UID = await RAP.navigateToUiOrCreate(TARGET_PAGE);
         const addedBlocks = await addAllMissingBlocks(); // 🐌
     }
     else // Read and store Session Values
     {
         console.log("+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+");
+        window.YT_GIF_DIRECT_SETTINGS.set(TARGET_PAGE, { uid: TARGET_UID }); // the most special cases of them all... the actual page
         const entirePageText = await Read_Write_SettingsPage(TARGET_UID, keyObjMap); // 🐌
         const addedBlocks = await addAllMissingBlocks(); // 🐌 // THEY WILL STACK UP AGAINS EACHOTHER IF THEY ARE NOT EXAMINED - careful, bud
     }
@@ -211,7 +212,7 @@ async function assignChildrenMissingValues()
                             }
                         }
                     }
-                    directObjPpts.parentKey = accObj.parentKey || targetPage;
+                    directObjPpts.parentKey = accObj.parentKey || TARGET_PAGE;
 
                     console.log(`${directObjPpts.parentKey} -> ${property}`);
                     keyObjMap.set(property, directObjPpts);
@@ -334,15 +335,8 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
                     }
                 }
 
-
-                if (targeObj.indent != indent && targeObj.indent == 0) // ⚠️ hardcode... new parent uid order 
-                {
-                    await checkReorderBlock(TARGET_UID, selfOrder, crrObjKey);
-                }
-                else
-                {
-                    await checkReorderBlock(parentUid, selfOrder, crrObjKey);
-                }
+                const relevantParentUID = (targeObj.indent == indent) ? parentUid : keyObjMap.get(targeObj.parentKey).uid; // block with proper indent? no, then nest it under it's most relevant parent
+                await checkReorderBlock(relevantParentUID, selfOrder, crrObjKey);
 
                 return true;
             }
