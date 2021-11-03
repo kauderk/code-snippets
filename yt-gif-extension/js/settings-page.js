@@ -131,14 +131,17 @@ async function init()
 {
     const { acc, keyObjMap } = await assignChildrenMissingValues();
     window.YT_GIF_DIRECT_SETTINGS = keyObjMap;
+    // the performance can increase dramatically if ONLY un-examined keyObjMap are reviewd inside addAllMissingBlocks  map.fiter(x=>!examined) or something like that
 
     if (TARGET_UID == null) // Brand new installation
     {
+        console.log("*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*");
         TARGET_UID = await RAP.navigateToUiOrCreate(targetPage);
         const addedBlocks = await addAllMissingBlocks(); // 🐌
     }
     else // Read and store Session Values
     {
+        console.log("+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+");
         const entirePageText = await Read_Write_SettingsPage(TARGET_UID, keyObjMap); // 🐌
         const addedBlocks = await addAllMissingBlocks(); // 🐌 // THEY WILL STACK UP AGAINS EACHOTHER IF THEY ARE NOT EXAMINED - careful, bud
     }
@@ -178,6 +181,7 @@ async function assignChildrenMissingValues()
             if (nextObj.hasOwnProperty(property) && nestedPpt && typeof nestedPpt === "object" && !(nestedPpt instanceof Array))
             {
                 const nextAccObj = {
+                    parentKey: property,
                     indent: indent + 1,
                     inputTypeFromBaseKey: nestedPpt?.baseKey?.inputType,
 
@@ -207,7 +211,9 @@ async function assignChildrenMissingValues()
                             }
                         }
                     }
+                    directObjPpts.parentKey = accObj.parentKey || targetPage;
 
+                    console.log(`${directObjPpts.parentKey} -> ${property}`);
                     keyObjMap.set(property, directObjPpts);
                 }
 
@@ -329,7 +335,15 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
                 }
 
 
-                await checkReorderBlock(parentUid, selfOrder, crrObjKey);
+                if (targeObj.indent != indent && targeObj.indent == 0) // ⚠️ hardcode... new parent uid order 
+                {
+                    await checkReorderBlock(TARGET_UID, selfOrder, crrObjKey);
+                }
+                else
+                {
+                    await checkReorderBlock(parentUid, selfOrder, crrObjKey);
+                }
+
                 return true;
             }
             return false;
@@ -473,7 +487,7 @@ async function addAllMissingBlocks()
                     if (nestedPpt.examined == false)
                     {
                         let preStr = null;
-                        const prntKey = accObj.parentKey;
+                        const prntKeyToInlineKey = accObj.parentKey;
 
                         if (nestedPpt.baseValue != undefined) // in most cases it't children will add up information about it
                         {
@@ -487,11 +501,11 @@ async function addAllMissingBlocks()
                         const manualStt = {
                             m_uid: accObj.accHierarchyUids[accObj.accHierarchyUids.length - 1] || TARGET_UID,
                             m_strArr: (preStr)
-                                ? [prntKey, preStr] : [prntKey], // extra join? no, then ignore it
+                                ? [prntKeyToInlineKey, preStr] : [prntKeyToInlineKey], // extra join? no, then ignore it
                             m_order: nestedPpt.order,
                         };
                         nestedPpt = await UIBlockCreation(nestedPpt, manualStt);
-                        //await checkReorderBlock(manualStt.m_uid, manualStt.m_order, nestedPpt);
+                        await checkReorderBlock(manualStt.m_uid, manualStt.m_order, nestedPpt);
                     }
 
                     HierarchyUids = [...HierarchyUids, nestedPpt?.uid];
@@ -527,22 +541,11 @@ async function addAllMissingBlocks()
                     }
 
                     nestedPpt = await UIBlockCreation(nestedPpt, manualStt);
-                    //await checkReorderBlock(manualStt.m_uid, manualStt.m_order, nestedPpt);
+                    await checkReorderBlock(manualStt.m_uid, manualStt.m_order, nestedPpt);
                 }
             }
         }
         return accStr;
-
-        // async function TryToCreateUIblock(nestedBlock, manualStt)
-        // {
-        //     if (!nestedBlock.examined)
-        //     {
-        //         nestedBlock = await UIBlockCreation(nestedBlock, manualStt);
-        //     }
-        //     return nestedBlock;
-        //     //#region local util
-        //     //#endregion
-        // }
         async function UIBlockCreation(baseKeyObj, manual = {})
         {
             const { m_order, m_uid, m_join, m_strArr } = manual;
@@ -605,6 +608,7 @@ async function checkReorderBlock(parentUid, selfOrder, childObjToMoveUID)
     {
         if (selfOrder != validOrder)
         {
+            debugger;
             await RAP.moveBlock(parentUid, validOrder, validUid);
         }
     }
@@ -694,6 +698,7 @@ function baseTmp(_inputType, _string = '')
         examined: false,
 
         uid: '',
+        parentKey: '',
         string: _string,
 
         inputType: _inputType,
