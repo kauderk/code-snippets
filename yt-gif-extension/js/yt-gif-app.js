@@ -416,6 +416,7 @@ async function Ready()
 
                 const domEl = document.getElementById(childKey); // ❗❗❗
 
+                debugger;
                 if (domEl)
                 {
                     parentObj[childKey] = domEl;
