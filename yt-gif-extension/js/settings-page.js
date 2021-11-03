@@ -29,7 +29,7 @@ window.YT_GIF_SETTINGS_PAGE = {
             key: InlinePmt("\n`yt_gif_settings_key`\nsecond way to know which setting to change"),
             value: InlinePmt("\n`<value>`\nin many cases optional and most of the time a binary switch, on - off"),
         },
-        reach: InlinePmt(`Blocks below "LogStatus" will be ignored`),
+        //reach: InlinePmt(`Blocks below "LogStatus" will be ignored`),
     },
     display: {
         baseKey: BaseSetting(chk),
@@ -77,10 +77,14 @@ window.YT_GIF_SETTINGS_PAGE = {
     },
     range: {
         baseKey: BaseSetting(rng),
-        /*seconds up to 60*/
-        timestamp_display_scroll_offset: dom('5', int),
-        /* integers from 0 to 100 */
-        end_loop_sound_volume: dom('50', int),
+        timestamp_display_scroll_offset: {
+            baseKey: BaseDom('5', int),
+            tdso_opt: InlinePmt(`seconds up to 60`),
+        },
+        end_loop_sound_volume: {
+            baseKey: BaseDom('50', int),
+            elsv_opt: InlinePmt(`integers from 0 to 100`),
+        },
     },
     InAndOutKeys: {
         baseKey: BaseSetting(chk),
@@ -93,7 +97,7 @@ window.YT_GIF_SETTINGS_PAGE = {
         baseKey: BaseSetting(),
         video_volume: {
             baseKey: BaseInitSetting(40, int),
-            vv_opt: InlinePmt(`from 0 to 100`),
+            vv_opt: InlinePmt(`integers from 0 to 100`),
         },
         css_theme: {
             baseKey: BaseInitSetting('dark', str),
@@ -299,11 +303,10 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
                     const { stringOK, v_string, v_uid } = await validateBlockContent(targeObj, nextStr, splitedStrArr, uid, accObj.nextUID);
                     if (!stringOK)
                     {
-                        debugger;
                         console.log(`Updating block  ((${uid})) -> \n${nextStr} \nﾠ\nto ((${v_uid})) ->  \nﾠ\n${v_string}`)
                         await RAP.updateBlock(v_uid, v_string);
                         p_string = v_string;
-                        p_uid = uid;
+                        p_uid = v_uid;
                     }
                 }
 
@@ -321,7 +324,7 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
 
                     if (!caputureValueOk && splitedStrArr[2]) // caputured string too
                     {
-                        console.warn(`"${nextStr}" value is looks weird, it will default to false...`);
+                        console.warn(`"${nextStr}" value looks weird, it will default to false...`);
                     }
                 }
 
@@ -330,22 +333,6 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
                 return true;
             }
             return false;
-
-            async function checkReorderBlock(parentUid, selfOrder, childObjToMoveUID)
-            {
-                const validOrder = childObjToMoveUID.order;
-                const validUid = childObjToMoveUID.uid;
-                try
-                {
-                    if (selfOrder != validOrder)
-                    {
-                        await RAP.moveBlock(parentUid, validOrder, validUid);
-                    }
-                } catch (err)
-                {
-                    debugger;
-                }
-            }
         }
         async function validateBlockContent(obj, nextStr, splitedStrArr, caputuredUID, nextUID)
         {
@@ -504,6 +491,7 @@ async function addAllMissingBlocks()
                             m_order: nestedPpt.order,
                         };
                         nestedPpt = await UIBlockCreation(nestedPpt, manualStt);
+                        //await checkReorderBlock(manualStt.m_uid, manualStt.m_order, nestedPpt);
                     }
 
                     HierarchyUids = [...HierarchyUids, nestedPpt?.uid];
@@ -539,6 +527,7 @@ async function addAllMissingBlocks()
                     }
 
                     nestedPpt = await UIBlockCreation(nestedPpt, manualStt);
+                    //await checkReorderBlock(manualStt.m_uid, manualStt.m_order, nestedPpt);
                 }
             }
         }
@@ -608,6 +597,22 @@ function assertObjPpt_base(baseKeyObj, string, uid)
     }
     return Object.assign(baseKeyObj, obj);
 }
+async function checkReorderBlock(parentUid, selfOrder, childObjToMoveUID)
+{
+    const validOrder = childObjToMoveUID.order;
+    const validUid = childObjToMoveUID.uid;
+    try
+    {
+        if (selfOrder != validOrder)
+        {
+            await RAP.moveBlock(parentUid, validOrder, validUid);
+        }
+    }
+    catch (err)
+    {
+        debugger;
+    }
+}
 //#endregion
 
 
@@ -631,10 +636,21 @@ function InlinePmt(blockContent = '')
     }
     return Object.assign(BasePmt(), promptObj);
 }
-/*---------------------------------------------*/
+/*--------------------------------*/
 function BaseSetting(inputType)
 {
     return baseTmp(inputType);
+}
+/*---------------------------------------------*/
+function BaseDom(baseValue = '', inputType)
+{
+    const domObj = {
+        domEl: '',
+        baseValue: baseValue,
+        inputType: inputType,
+        inlineObj: false,
+    }
+    return Object.assign(subTemp(), domObj);
 }
 function dom(baseValue = '', inputType)
 {
@@ -645,7 +661,7 @@ function dom(baseValue = '', inputType)
     }
     return Object.assign(subTemp(), domObj);
 }
-/*---------------------------------------------*/
+/*--------------------*/
 function BaseInitSetting(baseValue = '', inputType)
 {
     const subInputObj = {
@@ -659,7 +675,7 @@ function initSetting(baseValue = '', inputType)
 {
     return subTemp(baseValue, inputType);
 }
-/*---------------------------------------------*/
+/*---------------------------------------------------------------*/
 function subTemp(baseValue = '', inputType)
 {
     const subSub = {
@@ -689,7 +705,7 @@ function baseTmp(_inputType, _string = '')
         inlineObj: false,
     }
 }
-/*---------------------------------------------*/
+/*---------------------------------------------------------------*/
 //#endregion
 
 
@@ -720,6 +736,11 @@ added
 
 
 bugs ☐ ☑
+    major bugs when " : " or " / " are mixed up together
+        they wont't be removed or deleted when the obj is updated
+
+    checkReorderBlock won't work if the order is in the right spot
+        nested under a wrong parent
 
 
 FIXME
