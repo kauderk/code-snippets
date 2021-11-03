@@ -80,7 +80,7 @@ const videoParams = {
 
     speed: 1,
 
-    volume: window.YT_GIF_SETTINGS_PAGE.defaultValues.video_volume.baseKey.sessionValue,
+    volume: window.YT_GIF_SETTINGS_PAGE.defaultValues.video_volume.baseKey.sessionValue, // window.YT_GIF_DIRECT_SETTINGS.get('video_volume').sessionValue,
     updateVolume: 30, // 'this' will be set afterwards
     volumeURLmapHistory: [],
 };
@@ -1255,21 +1255,15 @@ async function onPlayerReady(event)
 
 
 
-    // Used inside many functions 
-    const { playStyle, muteStyle } = UI;
-
     // 2. play style | pause style
-    //#region variables used inside the 'change' callbacks - play/mute Styles
-    const { visible_clips_start_to_play_unmuted } = playStyle;
-    const { strict_mute_everything_except_current, muted_on_any_mouse_interaction } = muteStyle;
     //#endregion
-    for (const p in playStyle)
+    for (const p in UI.playStyle)
     {
-        playStyle[p].addEventListener('change', playStyleDDMO);
+        UI.playStyle[p].addEventListener('change', playStyleDDMO);
     }
-    for (const m in muteStyle)
+    for (const m in UI.muteStyle)
     {
-        muteStyle[m].addEventListener('change', muteStyleDDMO);
+        UI.muteStyle[m].addEventListener('change', muteStyleDDMO);
     }
 
 
@@ -1371,9 +1365,9 @@ async function onPlayerReady(event)
     //#region 2. play/mute styles
     function playStyleDDMO()
     {
-        if (!UTILS.inViewport(iframe)) return; //play all VISIBLE Players, this will be called on all visible iframes
+        if (UTILS.isElementVisible(iframe)) return; //play all VISIBLE Players, this will be called on all visible iframes
 
-        if (visible_clips_start_to_play_unmuted.checked)
+        if (UI.playStyle.visible_clips_start_to_play_unmuted.checked)
         {
             togglePlay(true);
             isSoundingFine(false);
@@ -1385,9 +1379,9 @@ async function onPlayerReady(event)
     }
     function muteStyleDDMO()
     {
-        if (!UTILS.inViewport(iframe)) return; //mute all VISIBLE Players, this will be called on all visible iframes
+        if (UTILS.isElementVisible(iframe)) return; //mute all VISIBLE Players, this will be called on all visible iframes
 
-        if (strict_mute_everything_except_current.checked || muted_on_any_mouse_interaction.checked)
+        if (UI.playStyle.strict_mute_everything_except_current.checked || UI.playStyle.muted_on_any_mouse_interaction.checked)
         {
             isSoundingFine(false);
         }
@@ -1455,7 +1449,7 @@ async function onPlayerReady(event)
             //#region local utils
             function LoopTroughVisibleYTGIFs(config = { styleQuery, others_callback: () => { }, self_callback: () => { } })
             {
-                const ytGifs = UTILS.inViewport(UTILS.allIframeStyle(config?.styleQuery));
+                const ytGifs = UTILS.inViewportEls(UTILS.allIframeStyle(config?.styleQuery));
                 for (const i of ytGifs)
                 {
                     const blockID = UTILS.closestBlockID(i);
@@ -1638,13 +1632,13 @@ async function onPlayerReady(event)
     {
         // expensive for sure 🙋
         UTILS.RemoveElsEventListeners(withEventListeners);
-        for (const p in playStyle)
+        for (const p in UI.playStyle)
         {
-            playStyle[p].removeEventListener('change', playStyleDDMO); // all valid, toggle play state
+            UI.playStyle[p].removeEventListener('change', playStyleDDMO); // all valid, toggle play state
         }
-        for (const m in muteStyle)
+        for (const m in UI.muteStyle)
         {
-            muteStyle[m].removeEventListener('change', muteStyleDDMO); // all valid, toggle play state
+            UI.muteStyle[m].removeEventListener('change', muteStyleDDMO); // all valid, toggle play state
         }
 
 
@@ -1753,7 +1747,7 @@ async function onPlayerReady(event)
                     {
                         videoIsPlayingWithSound(true);
                     }
-                    else if (UTILS.inViewport(iframe) && !t.__proto__.globalHumanInteraction)
+                    else if (UTILS.isElementVisible(iframe) && !t.__proto__.globalHumanInteraction)
                     {
                         togglePlay(UI.playStyle.visible_clips_start_to_play_unmuted.checked); // pause
                     }
@@ -1978,7 +1972,7 @@ function onStateChange(state)
 //#region Utils
 function validSoundURL()
 {
-    const src = window.YT_GIF_SETTINGS_PAGE.defaultValues.end_loop_sound_src.sessionValue;
+    const src = window.YT_GIF_SETTINGS_PAGE.defaultValues.end_loop_sound_src.baseKey.sessionValue;
     if (UTILS.isValidUrl(src))
     {
         return src
