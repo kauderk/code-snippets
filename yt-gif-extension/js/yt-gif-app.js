@@ -868,7 +868,7 @@ async function Ready()
 function ObserveIframesAndDelployYTPlayers(targetClass)
 {
     // 1. set up all visible YT GIFs
-    const visible = UTILS.inViewport(AvoidAllZoomChilds());
+    const visible = UTILS.inViewportEls(AvoidAllZoomChilds());
     for (const component of visible)
     {
         onYouTubePlayerAPIReady(component, 'first wave');
