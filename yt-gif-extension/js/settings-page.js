@@ -93,6 +93,17 @@ window.YT_GIF_SETTINGS_PAGE = {
         altKey: dom(),
         iaok_opt: InlinePmt(`middle mouse button is on by default`),
     },
+    // defaultValues: {
+    //     baseKey: BaseSetting(),
+    //     video_volume: {
+    //         baseKey: BaseInitSetting(40, int),
+    //         vv_opt: InlinePmt(`integers from 0 to 100`),
+    //     },
+    //     css_theme: {
+    //         baseKey: BaseInitSetting('dark', str),
+    //         ct_opt: InlinePmt(`"dark" or "light"`),
+    //     },
+    // },
     defaultValues: {
         baseKey: BaseSetting(),
         video_volume: {
@@ -116,7 +127,15 @@ window.YT_GIF_SETTINGS_PAGE = {
             elss_opt: InlinePmt(`src sound when yt gif makes a loop, empty if unwanted`),
         },
     },
-    LogStatus: InlinePmt(`Everything looks alright :D`),
+    LogStatus: {
+        baseKey: BasePmt(`Everything looks alright :D`),
+        DisplacedBlocks: {
+            baseKey: BasePmt(`invalid block settings, deleted or deprecated`),
+        },
+        UknownBlocks: {
+            baseKey: BasePmt(`... to the YT GIF SETTINGS PAGE script algorithm-functions`),
+        },
+    },
 }
 const settingsReach = Object.keys(window.YT_GIF_SETTINGS_PAGE).length;
 // THE ORDER DOES MATTER, because of the counter
@@ -135,19 +154,17 @@ async function init()
 
     if (TARGET_UID == null) // Brand new installation
     {
-        console.log("*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*");
         TARGET_UID = await RAP.navigateToUiOrCreate(TARGET_PAGE);
         const addedBlocks = await addAllMissingBlocks(); // 🐌
     }
     else // Read and store Session Values
     {
-        console.log("+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+\n+");
         window.YT_GIF_DIRECT_SETTINGS.set(TARGET_PAGE, { uid: TARGET_UID }); // the most special cases of them all... the actual page
         const entirePageText = await Read_Write_SettingsPage(TARGET_UID, keyObjMap); // 🐌
         const addedBlocks = await addAllMissingBlocks(); // 🐌 // THEY WILL STACK UP AGAINS EACHOTHER IF THEY ARE NOT EXAMINED - careful, bud
     }
     await RAP.SetNumberedViewWithUid(TARGET_UID);
-    await RAP.CollapseDirectcChildren(TARGET_UID, false);
+    //await RAP.CollapseDirectcChildren(TARGET_UID, false);
 }
 
 //#region HIDDEN FUNCTIONS
@@ -214,7 +231,6 @@ async function assignChildrenMissingValues()
                     }
                     directObjPpts.parentKey = accObj.parentKey || TARGET_PAGE;
 
-                    console.log(`${directObjPpts.parentKey} -> ${property}`);
                     keyObjMap.set(property, directObjPpts);
                 }
 
@@ -252,21 +268,48 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
     }
 
     const accObj = { accStr: '' };
-    return await Rec_Read_Write_SettingsPage(ChildrenHierarchy[0][0], accObj);
+    let FinishRec_ThenDiplaceCallbacksArr = []; // acc inside the Rec_Func
+
+    const entirePageText = await Rec_Read_Write_SettingsPage(ChildrenHierarchy[0][0], accObj);
+
+    for (const displaceBlock_cb of FinishRec_ThenDiplaceCallbacksArr)
+    {
+        await displaceBlock_cb(); // this is fucking CRAZY!!
+    }
+
+    return entirePageText;
+
+
     async function Rec_Read_Write_SettingsPage(nextObj, accObj)
     {
         let { accStr } = accObj;
+        let parentState = {
+            displaced: false, // can loop throughout its children
+        }
+
         const { nextUID, keyFromLevel0, selfOrder } = accObj;
         const { tab, nextStr, indent, parentUid } = await RelativeChildInfo(nextObj);
         const { uid, key, value, caputuredValue, caputureValueOk, splitedStrArr, join } = getKeywordsFromBlockString(nextStr);
 
         if (! await SuccessfulSttgUpt(indent)) // remove it
         {
-            const uidToDelete = uid || nextUID;
-            if (uidToDelete)
+            const uidToDelete = uid || nextUID || nextObj.uid;
+            if (uidToDelete != TARGET_UID) // the nature of the recursive func makes it so the page uid can't be avoided, you don't want that - exit
             {
-                debugger;
-                await tryToremoveBlock(uidToDelete); // 🐌
+                if (accObj?.parentState?.displaced === true)
+                {
+                    // don't move anything because it's parent was already displaced
+                }
+                else
+                {
+                    FinishRec_ThenDiplaceCallbacksArr.push(async function () 
+                    {
+                        await tryToremoveBlock(uidToDelete, nextStr); // this is craziest shit I've ever seen... come on now
+                    })
+                }
+                parentState = {
+                    displaced: true, // it's children can't loop anymore - also you want to set this whitin the Rec_Fuc so there are no hanging clousures expecting values
+                }
             }
         }
         else
@@ -287,12 +330,11 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
                     nextUID: uid,
                     keyFromLevel0: key,
                     selfOrder: child.order,
+                    parentState: parentState,
+                    RoamObj: child,
                 };
 
                 accStr = await Rec_Read_Write_SettingsPage(child, nextAccObj);
-                if (child.order < settingsReach)
-                {
-                }
             }
         }
 
@@ -335,8 +377,13 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
                     }
                 }
 
-                const relevantParentUID = (targeObj.indent == indent) ? parentUid : keyObjMap.get(targeObj.parentKey).uid; // block with proper indent? no, then nest it under it's most relevant parent
-                await checkReorderBlock(relevantParentUID, selfOrder, crrObjKey);
+                FinishRec_ThenDiplaceCallbacksArr.push(async function () 
+                {
+                    const relevantParentUID = (targeObj.indent == indent) ? parentUid : keyObjMap.get(targeObj.parentKey).uid; // block with proper indent? no, then nest it under it's most relevant parent
+                    await checkReorderBlock(relevantParentUID, selfOrder, crrObjKey);
+                    // sometimes the nested blocks get reviwed before it's actual parents
+                    // finish Rec_Fun then reorder them
+                })
 
                 return true;
             }
@@ -365,18 +412,17 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
                 stringOK
             }
         }
-        async function tryToremoveBlock(uid)
+        async function tryToremoveBlock(uid, nextStr)
         {
-            if (uid == TARGET_UID)
+            try
             {
-                console.log(`"${nextStr}" pass on removal`);
-                return;
-                // the nature of the recursive func makes it
-                // so the page can't be avoided, you don't want that - return
+                await RAP.moveBlock(keyObjMap.get('DisplacedBlocks').uid, 10000, uid); // I only want to move a block and it's children along with it
             }
-
-            console.log(`"${nextStr}" <= invalid YT GIF setting was removed!`);
-            await RAP.deleteBlock(uid);
+            catch (err)
+            {
+                debugger;
+            }
+            console.log(`${nextStr}           <= deprecated YT GIF setting!`);
         }
         async function RelativeChildInfo(obj)
         {
@@ -602,7 +648,6 @@ async function checkReorderBlock(parentUid, selfOrder, childObjToMoveUID)
     {
         if (selfOrder != validOrder)
         {
-            debugger;
             await RAP.moveBlock(parentUid, validOrder, validUid);
         }
     }
@@ -740,6 +785,16 @@ bugs ☐ ☑
 
     checkReorderBlock won't work if the order is in the right spot
         nested under a wrong parent
+
+    somewhat CRITICAL, sometimes the roam api loads blocks with the same order... yikes
+
+    loading inlinePmts...
+        they get discarted on the recycle bin
+            sometimes under the LogStatus block
+
+        possible fix...
+            move basekey objects with it's children to the recycle bin
+
 
 
 FIXME
