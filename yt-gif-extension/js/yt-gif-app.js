@@ -49,7 +49,7 @@ const YT_GIF_OBSERVERS_TEMP = {
         console.log(`${mutObjRes.counter} mutation and ${insObjRes.counter} intersection master observers cleaned`);
 
         function cleanObserverArr(observer)
-        {
+        {//https://www.codegrepper.com/code-examples/javascript/how+to+do+a+reverse+loop+in+javascript#:~:text=www.techiedelight.com-,how%20to%20reverse%20loop%20in%20javascript,-javascript%20by%20Dark
             let counter = 0;
             for (let i = observer.length - 1; i >= 0; i--)
             {
@@ -220,24 +220,60 @@ const rm_components = {
         classToObserve: `rm-xparser-default-${cssData.yt_gif}`,
         BinaryDomUI: () => UI.deploymentStyle.deployment_style_yt_gif,
     },
-    current: {
-        key: ''
+    state: {
+        currentKey: '',
+        initialKey: '',
+    },
+    assertCurrentKey: function (override_roam_video_component)
+    {
+        let newKey = null; // this can be shorter for sure, how though?
+        if (UTILS.isTrue(override_roam_video_component)) //video
+        {
+            newKey = 'video';
+        }
+        else if (override_roam_video_component === 'both') // both
+        {
+            newKey = 'both';
+        }
+        else // yt-gif
+        {
+            newKey = 'yt_gif';
+        }
+        return this.state.currentKey = newKey;
+    },
+    validOverrideComponentSettingBlock: function (el)
+    {
+        const idPrfx = (key) => `deployment_style_${key}`;
+        let replaceWith = null;
+        switch (el.id)
+        {
+            case idPrfx('yt_gif'):
+                replaceWith = 'false';
+                break;
+            case idPrfx('video'):
+                replaceWith = 'true';
+                break;
+            case idPrfx('both'):
+                replaceWith = 'both';
+                break;
+        }
+        return replaceWith;
     },
     RunMasterObserverWithKey: function (key)
     {
-        console.log("running master observer form obj rm_components");
-        this.current.key = key;
+        this.state.currentKey = key;
         this[key]['runMasterObservers'](); // THIS IS INSANE!!!
     },
     ChargeMasterObserversWithValidDeploymentStyle: function ()
     {
-        debugger;
         const filterKeyProperty = 'deploymentStyle';
         const filtered = UTILS.FilterSubObjByKey(filterKeyProperty, this);
+
         for (const key in filtered)
         {
             if (UTILS.isTrue(this[key][filterKeyProperty]())) // THIS IS CRAZY
             {
+                debugger;
                 this.RunMasterObserverWithKey(key);
                 return;
             }
@@ -255,6 +291,7 @@ Object.assign(rm_components.both, baseDeploymentObj_both());
 /*-----------------------------------*/
 
 
+
 if (
     typeof (UTILS) !== 'undefined' &&
     typeof (YT) != 'undefined'
@@ -266,6 +303,8 @@ else
 {
     console.log(`The YT GIF Extension won't be installed, major scripts are missing... submit you issue here: ${links.help.github_isuues}`);
 }
+
+
 
 async function Ready()
 {
@@ -304,17 +343,18 @@ async function Ready()
 
 
 
-    // 2. assign direct values to the main object
-    DDM_to_UI_variables(); // filtering baseKey & prompts and transforming from obj to values or dom els - it is not generic and only serves for the first indent level (from parent to child keys)
+    // 2. assign direct values to the main object | UI - user inputs
+    DDM_to_UI_variables(); // filtering baseKey & prompts and transforming them from objs to values or dom els - it is not generic and only serves for the first indent level (from parent to child keys)
     SaveSettingsOnChanges(); // the seetings page script is responsable for everything, this are just events
 
 
 
-    // 3. set up events pre observers
+    // 3. set up events
     //#region relevant variables
-    const { ddm_icon, ddm_focus, ddm_info_message_selector, dropdown__hidden } = cssData;
+    const { ddm_icon, ddm_focus, ddm_info_message_selector, dropdown__hidden, awaitng_input_with_thumbnail } = cssData;
     const { timestamp_display_scroll_offset, end_loop_sound_volume } = UI.range;
     const { rangeValue, loop_volume_displayed } = UI.label;
+    const { awaiting_with_video_thumnail_as_bg } = UI.experience;
     //#endregion
 
     DDM_IconFocusBlurEvents(ddm_icon, ddm_focus, ddm_info_message_selector);
@@ -324,23 +364,23 @@ async function Ready()
     UpdateOnScroll_RTM(timestamp_display_scroll_offset, rangeValue);
     UpdateOnScroll_RTM(end_loop_sound_volume, loop_volume_displayed);
 
-
-
-    // 4. run extension and events after set up
-    //#region relevant variables
-    const { override_roam_video_component } = UI.defaultValues;
-    const { awaiting_with_video_thumnail_as_bg } = UI.experience;
-    const { awaitng_input_with_thumbnail } = cssData;
-    let { key } = rm_components.current;
-    //#endregion
-
-    key = KeyToObserve_UCS(override_roam_video_component);
-
-    await MasterObserver_UCS_RTM(); // listening for changes // BIG BOI FUNCTION
-
     TogglePlayerThumbnails_DDM_RTM(awaiting_with_video_thumnail_as_bg, awaitng_input_with_thumbnail);
 
-    rm_components.RunMasterObserverWithKey(key);
+
+
+
+    // 4. run extension and events - set up
+    //#region relevant variables
+    const { override_roam_video_component } = UI.defaultValues;
+    //#endregion
+
+    await MasterObserver_UCS_RTM(); // listening for changes | change the behaviour RTM // BIG BOI FUNCTION
+
+    debugger;
+    rm_components.state.initialKey = rm_components.assertCurrentKey(override_roam_video_component);
+    const { initialKey } = rm_components.state;
+    rm_components[initialKey].checkSubDeploymentStyle(true); // start with some value
+    rm_components.RunMasterObserverWithKey(initialKey);
 
     console.log('YT GIF extension activated');
 
@@ -558,27 +598,12 @@ async function Ready()
     }
     function updateOverrideComponentSettingBlock(e, el, keyObj, siblingKeys)
     {
-        debugger;
-        const idPrfx = (key) => `deployment_style_${key}`;
-        let replaceWith = 'error';
-        switch (el.id)
+        const validOverride = rm_components.validOverrideComponentSettingBlock(el);
+        if (validOverride)
         {
-            case idPrfx('yt_gif'):
-                replaceWith = 'false';
-                break;
-            case idPrfx('video'):
-                replaceWith = 'true';
-                break;
-            case idPrfx('both'):
-                replaceWith = 'both';
-                break;
-            //case 'deploy_yt_gifs':
-            default:
-                debugger;
-                return;
-                break;
+            rm_components.assertCurrentKey(validOverride);
+            window.YT_GIF_DIRECT_SETTINGS.get('override_roam_video_component')?.UpdateSettingsBlockValue(validOverride);
         }
-        window.YT_GIF_DIRECT_SETTINGS.get('override_roam_video_component')?.UpdateSettingsBlockValue(replaceWith);
     }
     //#endregion
 
@@ -698,26 +723,6 @@ async function Ready()
 
         UptLabel(scroll);
     }
-    //#endregion
-
-
-    //#region 4. runtime events and master observers
-    function KeyToObserve_UCS(override_roam_video_component)
-    {
-        // this can be shorter for sure, how though?
-        if (UTILS.isTrue(override_roam_video_component)) //video
-        {
-            return 'video';
-        }
-        else if (override_roam_video_component === 'both') // both
-        {
-            return 'both';
-        }
-        else // yt-gif
-        {
-            return 'yt_gif';
-        }
-    }
     function TogglePlayerThumbnails_DDM_RTM(awaiting_with_video_thumnail_as_bg, awaitng_input_with_thumbnail)
     {
         // BIND TO SETTINGS PAGE
@@ -726,15 +731,15 @@ async function Ready()
         function handleIMGbgSwap(e)
         {
             const awaitingGifs = [...document.querySelectorAll(`.${awaitng_input_with_thumbnail}`)];
-            for (const i of awaitingGifs)
+            for (const el of awaitingGifs)
             {
                 if (awaiting_with_video_thumnail_as_bg.checked)
                 {
-                    UTILS.applyIMGbg(i, i.dataset.videoUrl);
+                    UTILS.applyIMGbg(el, el.dataset.videoUrl);
                 }
                 else
                 {
-                    UTILS.removeIMGbg(i); // spaguetti
+                    UTILS.removeIMGbg(el); // spaguetti
                 }
             }
         }
@@ -742,7 +747,7 @@ async function Ready()
     //#endregion
 
 
-    //#region BIG BOI FUNCTION - change the funcionality of the extension
+    //#region 4. BIG BOI FUNCTION - change the funcionality of the extension
     async function MasterObserver_UCS_RTM()
     {
         const { suspend_yt_gif_deployment, deploy_yt_gifs } = UI.deploymentStyle;
@@ -788,7 +793,8 @@ async function Ready()
             loading: `** Setting up Observers **`,
         }
         labelCheckMenu.innerHTML = deployInfo.suspend;
-        rm_components[key].checkSubDeploymentStyle(true);
+
+
 
         // 1.
         checkMenu.addEventListener('change', handleAnimationsInputRestriction);
@@ -1989,23 +1995,7 @@ function onStateChange(state)
         {
             if (UI.experience.sound_when_video_loops.checked)
             {
-                play(soundSrc);
-                //#region util
-                function play(url)
-                {
-                    return new Promise(function (resolve, reject)
-                    { // return a promise
-                        var audio = new Audio();                     // create audio wo/ src
-                        audio.preload = "auto";                      // intend to play through
-                        audio.volume = UTILS.mapRange(UI.range.end_loop_sound_volume.value, 0, 100, 0, 1.0);
-                        audio.autoplay = true;                       // autoplay when loaded
-                        audio.onerror = reject;                      // on error, reject
-                        audio.onended = resolve;                     // when done, resolve
-
-                        audio.src = url
-                    });
-                }
-                //#endregion
+                PlayEndSound(soundSrc);
             }
         }
 
@@ -2034,6 +2024,21 @@ function onStateChange(state)
     if (state.data === YT.PlayerState.PAUSED)
     {
         t.__proto__.ClearTimers();
+    }
+
+    function PlayEndSound(url)
+    {
+        return new Promise(function (resolve, reject)
+        { // return a promise
+            var audio = new Audio();                     // create audio wo/ src
+            audio.preload = "auto";                      // intend to play through
+            audio.volume = UTILS.mapRange(UI.range.end_loop_sound_volume.value, 0, 100, 0, 1.0);
+            audio.autoplay = true;                       // autoplay when loaded
+            audio.onerror = reject;                      // on error, reject
+            audio.onended = resolve;                     // when done, resolve
+
+            audio.src = url
+        });
     }
 }
 
