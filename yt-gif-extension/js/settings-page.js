@@ -19,7 +19,9 @@ const rad = 'radio',
     url = 'url',
     rng = 'range';
 
-
+/**
+ * each key must be unique, careful bud
+ */
 window.YT_GIF_SETTINGS_PAGE = {
     Workflow: {
         baseKey: BasePmt(`BIP BOP . . .`),
@@ -92,6 +94,31 @@ window.YT_GIF_SETTINGS_PAGE = {
         altKey: dom(),
         iaok_opt: InlinePmt(`middle mouse button is on by default`),
     },
+    playerDefaultValues: {
+        baseKey: BaseSetting(),
+        player_span: {
+            baseKey: BaseInitSetting('50%', str),
+            ps_opt: InlinePmt(`empty means 50% - only valid css units like px  %  vw`),
+        },
+        player_volume: {
+            baseKey: BaseInitSetting(40, int),
+            vv_opt: InlinePmt(`integers from 0 to 100`),
+        },
+        player_interface_language: {
+            baseKey: BaseInitSetting('en', str),
+            pil_opt: InlinePmt('inline url parameter `&hl=` has priority over this'),
+            pli_guide: InlinePmt(`https://developers.google.com/youtube/player_parameters#:~:text=Sets%20the%20player%27s%20interface%20language.%20The%20parameter%20value%20is%20an%20ISO%20639-1%20two-letter%20language%20code%20or%20a%20fully%20specified%20locale.%20For%20example%2C%20fr%20and%20fr-ca%20are%20both%20valid%20values.%20Other%20language%20input%20codes%2C%20such%20as%20IETF%20language%20tags%20(BCP%2047)%20might%20also%20be%20handled%20properly.`),
+        },
+        player_captions_language: {
+            baseKey: BaseInitSetting('en', str),
+            pcl_opt: InlinePmt('inline url parameter `&cc=` has priority over this'),
+            pcl_guide: InlinePmt(`https://developers.google.com/youtube/player_parameters#:~:text=This%20parameter%20specifies%20the%20default%20language%20that%20the%20player%20will%20use%20to%20display%20captions.%20Set%20the%20parameter%27s%20value%20to%20an%20ISO%20639-1%20two-letter%20language%20code.`),
+        },
+        player_captions_on_load: {
+            baseKey: BaseInitSetting('true', bol),
+            pcol_guide: InlinePmt("Browsers love to cash data... if set to -true- most certently you'll get caption on load, but it's hard to tell otherwise... Also, the mixmatch of diferent `&hl=` and `&cc=` can cause to not show the captions on load"),
+        },
+    },
     defaultValues: {
         baseKey: BaseSetting(),
         css_theme: {
@@ -105,29 +132,6 @@ window.YT_GIF_SETTINGS_PAGE = {
         end_loop_sound_src: {
             baseKey: BaseInitSetting('https://freesound.org/data/previews/256/256113_3263906-lq.mp3', url),
             elss_opt: InlinePmt(`src sound when yt gif makes a loop, empty if unwanted`),
-        },
-
-        player_span: {
-            baseKey: BaseInitSetting('50%', str),
-            ps_opt: InlinePmt(`empty means 50% - only valid css units like px  %  vw`),
-        },
-        player_volume: {
-            baseKey: BaseInitSetting(40, int),
-            vv_opt: InlinePmt(`integers from 0 to 100`),
-        },
-        player_interface_language: {
-            baseKey: BaseInitSetting('en', str),
-            pcl_opt: InlinePmt('inline url parameter `&hl=` has priority over this'),
-            pli_guide: InlinePmt(`https://developers.google.com/youtube/player_parameters#:~:text=Sets%20the%20player%27s%20interface%20language.%20The%20parameter%20value%20is%20an%20ISO%20639-1%20two-letter%20language%20code%20or%20a%20fully%20specified%20locale.%20For%20example%2C%20fr%20and%20fr-ca%20are%20both%20valid%20values.%20Other%20language%20input%20codes%2C%20such%20as%20IETF%20language%20tags%20(BCP%2047)%20might%20also%20be%20handled%20properly.`),
-        },
-        player_captions_language: {
-            baseKey: BaseInitSetting('en', str),
-            pcl_opt: InlinePmt('inline url parameter `&cc=` has priority over this'),
-            pcl_guide: InlinePmt(`https://developers.google.com/youtube/player_parameters#:~:text=This%20parameter%20specifies%20the%20default%20language%20that%20the%20player%20will%20use%20to%20display%20captions.%20Set%20the%20parameter%27s%20value%20to%20an%20ISO%20639-1%20two-letter%20language%20code.`),
-        },
-        player_captions_on_load: {
-            baseKey: BaseInitSetting('true', bol),
-            pcol_guide: InlinePmt("Browsers love to cash data... if set to -true- most certently you'll get caption on load, but it's hard to tell otherwise... Also, the mixmatch of diferent `&hl=` and `&cc=` can cause to not show the captions on load"),
         },
     },
     LogStatus: {
@@ -216,7 +220,7 @@ async function assignChildrenMissingValues()
                     inputTypeFromBaseKey: nestedPpt?.baseKey?.inputType,
 
                     accStr: accStr,
-                    nextStr: nestedPpt.string || '',
+                    nextStr: nestedPpt.string || '', // debugging purposes
                 };
 
 
@@ -301,7 +305,7 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
     return entirePageText;
 
 
-    async function Rec_Read_Write_SettingsPage(nextObj, accObj)
+    async function Rec_Read_Write_SettingsPage(nextChildObj, accObj)
     {
         // 0.
         let { accStr } = accObj;
@@ -310,8 +314,8 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
         }
 
         const { nextUID, keyFromLevel0, selfOrder } = accObj;
-        const { tab, nextStr, indent, parentUid } = await RelativeChildInfo(nextObj); // vs .1
-        const { uid, key, value, caputuredValue, caputureValueOk, splitedStrArr, join } = getKeywordsFromBlockString(nextStr); // vs .2
+        const { tab, nextStr, indent, parentUid } = await RelativeChildInfo(nextChildObj); // var from obj .1
+        const { uid, key, value, caputuredValue, caputureValueOk, splitedStrArr, join } = getKeywordsFromBlockString(nextStr); // var from obj .2
 
         // 1.
         if (! await SuccessfulSettingsUpt(indent))
@@ -327,9 +331,9 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
 
 
         // 2.
-        if (nextObj.children)
+        if (nextChildObj.children)
         {
-            const object = await RAP.getBlockOrPageInfo(nextObj.uid);
+            const object = await RAP.getBlockOrPageInfo(nextChildObj.uid);
             const children = RAP.sortObjectsByOrder(object[0][0].children);
 
             // 3. rec
@@ -350,7 +354,7 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
 
         return accStr;
 
-        // vs .1
+        // var from obj .1
         async function RelativeChildInfo(obj)
         {
             const nextStr = obj.string || obj.title || '';
@@ -365,7 +369,7 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
                     ? parentsHierarchy[0][0]?.uid : TARGET_UID, // if undefined - most defenetly it's the direct child (level 0) of the page
             }
         }
-        // vs .2
+        // var from obj .2
         function getKeywordsFromBlockString(nextStr)
         {
             const rgxUid = new RegExp(/\(([^\)]+)\)/, 'gm'); //(XXXXXXXX)
@@ -425,7 +429,7 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
         async function SuccessfulSettingsUpt()
         {
             const targeObj = keyObjMap.get(key);
-            if (targeObj)
+            if (targeObj && key != TARGET_PAGE)
             {
                 let p_string = nextStr, p_uid = uid;
                 if (join == PmtSplit)
@@ -458,12 +462,23 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
                     }
                 }
 
+                // work in progress
+                // are you indented correclty? - and - are you nested under the proper block?
+                const validNestFromThePast = (targeObj.indent == indent && accObj.keyFromLevel0 == targeObj.parentKey);
+                if (validNestFromThePast)
+                {
+                    parentState = {
+                        displaced: true,
+                    };
+                }
                 FinishRec_thenDisplace_cbArr.push(async function () 
                 {
-                    const relevantParentUID = (targeObj.indent == indent) ? parentUid : keyObjMap.get(targeObj.parentKey).uid; // block with proper indent? no, then nest it under it's most relevant parent
-                    await checkReorderBlockObj(relevantParentUID, selfOrder, crrObjKey);
-                    // sometimes the nested blocks get reviwed before it's actual parents
-                    // finish Rec_Fun then reorder them
+                    const relevantParentUID = validNestFromThePast ? parentUid : keyObjMap.get(targeObj.parentKey).uid; // block with proper indent? no, then nest it under it's most relevant parent
+
+                    if (parentState.displaced == false) // shall stay with it's parent then
+                    {
+                        await checkReorderBlockObj(relevantParentUID, selfOrder, crrObjKey);
+                    }
                 })
 
                 return true;
@@ -471,20 +486,34 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
             return false;
             async function validateBlockContent(obj, nextStr, splitedStrArr, caputuredUID, nextUID)
             {
+
                 const caputuredString = splitedStrArr[2] || ''; // undefinded means it doens't requieres a third param, that's ok
 
                 const uidOk = await RAP.getBlockOrPageInfo(caputuredUID);
-                const v_uid = (uidOk) ? caputuredUID : nextUID;
+                const v_uid = (uidOk) ? caputuredUID : nextChildObj.uid; // : nextUID;
 
                 let v_string = nextStr;
                 let stringOK = true;
 
+
                 if (obj.string != caputuredString)
                 {
+                    if (obj.uid != '' || obj.string.includes(" / ") || splitedStrArr[3] != undefined)
+                    {
+                        debugger;
+                        throw new Error(`STOP! the string is invalid =>         ${obj.string}`);
+                    }
+
                     splitedStrArr.splice(2, 1, obj.string);
                     v_string = splitedStrArr.join(obj.join);
                     stringOK = false;
                 }
+
+                /*
+                obj -> (FCjU6icP_) / pcl_opt / inline url parameter `&cc=` has priority over this
+                caputuredString -> inline url parameter `&cc=` has priority over this
+
+                 */
 
                 return {
                     v_string,
@@ -496,7 +525,7 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
         // 1.1
         function HandleMoveOrDeletion()
         {
-            const uidToMove = uid || nextObj.uid || nextUID;
+            const uidToMove = uid || nextChildObj.uid || nextUID;
             if (uidToMove != TARGET_UID) // the nature of the recursive func makes it so the page uid can't be avoided, you don't want that - exit
             {
                 if (accObj?.parentState?.displaced === true)
@@ -711,9 +740,9 @@ async function checkReorderBlockObj(parentUid, selfOrder, childObjToMoveUID)
     const validUid = childObjToMoveUID.uid;
     try
     {
+        await RAP.moveBlock(parentUid, validOrder, validUid);
         if (selfOrder != validOrder)
         {
-            await RAP.moveBlock(parentUid, validOrder, validUid);
         }
     }
     catch (err)
@@ -727,23 +756,22 @@ async function checkReorderBlockObj(parentUid, selfOrder, childObjToMoveUID)
 
 //#region sub OBJECTS
 /*---------------------------------------------*/
+function InlinePmt(blockContent = '')
+{
+    const promptObj = {
+        inlineObj: true,
+        string: blockContent,
+    }
+    return Object.assign(BasePmt(), promptObj);
+}
 function BasePmt(blockContent = '')
 {
     const promptObj = {
         join: PmtSplit,
         inputType: pmt,
-        string: blockContent
+        string: blockContent,
     }
     return Object.assign(baseTmp(), promptObj);
-}
-function InlinePmt(blockContent = '')
-{
-    const promptObj = {
-        inlineObj: true,
-        inputType: pmt,
-        string: blockContent
-    }
-    return Object.assign(BasePmt(), promptObj);
 }
 /*--------------------------------*/
 function BaseSetting(inputType)
@@ -867,6 +895,10 @@ bugs ☐ ☑
 
             tried two times and it seems that 'displaced parent'
             is the responsable for the problem
+
+            now it seems to be that those blocks with "deprecated" keys
+            in the recycle bin are taken in account, changed it's string
+            and then moved back to the recycle bin... but with messed up data
 
 FIXME
     tryToremoveBlock
