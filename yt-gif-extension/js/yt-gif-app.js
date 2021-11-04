@@ -190,22 +190,35 @@ function pushMasterObserverWithTargetClass(classToObserve)
 {
     window.YT_GIF_OBSERVERS.masterMutationObservers.push(ObserveIframesAndDelployYTPlayers(classToObserve));
 }
+function baseDeploymentObj()
+{
+    return {
+        deploymentStyle: function () { this.BinaryDomUI().checked },
+        checkSubDeploymentStyle: function (bol) { this.BinaryDomUI().checked = bol },
+        runMasterObservers: function () { pushMasterObserverWithTargetClass(this.classToObserve); },
+    }
+}
+function baseDeploymentObj_both()
+{
+    const obj_both = {
+        runMasterObservers: function ()
+        {
+            for (const classValue of this.classesToObserve)
+                pushMasterObserverWithTargetClass(classValue);
+        },
+    }
+    return Object.assign(baseDeploymentObj(), obj_both);
+}
 const rm_components = {
     video: {
         description: '{{[[video]]}}',
         classToObserve: 'rm-video-player__spacing-wrapper',
-        BinaryDomUI: UI.deploymentStyle.deployment_style_video,
-        deploymentStyle: function () { this.BinaryDomUI.checked },
-        checkSubDeploymentStyle: function (bol) { this.BinaryDomUI.checked = bol },
-        runMasterObservers: function () { pushMasterObserverWithTargetClass(this.classToObserve); },
+        BinaryDomUI: () => UI.deploymentStyle.deployment_style_video,
     },
     yt_gif: {
         description: '{{[[yt-gif]]}}',
         classToObserve: `rm-xparser-default-${cssData.yt_gif}`,
-        BinaryDomUI: UI.deploymentStyle.deployment_style_yt_gif,
-        deploymentStyle: function () { this.BinaryDomUI.checked },
-        checkSubDeploymentStyle: function (bol) { this.BinaryDomUI.checked = bol },
-        runMasterObservers: function () { pushMasterObserverWithTargetClass(this.classToObserve); },
+        BinaryDomUI: () => UI.deploymentStyle.deployment_style_yt_gif,
     },
     current: {
         key: ''
@@ -215,20 +228,30 @@ const rm_components = {
         console.log("running master observer form obj rm_components");
         this.current.key = key;
         this[key]['runMasterObservers'](); // THIS IS INSANE!!!
+    },
+    ChargeMasterObserversWithValidDeploymentStyle: function ()
+    {
+        debugger;
+        const filterKeyProperty = 'deploymentStyle';
+        const filtered = UTILS.FilterSubObjByKey(filterKeyProperty, this);
+        for (const key in filtered)
+        {
+            if (UTILS.isTrue(this[key][filterKeyProperty]())) // THIS IS CRAZY
+            {
+                this.RunMasterObserverWithKey(key);
+                return;
+            }
+        }
     }
 }
+Object.assign(rm_components.video, baseDeploymentObj());
+Object.assign(rm_components.yt_gif, baseDeploymentObj());
 rm_components.both = {
     description: `${rm_components.video.description} and ${rm_components.yt_gif.description}`,
     classesToObserve: [rm_components.video.classToObserve, rm_components.yt_gif.classToObserve],
-    BinaryDomUI: UI.deploymentStyle.deployment_style_both,
-    deploymentStyle: function () { this.BinaryDomUI.checked },
-    checkSubDeploymentStyle: function (bol) { this.BinaryDomUI.checked = bol },
-    runMasterObservers: function ()
-    {
-        for (const classValue of this.classesToObserve)
-            pushMasterObserverWithTargetClass(classValue);
-    },
+    BinaryDomUI: () => UI.deploymentStyle.deployment_style_both,
 }
+Object.assign(rm_components.both, baseDeploymentObj_both());
 /*-----------------------------------*/
 
 
@@ -491,21 +514,24 @@ async function Ready()
             for (const childKey in parentObj)
             {
                 const child = parentObj[childKey];
+                siblingKeys = UTILS.pushSame(siblingKeys, childKey);
                 switch (parentKey)
                 {
                     case 'label':
                     case 'defaultValues':
                     case 'InAndOutKeys':
                         continue;
+                    case 'deploymentStyle': // special case...
+                        child.addEventListener('change', function (e) { updateOverrideComponentSettingBlock(e, this, childKey, siblingKeys) }, true);
+                        continue;
                     case 'range': // special case...
                         child.addEventListener('wheel', function (e) { changeOnWeeel(e, this, childKey) }, true);
                 }
-
-                siblingKeys = UTILS.pushSame(siblingKeys, childKey);
                 child.addEventListener('change', function (e) { updateSettingsPageBlock(e, this, childKey, siblingKeys) }, true);
             }
         }
     }
+    /* *************** */
     function updateSettingsPageBlock(e, el, keyObj, siblingKeys)
     {
         const { type, checked, value } = el;
@@ -529,6 +555,30 @@ async function Ready()
     {
         // How do I check values in the future? This looks expensive...
         el.dispatchEvent(new Event('change'));
+    }
+    function updateOverrideComponentSettingBlock(e, el, keyObj, siblingKeys)
+    {
+        debugger;
+        const idPrfx = (key) => `deployment_style_${key}`;
+        let replaceWith = 'error';
+        switch (el.id)
+        {
+            case idPrfx('yt_gif'):
+                replaceWith = 'false';
+                break;
+            case idPrfx('video'):
+                replaceWith = 'true';
+                break;
+            case idPrfx('both'):
+                replaceWith = 'both';
+                break;
+            //case 'deploy_yt_gifs':
+            default:
+                debugger;
+                return;
+                break;
+        }
+        window.YT_GIF_DIRECT_SETTINGS.get('override_roam_video_component')?.UpdateSettingsBlockValue(replaceWith);
     }
     //#endregion
 
@@ -777,34 +827,13 @@ async function Ready()
         // 1.1.2
         async function greenAnimationCombo()
         {
-            ChargeMasterObservers();
+            rm_components.ChargeMasterObserversWithValidDeploymentStyle()
             labelTxt(deployInfo.loading); //change label to suspend
             isVisualFeedbackPlaying(true)
             await restricInputsfor10SecMeanWhile(greeAnimationInputReady);
             labelTxt(deployInfo.suspend);
         }
-        // 1.1.2.a
-        function ChargeMasterObservers()
-        {
-            debugger;
-            const filtered = Object.keys(rm_components)
-                .filter(key => rm_components[key].hasOwnProperty('deploymentStyle'))
-                .reduce((obj, key) =>
-                {
-                    obj[key] = rm_components[key];
-                    return obj;
-                }, {});
 
-            for (const key in filtered)
-            {
-                debugger;
-                if (UTILS.isTrue(filtered[key]['deploymentStyle']())) // THIS IS CRAZY
-                {
-                    rm_components.RunMasterObserverWithKey(key);
-                    return;
-                }
-            }
-        }
 
 
         /* ****************** */
@@ -861,6 +890,7 @@ async function Ready()
         }
     }
     //#endregion
+
 
     //#region local utils
     function DDM_Els()

@@ -216,16 +216,16 @@ async function assignChildrenMissingValues()
                         directObjPpts.UpdateSettingsBlockValue = function (replaceWith)
                         {
                             const rgxValue = new RegExp(/<(.*?)>/, 'gm'); // "<XXX>"
-                            const postChange = directObjPpts.string + "";
+                            const preChange = directObjPpts.string + "";
 
-                            const preString = directObjPpts.string.replace(rgxValue, `<${replaceWith}>`);
+                            const postChange = directObjPpts.string.replace(rgxValue, `<${replaceWith}>`);
 
-                            if (preString != directObjPpts.string) // well. don't make extra api calls
+                            if (postChange != directObjPpts.string) // well. don't make extra api calls
                             {
-                                directObjPpts.string = preString;
+                                directObjPpts.string = postChange;
                                 directObjPpts.sessionValue = replaceWith;
                                 RAP.updateBlock(directObjPpts.uid, directObjPpts.string);
-                                //console.log(`Setting ${property} was, \n${postChange} \nnow is \n${window.YT_GIF_DIRECT_SETTINGS.get(property).string}`)
+                                console.log(`Setting ${property} was, \n${preChange} \nnow is \n${window.YT_GIF_DIRECT_SETTINGS.get(property).string}`)
                             }
                         };
                     }
