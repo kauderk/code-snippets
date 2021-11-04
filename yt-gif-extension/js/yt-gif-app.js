@@ -80,7 +80,7 @@ const videoParams = {
 
     speed: 1,
 
-    volume: window.YT_GIF_SETTINGS_PAGE.defaultValues.video_volume.baseKey.sessionValue, // window.YT_GIF_DIRECT_SETTINGS.get('video_volume').sessionValue,
+    volume: window.YT_GIF_SETTINGS_PAGE.defaultValues.player_volume.baseKey.sessionValue,
     updateVolume: 30, // 'this' will be set afterwards
     volumeURLmapHistory: [],
 };
@@ -193,7 +193,7 @@ function pushMasterObserverWithTargetClass(classToObserve)
 function baseDeploymentObj()
 {
     return {
-        deploymentStyle: function () { this.BinaryDomUI().checked },
+        deploymentStyle: function () { return this.BinaryDomUI().checked },
         checkSubDeploymentStyle: function (bol) { this.BinaryDomUI().checked = bol },
         runMasterObservers: function () { pushMasterObserverWithTargetClass(this.classToObserve); },
     }
@@ -273,7 +273,6 @@ const rm_components = {
         {
             if (UTILS.isTrue(this[key][filterKeyProperty]())) // THIS IS CRAZY
             {
-                debugger;
                 this.RunMasterObserverWithKey(key);
                 return;
             }
@@ -301,7 +300,7 @@ if (
 }
 else
 {
-    console.log(`The YT GIF Extension won't be installed, major scripts are missing... submit you issue here: ${links.help.github_isuues}`);
+    console.log(`The YT GIF Extension won't be installed, major scripts are missing... submit your issue here: ${links.help.github_isuues}`);
 }
 
 
@@ -376,7 +375,6 @@ async function Ready()
 
     await MasterObserver_UCS_RTM(); // listening for changes | change the behaviour RTM // BIG BOI FUNCTION
 
-    debugger;
     rm_components.state.initialKey = rm_components.assertCurrentKey(override_roam_video_component);
     const { initialKey } = rm_components.state;
     rm_components[initialKey].checkSubDeploymentStyle(true); // start with some value
@@ -1123,6 +1121,9 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
 
             media.volume = ExtractFromURL('int', /(vl=|volume=)(?:\d+)/g);
 
+            media.hl = new RegExp(/(hl=)((?:\w+))/, 'gm').exec(url)?.[2];
+            media.cc = new RegExp(/(cc=|cc_lang_pref=)((?:\w+))/, 'gm').exec(url)?.[2];
+
             media.src = url;
             media.type = 'youtube';
 
@@ -1218,36 +1219,53 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
     // last - customize the iframe api
     function playerConfig(configParams)
     {
+        // in progress
+        const { player_interface_language, player_captions_language, player_captions_on_load } = Object.fromEntries(window.YT_GIF_DIRECT_SETTINGS); // https://stackoverflow.com/questions/49569682/destructuring-a-map#:~:text=let%20%7B%20b%2C%20d%20%7D%20%3D%20Object.fromEntries(m)
+
+        const playerVars = {
+            autoplay: 1, 		// Auto-play the video on load
+            controls: 1, 		// Show pause/play buttons in player
+            mute: 1,
+            start: configParams?.start,
+            end: configParams?.end,
+
+            hl: configParams?.hl || player_interface_language.sessionValue,           // Display interface language   // https://developers.google.com/youtube/player_parameters#:~:text=Sets%20the%20player%27s%20interface%20language.%20The%20parameter%20value%20is%20an%20ISO%20639-1%20two-letter%20language%20code%20or%20a%20fully%20specified%20locale.%20For%20example%2C%20fr%20and%20fr-ca%20are%20both%20valid%20values.%20Other%20language%20input%20codes%2C%20such%20as%20IETF%20language%20tags%20(BCP%2047)%20might%20also%20be%20handled%20properly.
+            cc_lang_pref: configParams?.cc || player_captions_language.sessionValue, 	// Display closed captions      // https://developers.google.com/youtube/player_parameters#:~:text=This%20parameter%20specifies%20the%20default%20language%20that%20the%20player%20will%20use%20to%20display%20captions.%20Set%20the%20parameter%27s%20value%20to%20an%20ISO%20639-1%20two-letter%20language%20code.
+
+            cc_load_policy: (UTILS.isTrue(player_captions_on_load.sessionValue)) ? 1 : 3,  // Hide closed captions - broken feature by design
+            iv_load_policy: 3,  // Hide the Video Annotations
+
+            vq: 'hd1080',
+
+            autohide: 1, 		// Hide video controls when playing
+            showinfo: 0, 		// Hide the video title
+            modestbranding: 1,  // Hide the Youtube Logo
+
+            fs: 1,              // Hide the full screen button
+            rel: 0,
+
+            version: 3,
+            feature: 'oembed',
+            enablejsapi: 1,
+            origin: 'https://roamresearch.com',
+        };
+
         return params = {
             height: '100%',
             width: '100%',
             videoId: configParams?.id,
-            playerVars: {
-                autoplay: 1, 		// Auto-play the video on load
-                controls: 1, 		// Show pause/play buttons in player
-                mute: 1,
-                start: configParams?.start,
-                end: configParams?.end,
-
-                vq: 'hd1080',
-                version: 3,
-                feature: 'oembed',
-                autohide: 1, 		// Hide video controls when playing
-                showinfo: 0, 		// Hide the video title
-                modestbranding: 1,  // Hide the Youtube Logo
-                fs: 1,              // Hide the full screen button
-                rel: 0,
-                cc_load_policy: 3,  // Hide closed captions
-                iv_load_policy: 3,  // Hide the Video Annotations
-                enablejsapi: 1,
-                origin: 'https://roamresearch.com',
-            },
+            playerVars: playerVars,
             events: {
                 'onReady': onPlayerReady,
                 'onStateChange': onStateChange
             }
         };
     }
+    //https://www.youtube.com/embed/qbUcv3Bc61g?autoplay=1&controls=1&mute=1&hl=ja&cc_lang_pref=0&cc_load_policy=3&vq=hd1080&version=3&feature=oembed&autohide=1&showinfo=0&modestbranding=1&fs=1&rel=0&iv_load_policy=3&enablejsapi=1&origin=https%3A%2F%2Froamresearch.com&widgetid=50
+    //https://www.youtube.com/embed/qbUcv3Bc61g?autoplay=1&controls=1&mute=1&hl=ja&cc_lang_pref=0&vq=hd1080&version=3&feature=oembed&autohide=1&showinfo=0&modestbranding=1&fs=1&rel=0&iv_load_policy=3&enablejsapi=1&origin=https%3A%2F%2Froamresearch.com&widgetid=51
+    //https://www.youtube.com/embed/qbUcv3Bc61g?autoplay=1&controls=1&mute=1&hl=ja&vq=hd1080&version=3&feature=oembed&autohide=1&showinfo=0&modestbranding=1&fs=1&rel=0&iv_load_policy=3&enablejsapi=1&origin=https%3A%2F%2Froamresearch.com&widgetid=52
+    //https://www.youtube.com/embed/qbUcv3Bc61g?autoplay=1&controls=1&mute=1&vq=hd1080&version=3&feature=oembed&autohide=1&showinfo=0&modestbranding=1&fs=1&rel=0&cc_load_policy=3&iv_load_policy=3&enablejsapi=1&origin=https%3A%2F%2Froamresearch.com&widgetid=54
+
     function DeployYT_IFRAME()
     {
         return new window.YT.Player(newId, playerConfig(configParams));
@@ -2060,33 +2078,28 @@ function validSoundURL()
 
 user requested ☐ ☑
     yt iframe customizable ui language ☐
+        add yt_api customizable settings ✘ 🙋
 
 
 I want to add ☐ ☑
-    Refactoring mode, don't load the yt gif, in fact don't create the btn
-        just show the user the raw text, so they don't have to go and re enter the block
-
-    10 head big monkey brain roam idea boiiii ☐
-        paste text form the yt gif browser extension to roam, if the exact same string
-        already exist in the DB, a promt message will
-
     an inline editor for ajusting the litle miscalculations in the clips ☐
         a litle bit earlier, a litle bit after...
         and inplement the changes, when the user the user enter the real edit block mode
-
+            🙋
 
 added
-    visible_clips_start_to_play_unmuted synergy with fullscreenStyle
+    visible_clips_start_to_play_unmuted synergy with fullscreenStyle ☑ ☑
         each does what they're suposed be doing
             when entering fullscreen mode
                 pause everything but itself
             when exeting - if visible_clips_start_to_play_unmuted is eneabled
                 fire the "change" event to adjust the settings once again
 
+    bind event and update settings_page obj ☑ ☑
+        and update the actual block on the actual page ☑ ☑
 
 TODO ☐ ☑
-    bind event and update settings_page obj ☐
-        and update the actual block on the actual page
+    delete useless src sound tags - player html
 
 features on hold btn at the bottom ☑ ☑
     focus & blus for sub ddm ☑ ☑
@@ -2112,24 +2125,46 @@ features on hold btn at the bottom ☑ ☑
     https://freesound.org/people/nckn/sounds/256113/               * param ram *
     https://freesound.org/data/previews/256/256113_3263906-lq.mp3
 
-    https://freesound.org/data/previews/35/35631_18799-lq.mp3 - roam research podoro ding -
+    https://freesound.org/data/previews/35/35631_18799-lq.mp3 - roam research pomodoro * ding! *
 
 
 Discarted
     shortcuts for any btn ✘
     all hoverable actions, after 500ms the item it's checked // and this feature own btn ofcourse ✘
-    add yt_api customizable settings ✘
+
+    Refactoring mode, don't load the yt gif, in fact don't create the btn
+        just show the user the raw text, so they don't have to go and re enter the block
+            well... the don't load part is already implemented with the "deploymentStyle"
+            Now-- the part of showin the text only... Hmmm...
+                that would have to be a "yt-gif" component only...
+
+    10 head big monkey brain roam idea boiiii ☐
+        paste text form the yt gif browser extension to roam, if the exact same string
+        already exist in the DB, a promt message will
+            I see... but that's too intrusive though, even If I know exactly what's going on...
+                it's the same as navegateToUIpage on a brand new installation.
 
 
 Bugs
-    hover a frame > mouse leave with sound > focus on another window > go back to roam & and mouse enter a new frame, both videos play unmuted even with strict_mute_everything_except_current enabled ☐
-        work around > mouse enter a new frame holding middle mouse > mutes the previous, but the previous video still plays unmuted even though play_on_mouse_over enebled ☐
+    hover a frame
+        > mouse leave with sound
+            > focus on another window
+            > go back to roam & and mouse enter a new frame,
+                both videos play unmuted even with
+                strict_mute_everything_except_current enabled ☐
+        work around
+            > mouse enter a new frame holding middle mouse
+            > mutes the previous, but the previous video still plays unmuted
+             even though play_on_mouse_over enebled ☐
 
-    initizlizing any video
-        it's volume is 100 always
-
-    videoParams
-        default volume is mistaken as string
+Fixed
+     videoParams ☑ ☑
+        default volume is mistaken as string ☑ ☑
             it should be an integer
+
+
+bugs that fixed themselves
+    initizlizing any video
+        it's volume is 100 always - lol, it works as expected right now
 
 */
