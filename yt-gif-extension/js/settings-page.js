@@ -225,7 +225,7 @@ async function assignChildrenMissingValues()
                                 directObjPpts.string = postChange;
                                 directObjPpts.sessionValue = replaceWith;
                                 RAP.updateBlock(directObjPpts.uid, directObjPpts.string);
-                                console.log(`Setting ${property} was, \n${preChange} \nnow is \n${window.YT_GIF_DIRECT_SETTINGS.get(property).string}`)
+                                //console.log(`Setting ${property} was, \n${preChange} \nnow is \n${window.YT_GIF_DIRECT_SETTINGS.get(property).string}`)
                             }
                         };
                     }

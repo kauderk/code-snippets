@@ -7,14 +7,14 @@ kauderk.util = ((util) =>
      * @param {String} subKeyAsFilter 
      * @returns {Object} Filtered sub properties
      */
-    util.FilterSubObjByKey = (subKeyAsFilter, obj) =>
+    util.FilterSubObjByKey = (subKeyAsFilter, refObj) =>
     {
-        return Object.keys(obj)
-            .filter(key => obj[key].hasOwnProperty(subKeyAsFilter))
-            .reduce((obj, key) =>
+        return Object.keys(refObj)
+            .filter(key => refObj[key].hasOwnProperty(subKeyAsFilter))
+            .reduce((accObj, key) =>
             {
-                obj[key] = obj[key];
-                return obj;
+                accObj[key] = refObj[key];
+                return accObj;
             }, {});
     }
 
