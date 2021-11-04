@@ -2,6 +2,22 @@ var kauderk = window.kauderk || {};
 
 kauderk.util = ((util) =>
 {
+    /**
+     * Returns copy of itself with subOjects that directly include the filterKey
+     * @param {String} subKeyAsFilter 
+     * @returns {Object} Filtered sub properties
+     */
+    util.FilterSubObjByKey = (subKeyAsFilter, obj) =>
+    {
+        return Object.keys(obj)
+            .filter(key => obj[key].hasOwnProperty(subKeyAsFilter))
+            .reduce((obj, key) =>
+            {
+                obj[key] = obj[key];
+                return obj;
+            }, {});
+    }
+
     util.pushSame = (arr = [], el) =>
     {
         arr.push(el);
