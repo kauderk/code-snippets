@@ -223,6 +223,7 @@ async function assignChildrenMissingValues()
                             if (preString != directObjPpts.string) // well. don't make extra api calls
                             {
                                 directObjPpts.string = preString;
+                                directObjPpts.sessionValue = replaceWith;
                                 RAP.updateBlock(directObjPpts.uid, directObjPpts.string);
                                 //console.log(`Setting ${property} was, \n${postChange} \nnow is \n${window.YT_GIF_DIRECT_SETTINGS.get(property).string}`)
                             }

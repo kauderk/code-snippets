@@ -257,8 +257,9 @@ async function Ready()
 
 
     // 2. assign direct values to the main object
-    DDM_to_UI_variables(); // filtering baseKey & prompts and transforming from obj to values or dom el, it's not generic and it only serves first indentation level from parent to child objs
+    DDM_to_UI_variables(); // filtering baseKey & prompts and transforming from obj to values or dom els - it is not generic and only serves for the first indent level (from parent to child keys)
     SaveSettingsOnChanges(); // the seetings page script is responsable for everything, this are just events
+
 
 
     // 3. set up events pre observers
@@ -296,7 +297,8 @@ async function Ready()
     console.log('YT GIF extension activated');
 
 
-    //#region 1. hidden functions
+
+    //#region 1. looks - fetch css html
     async function smart_LoadCSS(cssURL, id) // 'cssURL' is the stylesheet's URL, i.e. /css/styles.css
     {
         if (!(await UTILS.isValidFetch(cssURL))) 
@@ -401,7 +403,7 @@ async function Ready()
     //#endregion
 
 
-    //#region 2. hidden functions
+    //#region 2. filter UI user inputs variables
     function DDM_to_UI_variables()
     {
         // this took a solid hour. thak you thank you
@@ -427,13 +429,13 @@ async function Ready()
                     switch (parentKey)
                     {
                         case 'range':
-                            child.value = Number(sessionValue);
+                            parentObj[childKey].value = Number(sessionValue);
                             break;
                         case 'label':
-                            child.innerHTML = sessionValue;
+                            parentObj[childKey].innerHTML = sessionValue;
                             break;
                         default:
-                            const binaryInput = child;
+                            const binaryInput = parentObj[childKey];
                             binaryInput.checked = UTILS.isTrue(sessionValue);
                             UTILS.linkClickPreviousElement(binaryInput);
                     }
@@ -513,7 +515,7 @@ async function Ready()
     //#endregion
 
 
-    //#region 3. hidden functions
+    //#region 3. events pre observers
     function DDM_IconFocusBlurEvents(ddm_icon, ddm_focus, ddm_info_message_selector)
     {
         // 1. special case
@@ -631,7 +633,7 @@ async function Ready()
     //#endregion
 
 
-    //#region 4. hidden functions
+    //#region 4. runtime events and master observers
     function KeyToObserve_UCS(override_roam_video_component)
     {
         // this can be shorter for sure, how though?
@@ -695,7 +697,7 @@ async function Ready()
     //#endregion
 
 
-    //#region BIG BOI FUNCTION
+    //#region BIG BOI FUNCTION - change the funcionality of the extension
     async function MasterObserver_UCS_RTM()
     {
         const checkMenu = UI.deploymentStyle.suspend_yt_gif_deployment;
@@ -855,7 +857,7 @@ async function Ready()
     //#endregion
 
 
-    //#region uitils
+    //#region local utils
     function DDM_Els()
     {
         const { ddm_exist } = cssData
@@ -995,7 +997,9 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
 
     // 3. weird recursive function... guys...
     const url = await InputBlockVideoParams(uid);
+    // 3.1
     allVideoParameters.set(newId, urlConfig(url));
+    const configParams = allVideoParameters.get(newId);
 
 
 
@@ -1008,46 +1012,19 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
 
 
 
-    //console.count(message);
-    //🌿
+    // 5. 
     if (UI.experience.awaiting_for_mouseenter_to_initialize.checked)
     {
-        const awaitingAnimation = [cssData.awiting_player_pulse_anim, cssData.awaitng_player_user_input];
-        const awaitingAnimationThumbnail = [...awaitingAnimation, cssData.awaitng_input_with_thumbnail];
-
-        let mainAnimation = awaitingAnimationThumbnail
-        wrapper.setAttribute(attrInfo.videoUrl, url);
-
-        if (UI.experience.awaiting_with_video_thumnail_as_bg.checked)
-        {
-            UTILS.applyIMGbg(wrapper, url);
-        }
-        else
-        {
-            mainAnimation = awaitingAnimation;
-        }
-
-        UTILS.toggleClasses(true, mainAnimation, wrapper);
-        wrapper.addEventListener('mouseenter', CreateYTPlayer);
-
-        //#region handler
-        function CreateYTPlayer(e)
-        {
-            UTILS.toggleClasses(false, mainAnimation, wrapper);
-            UTILS.removeIMGbg(wrapper);
-            wrapper.removeEventListener('mouseenter', CreateYTPlayer);
-
-            // 5. ACTUAL CREATION OF THE EMBEDED YOUTUBE VIDEO PLAYER (target)
-            return new window.YT.Player(newId, playerConfig());
-        }
-        //#endregion handler
+        return DeployYT_IFRAME_OnInteraction();
     }
     else
     {
-        // 5. ACTUAL CREATION OF THE EMBEDED YOUTUBE VIDEO PLAYER (target)
-        return new window.YT.Player(newId, playerConfig());
+        return DeployYT_IFRAME();
     }
-    //#region local utilites
+
+
+
+    // 3. get relevant url
     async function InputBlockVideoParams(tempUID)
     {
         const [finalURL, innerUIDs] = await TryToFindURL(tempUID);
@@ -1089,6 +1066,7 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
             return [Array.isArray(urls) ? urls[0] : null, innerUIDs, aliases];
         }
     }
+    // 3.1 extract params
     function urlConfig(url)
     {
         let success = false;
@@ -1157,19 +1135,58 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
         else { alert('No valid media id detected'); }
         return false;
     }
-    function playerConfig()
+
+    // 5.0
+    function setUpWrapperAwaitingAnimation()
     {
-        const map = allVideoParameters.get(newId);
+        const awaitingAnimation = [cssData.awiting_player_pulse_anim, cssData.awaitng_player_user_input];
+        const awaitingAnimationThumbnail = [...awaitingAnimation, cssData.awaitng_input_with_thumbnail];
+
+        let mainAnimation = awaitingAnimationThumbnail;
+        wrapper.setAttribute(attrInfo.videoUrl, url);
+
+        if (UI.experience.awaiting_with_video_thumnail_as_bg.checked)
+        {
+            UTILS.applyIMGbg(wrapper, url);
+        }
+
+        else
+        {
+            mainAnimation = awaitingAnimation;
+        }
+
+        UTILS.toggleClasses(true, mainAnimation, wrapper);
+        return mainAnimation;
+    }
+    // 5.1
+    function DeployYT_IFRAME_OnInteraction()
+    {
+        const mainAnimation = setUpWrapperAwaitingAnimation();
+        wrapper.addEventListener('mouseenter', CreateYTPlayer);
+
+        function CreateYTPlayer(e)
+        {
+            UTILS.toggleClasses(false, mainAnimation, wrapper);
+            UTILS.removeIMGbg(wrapper);
+            wrapper.removeEventListener('mouseenter', CreateYTPlayer);
+
+            return DeployYT_IFRAME();
+        }
+    }
+
+    // last - customize the iframe api
+    function playerConfig(configParams)
+    {
         return params = {
             height: '100%',
             width: '100%',
-            videoId: map?.id,
+            videoId: configParams?.id,
             playerVars: {
                 autoplay: 1, 		// Auto-play the video on load
                 controls: 1, 		// Show pause/play buttons in player
                 mute: 1,
-                start: map?.start,
-                end: map?.end,
+                start: configParams?.start,
+                end: configParams?.end,
 
                 vq: 'hd1080',
                 version: 3,
@@ -1190,8 +1207,10 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
             }
         };
     }
-
-    //#endregion
+    function DeployYT_IFRAME()
+    {
+        return new window.YT.Player(newId, playerConfig(configParams));
+    }
 }
 //
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -1283,6 +1302,7 @@ async function onPlayerReady(event)
 
     // 5. fullscreenStyle
     iframe.addEventListener('fullscreenchange', fullscreenStyle_Handler);
+    iframe.addEventListener('fullscreenchange', fullscreenAutoplaySynery_Handler);
 
 
 
@@ -1365,7 +1385,7 @@ async function onPlayerReady(event)
     //#region 2. play/mute styles
     function playStyleDDMO()
     {
-        if (UTILS.isElementVisible(iframe)) return; //play all VISIBLE Players, this will be called on all visible iframes
+        if (!UTILS.isElementVisible(iframe)) return; //play all VISIBLE Players, this will be called on all visible iframes
 
         if (UI.playStyle.visible_clips_start_to_play_unmuted.checked)
         {
@@ -1379,7 +1399,7 @@ async function onPlayerReady(event)
     }
     function muteStyleDDMO()
     {
-        if (UTILS.isElementVisible(iframe)) return; //mute all VISIBLE Players, this will be called on all visible iframes
+        if (!UTILS.isElementVisible(iframe)) return; //mute all VISIBLE Players, this will be called on all visible iframes
 
         if (UI.playStyle.strict_mute_everything_except_current.checked || UI.playStyle.muted_on_any_mouse_interaction.checked)
         {
@@ -1389,7 +1409,7 @@ async function onPlayerReady(event)
     //#endregion
 
 
-    //#region 3. hover over the frame
+    //#region 3. hover over the frame - mute | pause
     function InAndOutHoverStatesDDMO(e)
     {
         //🌿
@@ -1400,41 +1420,17 @@ async function onPlayerReady(event)
             togglePlay(true);
 
 
-
-            // kinda spaguetti code🚧 
             if (UI.muteStyle.strict_mute_everything_except_current.checked)
             {
                 if (anyValidInAndOutKey(e))
                 {
-                    function muteWithBlock(id, el)
-                    {
-                        SoundIs(ytGifAttr.sound.mute, el);
-                        recordedIDs.get(id)?.target?.mute();
-                    }
-
-                    const config = {
-                        styleQuery: ytGifAttr.sound.unMute,
-                        self_callback: (id, el) => muteWithBlock(id, el),
-                        others_callback: (id, el) => muteWithBlock(id, el)
-                    }
-
-                    LoopTroughVisibleYTGIFs(config);
+                    MuteEveryPlayer();
                 }
             }
             if (UI.playStyle.strict_play_current_on_mouse_over.checked)
             {
-                const config = {
-                    styleQuery: ytGifAttr.play.playing,
-                    others_callback: (id, el) =>
-                    {
-                        PlayIs(ytGifAttr.play.paused, el);
-                        recordedIDs.get(id)?.target?.pauseVideo()
-                    }
-                }
-                LoopTroughVisibleYTGIFs(config);
+                PauseAllOthersPlaying_Visibly();
             }
-            // ...but how else...? 🚧
-
 
 
             if (CanUnmute())
@@ -1445,25 +1441,6 @@ async function onPlayerReady(event)
             {
                 isSoundingFine(false);
             }
-
-            //#region local utils
-            function LoopTroughVisibleYTGIFs(config = { styleQuery, others_callback: () => { }, self_callback: () => { } })
-            {
-                const ytGifs = UTILS.inViewportEls(UTILS.allIframeStyle(config?.styleQuery));
-                for (const i of ytGifs)
-                {
-                    const blockID = UTILS.closestBlockID(i);
-                    if (i != iframe)
-                    {
-                        config?.others_callback(blockID, i);
-                    }
-                    else if (config.BlockID_self_callback)
-                    {
-                        config?.self_callback(blockID, i);
-                    }
-                }
-            }
-            //#endregion
         }
         else if (e.type == 'mouseleave')
         {
@@ -1481,6 +1458,52 @@ async function onPlayerReady(event)
                 togglePlay(!AnyPlayOnHover() && (t.getPlayerState() === 1));
 
                 isSoundingFine(false);
+            }
+        }
+    }
+    /* ************************************************* */
+    function MuteEveryPlayer()
+    {
+        function muteWithBlock(id, el)
+        {
+            SoundIs(ytGifAttr.sound.mute, el);
+            recordedIDs.get(id)?.target?.mute();
+        }
+
+        const config = {
+            styleQuery: ytGifAttr.sound.unMute,
+            self_callback: (id, el) => muteWithBlock(id, el),
+            others_callback: (id, el) => muteWithBlock(id, el)
+        };
+
+        LoopTroughVisibleYTGIFs(config);
+    }
+    function PauseAllOthersPlaying_Visibly()
+    {
+        const config = {
+            styleQuery: ytGifAttr.play.playing,
+            others_callback: (id, el) =>
+            {
+                PlayIs(ytGifAttr.play.paused, el);
+                recordedIDs.get(id)?.target?.pauseVideo();
+            }
+        };
+        LoopTroughVisibleYTGIFs(config);
+    }
+    /* ********************** */
+    function LoopTroughVisibleYTGIFs(config = { styleQuery, others_callback: () => { }, self_callback: () => { } })
+    {
+        const ytGifs = UTILS.inViewportEls(UTILS.allIframeStyle(config?.styleQuery));
+        for (const i of ytGifs)
+        {
+            const blockID = UTILS.closestBlockID(i);
+            if (i != iframe)
+            {
+                config?.others_callback(blockID, i);
+            }
+            else if (config.BlockID_self_callback)
+            {
+                config?.self_callback(blockID, i);
             }
         }
     }
@@ -1564,7 +1587,6 @@ async function onPlayerReady(event)
             }
         }, tickOffset); //nice delay to show feedback
     }
-
     //utils timeDisplay
     function ClearTimers()
     {
@@ -1604,11 +1626,23 @@ async function onPlayerReady(event)
                 togglePlay(false);
             }
         }
+
+    }
+    function fullscreenAutoplaySynery_Handler(e)
+    {
+        if (document.fullscreenElement)
+        {
+            PauseAllOthersPlaying_Visibly();
+        }
+        else if (UI.playStyle.visible_clips_start_to_play_unmuted.checked)
+        {
+            UI.playStyle.visible_clips_start_to_play_unmuted.dispatchEvent(new Event('change'));
+        }
     }
     //#endregion
 
 
-    //#region 7. on destroyed
+    //#region 7. on destroyed - clean up and ready next session
     function IframeMutationRemoval_callback(mutationsList, observer)
     {
         mutationsList.forEach(function (mutation)
@@ -1691,7 +1725,7 @@ async function onPlayerReady(event)
     //#endregion
 
 
-    //#region 8. pause off screen
+    //#region 8. pause on off screen
     function PauseOffscreen_callback(entries)
     {
         if (!entries[0])
@@ -1714,7 +1748,7 @@ async function onPlayerReady(event)
     //#endregion
 
 
-    //#region 9. last
+    //#region 9. last - let me watch would you
     function HumanInteraction_AutopalyFreeze()
     {
         const autoplayParent = iframe.closest('.rm-alias-tooltip__content') || //tooltip
@@ -1743,7 +1777,7 @@ async function onPlayerReady(event)
                 if (tick() > updateStartTime + loadingMarginOfError)
                 {
                     // or if mouse is inside parent
-                    if (t.__proto__.globalHumanInteraction) // usees is listening, don't interrupt
+                    if (t.__proto__.globalHumanInteraction) // user wants to listen, don't interrupt
                     {
                         videoIsPlayingWithSound(true);
                     }
@@ -1999,6 +2033,15 @@ I want to add ☐ ☑
     an inline editor for ajusting the litle miscalculations in the clips ☐
         a litle bit earlier, a litle bit after...
         and inplement the changes, when the user the user enter the real edit block mode
+
+
+added
+    visible_clips_start_to_play_unmuted synergy with fullscreenStyle
+        each does what they're suposed be doing
+            when entering fullscreen mode
+                pause everything but itself
+            when exeting - if visible_clips_start_to_play_unmuted is eneabled
+                fire the "change" event to adjust the settings once again
 
 
 TODO ☐ ☑
