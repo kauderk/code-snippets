@@ -186,48 +186,23 @@ const ytGifAttr = {
     }
 }
 /*-----------------------------------*/
-function pushMasterObserverWithTargetClass(classToObserve)
-{
-    window.YT_GIF_OBSERVERS.masterMutationObservers.push(ObserveIframesAndDelployYTPlayers(classToObserve));
-}
-const rm_components = {
+const rm_components_base = {
     video: {
         description: '{{[[video]]}}',
-        classToObserve: 'rm-video-player__spacing-wrapper',
-        BinaryDomUI: UI.deploymentStyle.deployment_style_video,
-        deploymentStyle: function () { this.BinaryDomUI.checked },
-        checkSubDeploymentStyle: function (bol) { this.BinaryDomUI.checked = bol },
-        runMasterObservers: function () { pushMasterObserverWithTargetClass(this.classToObserve); },
+        classToObserve: 'rm-video-player__spacing-wrapper'
     },
     yt_gif: {
         description: '{{[[yt-gif]]}}',
-        classToObserve: `rm-xparser-default-${cssData.yt_gif}`,
-        BinaryDomUI: UI.deploymentStyle.deployment_style_yt_gif,
-        deploymentStyle: function () { this.BinaryDomUI.checked },
-        checkSubDeploymentStyle: function (bol) { this.BinaryDomUI.checked = bol },
-        runMasterObservers: function () { pushMasterObserverWithTargetClass(this.classToObserve); },
+        classToObserve: `rm-xparser-default-${cssData.yt_gif}`
     },
     current: {
         key: ''
     },
-    RunMasterObserverWithKey: function (key)
-    {
-        console.log("running master observer form obj rm_components");
-        this.current.key = key;
-        this[key]['runMasterObservers'](); // THIS IS INSANE!!!
-    }
 }
+const rm_components = rm_components_base;
 rm_components.both = {
-    description: `${rm_components.video.description} and ${rm_components.yt_gif.description}`,
-    classesToObserve: [rm_components.video.classToObserve, rm_components.yt_gif.classToObserve],
-    BinaryDomUI: UI.deploymentStyle.deployment_style_both,
-    deploymentStyle: function () { this.BinaryDomUI.checked },
-    checkSubDeploymentStyle: function (bol) { this.BinaryDomUI.checked = bol },
-    runMasterObservers: function ()
-    {
-        for (const classValue of this.classesToObserve)
-            pushMasterObserverWithTargetClass(classValue);
-    },
+    description: `${rm_components.video} and ${rm_components.yt_gif}`,
+    classesToObserve: [rm_components.video.classToObserve, rm_components.yt_gif.classToObserve]
 }
 /*-----------------------------------*/
 
@@ -317,7 +292,7 @@ async function Ready()
 
     TogglePlayerThumbnails_DDM_RTM(awaiting_with_video_thumnail_as_bg, awaitng_input_with_thumbnail);
 
-    rm_components.RunMasterObserverWithKey(key);
+    RunMasterObserverWithKey(key);
 
     console.log('YT GIF extension activated');
 
@@ -504,31 +479,31 @@ async function Ready()
                 siblingKeys = UTILS.pushSame(siblingKeys, childKey);
                 child.addEventListener('change', function (e) { updateSettingsPageBlock(e, this, childKey, siblingKeys) }, true);
             }
-        }
-    }
-    function updateSettingsPageBlock(e, el, keyObj, siblingKeys)
-    {
-        const { type, checked, value } = el;
-        let replaceWith = (value).toString(); // range - checkbox - radio - label
-
-        if (type == 'checkbox' || type == 'radio')
-        {
-            replaceWith = (checked).toString();
-        }
-        if (type == 'radio') // special case...
-        {
-            for (const key of siblingKeys)
+            function updateSettingsPageBlock(e, el, keyObj, siblingKeys)
             {
-                window.YT_GIF_DIRECT_SETTINGS.get(key).UpdateSettingsBlockValue(''); // to false
+                const { type, checked, value } = el;
+                let replaceWith = (value).toString(); // range - checkbox - radio - label
+
+                if (type == 'checkbox' || type == 'radio')
+                {
+                    replaceWith = (checked).toString();
+                }
+                if (type == 'radio') // special case...
+                {
+                    for (const key of siblingKeys)
+                    {
+                        window.YT_GIF_DIRECT_SETTINGS.get(key).UpdateSettingsBlockValue(''); // to false
+                    }
+                }
+
+                window.YT_GIF_DIRECT_SETTINGS.get(keyObj).UpdateSettingsBlockValue(replaceWith);
+            }
+            function changeOnWeeel(e, el, keyObj)
+            {
+                // How do I check values in the future? This looks expensive...
+                el.dispatchEvent(new Event('change'));
             }
         }
-
-        window.YT_GIF_DIRECT_SETTINGS.get(keyObj)?.UpdateSettingsBlockValue(replaceWith);
-    }
-    function changeOnWeeel(e, el, keyObj)
-    {
-        // How do I check values in the future? This looks expensive...
-        el.dispatchEvent(new Event('change'));
     }
     //#endregion
 
@@ -689,16 +664,36 @@ async function Ready()
             }
         }
     }
+    function RunMasterObserverWithKey(key)
+    {
+        const options = {
+            video: () =>
+            { //video_MasterObserver
+                window.YT_GIF_OBSERVERS.masterMutationObservers.push(ObserveIframesAndDelployYTPlayers(rm_components.video.classToObserve));
+            },
+            yt_gif: () =>
+            { //yt_gif_MasterObserver
+                window.YT_GIF_OBSERVERS.masterMutationObservers.push(ObserveIframesAndDelployYTPlayers(rm_components.yt_gif.classToObserve));
+            },
+            both: () =>
+            { //both_MasterObserver
+                for (const classValue of rm_components.both.classesToObserve)
+                {
+                    window.YT_GIF_OBSERVERS.masterMutationObservers.push(ObserveIframesAndDelployYTPlayers(classValue));
+                }
+            },
+        }
+        rm_components.current.key = key;
+
+        options[key](); // THIS IS INSANE!!!
+    }
     //#endregion
 
 
     //#region BIG BOI FUNCTION - change the funcionality of the extension
     async function MasterObserver_UCS_RTM()
     {
-        const { suspend_yt_gif_deployment, deploy_yt_gifs } = UI.deploymentStyle;
-
-        const checkMenu = suspend_yt_gif_deployment;
-
+        const checkMenu = UI.deploymentStyle.suspend_yt_gif_deployment;
 
         const checkMenuParent = checkMenu.parentElement;
         const labelCheckMenu = checkMenu.previousElementSibling;
@@ -707,14 +702,12 @@ async function Ready()
         function labelTxt(str) { return labelCheckMenu.innerHTML = str; }
         //#endregion
 
+        const subHiddenDDM = document.querySelector(`.${cssData.dropdown__hidden}.${cssData.dropdown_deployment_style}`);
+        const subHiddenDDM_message = subHiddenDDM.querySelector(`.${cssData.dwp_message}`);
 
-        const { dropdown__hidden, dropdown_deployment_style, dwp_message } = cssData;
-        const subHiddenDDM = document.querySelector(`.${dropdown__hidden}.${dropdown_deployment_style}`);
-        const subHiddenDDM_message = subHiddenDDM.querySelector(`.${dwp_message}`);
-
-
-        const subMenuCheck = deploy_yt_gifs;
+        const subMenuCheck = UI.deploymentStyle.deploy_yt_gifs;
         const subMenuCheckParent = subMenuCheck.parentElement;
+
         //#region checkboxes utils
         const DeployCheckboxes = [checkMenu, subMenuCheck];
         function DeployCheckboxesDisabled(b) { DeployCheckboxes.forEach(check => check.disabled = b) }
@@ -723,58 +716,83 @@ async function Ready()
 
 
         //animations css classes
-        const { dwn_no_input, dropdown_fadeIt_bg_animation, dropdown_forbidden_input, dropdown_allright_input } = cssData;
-        const noInputAnimation = [dwn_no_input]
-        const baseAnimation = [dropdown_fadeIt_bg_animation, ...noInputAnimation];
-        const redAnimationNoInputs = [...baseAnimation, dropdown_forbidden_input];
-        const greeAnimationInputReady = [...baseAnimation, dropdown_allright_input];
+        const noInputAnimation = [cssData.dwn_no_input]
+        const baseAnimation = [cssData.dropdown_fadeIt_bg_animation, cssData.dwn_no_input];
+        const redAnimationNoInputs = [...baseAnimation, cssData.dropdown_forbidden_input];
+        const greeAnimationInputReady = [...baseAnimation, cssData.dropdown_allright_input];
 
 
-        // start with default values
+
+
         const deployInfo = {
             suspend: `Suspend Observers`,
             deploy: `Deploy Observers`,
             discharging: `** Disconecting Observers **`,
             loading: `** Setting up Observers **`,
         }
-        labelCheckMenu.innerHTML = deployInfo.suspend;
-        rm_components[key].checkSubDeploymentStyle(true);
 
-        // 1.
+
+
+        labelCheckMenu.innerHTML = deployInfo.suspend;
+
         checkMenu.addEventListener('change', handleAnimationsInputRestriction);
-        // 2.
         subMenuCheck.addEventListener('change', handleSubmitOptional_rm_comp);
 
 
-
-        // 1.1
+        //#region event handelers
         async function handleAnimationsInputRestriction(e)
         {
             if (checkMenu.checked)
             {
-                if (islabel(deployInfo.suspend))// 1.1.1
+                if (islabel(deployInfo.suspend))
                 {
                     await redAnimationCombo(); //after the 10 seconds allow inputs again
                 }
-                else if (islabel(deployInfo.deploy)) // 1.1.2
+                else if (islabel(deployInfo.deploy))
                 {
                     await greenAnimationCombo();
                 }
             }
+            //#region local util
+            async function redAnimationCombo()
+            {
+                labelTxt(deployInfo.discharging);
+                isVisualFeedbackPlaying(false)
+                window.YT_GIF_OBSERVERS.CleanMasterObservers();
+                await restricInputsfor10SecMeanWhile(redAnimationNoInputs); //showing the red animation, because you are choosing to suspend
+                labelTxt(deployInfo.deploy);
+            }
+            //#endregion
         }
 
 
-        // 1.1.1
-        async function redAnimationCombo()
+        async function handleSubmitOptional_rm_comp(e)
         {
-            labelTxt(deployInfo.discharging);
-            isVisualFeedbackPlaying(false)
-            window.YT_GIF_OBSERVERS.CleanMasterObservers();
-            await restricInputsfor10SecMeanWhile(redAnimationNoInputs); //showing the red animation, because you are choosing to suspend
-            labelTxt(deployInfo.deploy);
+            if (subMenuCheck.checked && (islabel(deployInfo.deploy)))
+            {
+                await greenAnimationCombo();
+            }
         }
 
-        // 1.1.2
+
+        //#region utils
+        function ChargeMasterObservers()
+        {
+            const deploymentRadioStates = {
+                video: () => UI.deploymentStyle.deployment_style_video.checked,
+                yt_gif: () => UI.deploymentStyle.deployment_style_yt_gif.checked,
+                both: () => UI.deploymentStyle.deployment_style_both.checked,
+            }
+
+            for (const key in deploymentRadioStates)
+            {
+                if (UTILS.isTrue(deploymentRadioStates[key]())) // THIS IS CRAZY
+                {
+                    RunMasterObserverWithKey(key)
+                    return;
+                }
+            }
+        }
         async function greenAnimationCombo()
         {
             ChargeMasterObservers();
@@ -783,31 +801,6 @@ async function Ready()
             await restricInputsfor10SecMeanWhile(greeAnimationInputReady);
             labelTxt(deployInfo.suspend);
         }
-        // 1.1.2.a
-        function ChargeMasterObservers()
-        {
-            debugger;
-            const filtered = Object.keys(rm_components)
-                .filter(key => rm_components[key].hasOwnProperty('deploymentStyle'))
-                .reduce((obj, key) =>
-                {
-                    obj[key] = rm_components[key];
-                    return obj;
-                }, {});
-
-            for (const key in filtered)
-            {
-                debugger;
-                if (UTILS.isTrue(filtered[key]['deploymentStyle']())) // THIS IS CRAZY
-                {
-                    rm_components.RunMasterObserverWithKey(key);
-                    return;
-                }
-            }
-        }
-
-
-        /* ****************** */
         function isVisualFeedbackPlaying(bol)
         {
             isSubMenuHidden(bol);
@@ -843,24 +836,19 @@ async function Ready()
                 }, duration);
             });
         }
+
         function DeployCheckboxesToggleAnims(bol, animation)
         {
             UTILS.toggleClasses(bol, animation, checkMenuParent);
             UTILS.toggleClasses(bol, noInputAnimation, subMenuCheckParent);
         }
-        /* ****************** */
+        //#endregion
 
 
-        // 2.1
-        async function handleSubmitOptional_rm_comp(e)
-        {
-            if (subMenuCheck.checked && (islabel(deployInfo.deploy)))
-            {
-                await greenAnimationCombo();
-            }
-        }
+        //#endregion
     }
     //#endregion
+
 
     //#region local utils
     function DDM_Els()

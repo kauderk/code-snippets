@@ -427,7 +427,7 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
 
                 const crrObjKey = assertObjPpt_base(targeObj, p_string, p_uid);
 
-                if (join == fmtSplit)
+                if (join == fmtSplit && crrObjKey.hasOwnProperty('sessionValue'))
                 {
                     crrObjKey.sessionValue = value;
                     crrObjKey.caputuredValue = caputuredValue;
