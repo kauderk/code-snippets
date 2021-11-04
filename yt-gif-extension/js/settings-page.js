@@ -94,17 +94,9 @@ window.YT_GIF_SETTINGS_PAGE = {
     },
     defaultValues: {
         baseKey: BaseSetting(),
-        video_volume: {
-            baseKey: BaseInitSetting(40, int),
-            vv_opt: InlinePmt(`integers from 0 to 100`),
-        },
         css_theme: {
             baseKey: BaseInitSetting('dark', str),
             ct_opt: InlinePmt(`"dark" or "light"`),
-        },
-        player_span: {
-            baseKey: BaseInitSetting('50%', str),
-            ps_opt: InlinePmt(`empty means 50% - only valid css units like px  %  vw`),
         },
         override_roam_video_component: {
             baseKey: BaseInitSetting('', [bol, str]),
@@ -113,6 +105,29 @@ window.YT_GIF_SETTINGS_PAGE = {
         end_loop_sound_src: {
             baseKey: BaseInitSetting('https://freesound.org/data/previews/256/256113_3263906-lq.mp3', url),
             elss_opt: InlinePmt(`src sound when yt gif makes a loop, empty if unwanted`),
+        },
+
+        player_span: {
+            baseKey: BaseInitSetting('50%', str),
+            ps_opt: InlinePmt(`empty means 50% - only valid css units like px  %  vw`),
+        },
+        player_volume: {
+            baseKey: BaseInitSetting(40, int),
+            vv_opt: InlinePmt(`integers from 0 to 100`),
+        },
+        player_interface_language: {
+            baseKey: BaseInitSetting('en', str),
+            pcl_opt: InlinePmt('inline url parameter `&hl=` has priority over this'),
+            pli_guide: InlinePmt(`https://developers.google.com/youtube/player_parameters#:~:text=Sets%20the%20player%27s%20interface%20language.%20The%20parameter%20value%20is%20an%20ISO%20639-1%20two-letter%20language%20code%20or%20a%20fully%20specified%20locale.%20For%20example%2C%20fr%20and%20fr-ca%20are%20both%20valid%20values.%20Other%20language%20input%20codes%2C%20such%20as%20IETF%20language%20tags%20(BCP%2047)%20might%20also%20be%20handled%20properly.`),
+        },
+        player_captions_language: {
+            baseKey: BaseInitSetting('en', str),
+            pcl_opt: InlinePmt('inline url parameter `&cc=` has priority over this'),
+            pcl_guide: InlinePmt(`https://developers.google.com/youtube/player_parameters#:~:text=This%20parameter%20specifies%20the%20default%20language%20that%20the%20player%20will%20use%20to%20display%20captions.%20Set%20the%20parameter%27s%20value%20to%20an%20ISO%20639-1%20two-letter%20language%20code.`),
+        },
+        player_captions_on_load: {
+            baseKey: BaseInitSetting('true', bol),
+            pcol_guide: InlinePmt("Browsers love to cash data... if set to -true- most certently you'll get caption on load, but it's hard to tell otherwise... Also, the mixmatch of diferent `&hl=` and `&cc=` can cause to not show the captions on load"),
         },
     },
     LogStatus: {
@@ -846,7 +861,12 @@ bugs ☐ ☑
         possible fix...
             move basekey objects with it's children to the recycle bin
 
+    when creating or renaming keys
+        if they're and they had nested inline pmts, they get
+        left hanging in the recycle bin
 
+            tried two times and it seems that 'displaced parent'
+            is the responsable for the problem
 
 FIXME
     tryToremoveBlock
