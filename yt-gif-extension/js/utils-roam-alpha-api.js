@@ -104,6 +104,10 @@ kauderk.rap = ((rap) =>
             ;*/
         return (results.length == 0) ? undefined : results
     }
+    rap.getBlockInfoByUID = async (blockUid) =>
+    {
+        return await window.roamAlphaAPI.q(`[:find (pull ?b [:block/string]):where [?b :block/uid "${blockUid}"]]`);
+    }
     rap.sortObjectsByOrder = (o) =>
     {
         return o.sort((a, b) => a.order - b.order);

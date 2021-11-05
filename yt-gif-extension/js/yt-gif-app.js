@@ -293,6 +293,7 @@ Object.assign(rm_components.both, baseDeploymentObj_both());
 
 if (
     typeof (UTILS) !== 'undefined' &&
+    typeof (RAP) != 'undefined' &&
     typeof (YT) != 'undefined'
 )
 {
@@ -365,7 +366,7 @@ async function Ready()
 
     TogglePlayerThumbnails_DDM_RTM(awaiting_with_video_thumnail_as_bg, awaitng_input_with_thumbnail);
 
-
+    navigateToSettingsPageInSidebar();
 
 
     // 4. run extension and events - set up
@@ -743,6 +744,20 @@ async function Ready()
             }
         }
     }
+    function navigateToSettingsPageInSidebar()
+    {
+        const settingsBtn = document.querySelector("#navigate-to-yt-gif-settings");
+        settingsBtn.addEventListener('click', function (e)
+        {
+            debugger;
+            // ⚠️⚠️⚠️ how do you communicate with the other scripts?
+            const anySidebarInstance = UTILS.innerElsContains('.rm-sidebar-outline .rm-title-display span', TARGET_PAGE).length >= 1;
+            if (!anySidebarInstance)
+            {
+                RAP.openBlockInSidebar(TARGET_PAGE);
+            }
+        });
+    }
     //#endregion
 
 
@@ -1097,7 +1112,7 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
         async function TryToFindURL(desiredUID)
         {
             // const info42 = await window.roam42.common.getBlockInfoByUID(desiredUID);
-            const info = await window.roamAlphaAPI.q(`[:find (pull ?b [:block/string]):where [?b :block/uid "${desiredUID}"]]`);
+            const info = await RAP.getBlockInfoByUID(desiredUID); //await window.roamAlphaAPI.q(`[:find (pull ?b [:block/string]):where [?b :block/uid "${desiredUID}"]]`);
             const rawText = info[0][0].string;
             const urls = rawText.match(/(http:|https:)?\/\/(www\.)?(youtube.com|youtu.be)\/(watch)?(\?v=)?(\S+)?[^ }]/);
             const innerUIDs = rawText.match(/(?<=\(\()([^(].*?[^)])(?=\)\))/gm);
