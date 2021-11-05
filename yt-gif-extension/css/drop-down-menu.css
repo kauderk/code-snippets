@@ -284,12 +284,23 @@ span.dropdown-info {
   100% { background-color: var(--deployment-extreme-bg); }
 }
 
-/* should be added and removed through javascript*/
+/* SHOULD BE ADDED AND REMOVED THROUGH JAVASCRIPT */
 .dropdown--hidden {
   display: none !important;
 }
 .dropdown_not-allowed_input *{
   cursor: not-allowed;
+}
+/* navegate to settings page not allowed */
+div.settings-not-allowed > span.dropdown-info-message{
+  cursor: not-allowed;
+}
+:is(div.settings-not-allowed, div.settings-not-allowed:hover) 
+> span.dropdown-info-message {
+  --submenu-message-bg: rgb(129 97 0 / 90%); 
+}
+div.settings-not-allowed > span.dropdown-info-message:hover{
+  --dropdown-main-btn-bg-h: rgba(255, 193, 7, 0.62);
 }
 
 /* Treat it like a perma highlight */
