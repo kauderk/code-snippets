@@ -939,7 +939,7 @@ async function Ready()
 function ObserveIframesAndDelployYTPlayers(targetClass)
 {
     // 1. set up all visible YT GIFs
-    const visible = UTILS.inViewportEls(AvoidAllZoomChilds());
+    const visible = UTILS.inViewportElsHard(AvoidAllZoomChilds());
     for (const component of visible)
     {
         onYouTubePlayerAPIReady(component, 'first wave');
@@ -1582,7 +1582,7 @@ async function onPlayerReady(event)
     /* ********************** */
     function LoopTroughVisibleYTGIFs(config = { styleQuery, others_callback: () => { }, self_callback: () => { } })
     {
-        const ytGifs = UTILS.inViewportEls(UTILS.allIframeStyle(config?.styleQuery));
+        const ytGifs = UTILS.inViewportElsHard(UTILS.allIframeStyle(config?.styleQuery));
         for (const i of ytGifs)
         {
             const blockID = UTILS.closestBlockID(i);
