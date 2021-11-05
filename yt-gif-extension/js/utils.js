@@ -2,6 +2,15 @@ var kauderk = window.kauderk || {};
 
 kauderk.util = ((util) =>
 {
+    util.innerElsContains = (selector, text) =>
+    {
+        // https://stackoverflow.com/questions/37098405/javascript-queryselector-find-div-by-innertext#:~:text=return%20Array.prototype.filter.call(elements%2C%20function(element)%7B
+        var elements = document.querySelectorAll(selector);
+        return Array.prototype.filter.call(elements, function (element)
+        {
+            return RegExp(text).test(element.textContent);
+        });
+    }
     /**
      * Returns copy of itself with subOjects that directly include the filterKey
      * @param {String} subKeyAsFilter 
