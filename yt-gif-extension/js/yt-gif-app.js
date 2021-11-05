@@ -366,7 +366,7 @@ async function Ready()
 
     TogglePlayerThumbnails_DDM_RTM(awaiting_with_video_thumnail_as_bg, awaitng_input_with_thumbnail);
 
-    navigateToSettingsPageInSidebar();
+    navigateToSettingsPageInSidebar("#navigate-to-yt-gif-settings-page"); // 🚧
 
 
     // 4. run extension and events - set up
@@ -630,7 +630,7 @@ async function Ready()
         for (const i of infoMessages)
         {
             const possibleSubDdm = i.nextElementSibling;
-            if (possibleSubDdm.classList.contains('dropdown-content'))
+            if (possibleSubDdm?.classList.contains('dropdown-content'))
             {
                 spanNegativeTabIndex(i);
                 validFocusMessage.set(i, possibleSubDdm);
@@ -674,7 +674,6 @@ async function Ready()
             toggleValidItemClasses();
             main.addEventListener('change', toggleValidItemClasses);
 
-            //#region local utils
             function toggleValidItemClasses()
             {
                 for (const i of valid)
@@ -682,7 +681,6 @@ async function Ready()
                     UTILS.toggleClasses(!main.checked, toggleClassArr, i);
                 }
             }
-            //#endregion
         }
 
         //#region local utils
@@ -744,18 +742,34 @@ async function Ready()
             }
         }
     }
-    function navigateToSettingsPageInSidebar()
+    async function navigateToSettingsPageInSidebar(settingsBtnSelector)
     {
-        const settingsBtn = document.querySelector("#navigate-to-yt-gif-settings");
-        settingsBtn.addEventListener('click', function (e)
+        const anySidebarInstance = () => UTILS.innerElsContains('.rm-sidebar-outline .rm-title-display span', TARGET_PAGE).length >= 1;
+
+        const settingsBtnWrapper = document.querySelector(settingsBtnSelector);
+        const settingsBtn = settingsBtnWrapper.querySelector('.dropdown-info-message[data-tooltip]')
+
+        const originalTooltip = settingsBtn.getAttribute('data-tooltip');
+        const clause = 'An instance of the YT GIF Settings page is already open within the Sidebar';
+
+
+        settingsBtn.addEventListener('click', async function (e)
         {
-            debugger;
-            // ⚠️⚠️⚠️ how do you communicate with the other scripts?
-            const anySidebarInstance = UTILS.innerElsContains('.rm-sidebar-outline .rm-title-display span', TARGET_PAGE).length >= 1;
-            if (!anySidebarInstance)
+            // ⚠️⚠️⚠️ how do you communicate with the other scripts? Interfaces? Events? WindowEvents?
+            if (!anySidebarInstance())
             {
-                RAP.openBlockInSidebar(TARGET_PAGE);
+                settingsBtn.setAttribute('data-tooltip', clause);
+                RAP.openBlockInSidebar(TARGET_UID); // this is a back end execution... should it be here...? //https://stackoverflow.com/questions/12097381/communication-between-scripts-three-methods#:~:text=All%20JS%20scripts%20are%20run%20in%20the%20global%20scope.%20When%20the%20files%20are%20downloaded%20to%20the%20client%2C%20they%20are%20parsed%20in%20the%20global%20scope
             }
+        });
+        settingsBtn.addEventListener('mouseenter', async function (e)
+        {
+            const isSidebarOpen = anySidebarInstance();
+            if (!isSidebarOpen)
+            {
+                settingsBtn.setAttribute('data-tooltip', originalTooltip);
+            }
+            UTILS.toggleClasses(isSidebarOpen, ['settings-not-allowed'], settingsBtnWrapper);
         });
     }
     //#endregion
