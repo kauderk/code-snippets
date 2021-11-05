@@ -94,7 +94,7 @@ window.YT_GIF_SETTINGS_PAGE = {
         altKey: dom(),
         iaok_opt: InlinePmt(`middle mouse button is on by default`),
     },
-    playerDefaultValues: {
+    defaultPlayerValues: {
         baseKey: BaseSetting(),
         player_span: {
             baseKey: BaseInitSetting('50%', str),
@@ -106,17 +106,17 @@ window.YT_GIF_SETTINGS_PAGE = {
         },
         player_interface_language: {
             baseKey: BaseInitSetting('en', str),
-            pil_opt: InlinePmt('inline url parameter `&hl=` has priority over this'),
+            pil_opt: InlinePmt('each block url parameter `&hl=` has priority over this'),
             pli_guide: InlinePmt(`https://developers.google.com/youtube/player_parameters#:~:text=Sets%20the%20player%27s%20interface%20language.%20The%20parameter%20value%20is%20an%20ISO%20639-1%20two-letter%20language%20code%20or%20a%20fully%20specified%20locale.%20For%20example%2C%20fr%20and%20fr-ca%20are%20both%20valid%20values.%20Other%20language%20input%20codes%2C%20such%20as%20IETF%20language%20tags%20(BCP%2047)%20might%20also%20be%20handled%20properly.`),
         },
         player_captions_language: {
             baseKey: BaseInitSetting('en', str),
-            pcl_opt: InlinePmt('inline url parameter `&cc=` has priority over this'),
+            pcl_opt: InlinePmt('each block url parameter `&cc=` has priority over this'),
             pcl_guide: InlinePmt(`https://developers.google.com/youtube/player_parameters#:~:text=This%20parameter%20specifies%20the%20default%20language%20that%20the%20player%20will%20use%20to%20display%20captions.%20Set%20the%20parameter%27s%20value%20to%20an%20ISO%20639-1%20two-letter%20language%20code.`),
         },
         player_captions_on_load: {
             baseKey: BaseInitSetting('true', bol),
-            pcol_guide: InlinePmt("Browsers love to cash data... if set to -true- most certently you'll get caption on load, but it's hard to tell otherwise... Also, the mixmatch of diferent `&hl=` and `&cc=` can cause to not show the captions on load"),
+            pcol_guide: InlinePmt("Browsers love to cash data... if set to -true- most certently you'll get caption on load, but it's hard to tell otherwise... Also, the mix and match of diferent `&hl=` and `&cc=` can cause to not show the captions on load"),
         },
     },
     defaultValues: {
@@ -155,7 +155,8 @@ window.YT_GIF_DIRECT_SETTINGS = null;
 window.YT_GIF_SETTINGS_PAGE_INIT = async () => await init();
 
 
-init();
+
+
 async function init()
 {
     const { acc, keyObjMap } = await assignChildrenMissingValues();
@@ -171,14 +172,14 @@ async function init()
         window.YT_GIF_DIRECT_SETTINGS.set(TARGET_PAGE, { uid: TARGET_UID }); // the most special cases of them all... the actual page
         const FinishRec_thenDisplace_cbArr = await Read_Write_SettingsPage(TARGET_UID, keyObjMap); // 🐌
         const addedBlocks = await addAllMissingBlocks(); // 🐌 // THEY WILL STACK UP AGAINS EACHOTHER IF THEY ARE NOT EXAMINED - careful, bud
-        // 2.
+        // displace after main funcs... not while reading
         for (const displaceBlock_cb of FinishRec_thenDisplace_cbArr)
         {
-            await displaceBlock_cb(); // this is fucking CRAZY!!
+            await displaceBlock_cb();
         }
     }
     await RAP.SetNumberedViewWithUid(TARGET_UID);
-    //await RAP.CollapseDirectcChildren(TARGET_UID, false);
+    await RAP.CollapseDirectcChildren(TARGET_UID, false);
 }
 
 //#region HIDDEN FUNCTIONS

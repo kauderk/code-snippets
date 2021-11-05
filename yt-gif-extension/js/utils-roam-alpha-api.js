@@ -239,6 +239,11 @@ kauderk.rap = ((rap) =>
         }
     }
     /* -------------------------------------------------------------------- */
+    rap.openBlockInSidebar = (blockUid, windowType = 'outline') =>
+    {
+        //windowType = block, outline, graph
+        return window.roamAlphaAPI.ui.rightSidebar.addWindow({ window: { type: windowType, 'block-uid': blockUid } })
+    }
     rap.getPageUid = (pageTitle) =>
     {
         const res = window.roamAlphaAPI.q(
