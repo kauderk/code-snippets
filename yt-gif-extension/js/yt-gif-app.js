@@ -80,7 +80,7 @@ const videoParams = {
 
     speed: 1,
 
-    volume: window.YT_GIF_SETTINGS_PAGE.defaultValues.player_volume.baseKey.sessionValue,
+    volume: window.YT_GIF_DIRECT_SETTINGS.get('player_volume').sessionValue,
     updateVolume: 30, // 'this' will be set afterwards
     volumeURLmapHistory: [],
 };
@@ -324,7 +324,7 @@ async function Ready()
 
     // 1. set up looks
     //#region relevant variables
-    const { css_theme, player_span, end_loop_sound_src } = window.YT_GIF_SETTINGS_PAGE.defaultValues;
+    const { css_theme, player_span, end_loop_sound_src } = Object.fromEntries(window.YT_GIF_DIRECT_SETTINGS);;
     const { themes, playerStyle, dropDownMenuStyle } = links.css;
     const { playerControls, dropDownMenu } = links.html;
     const { yt_gif } = cssData; // CssThemes_UCS
@@ -333,10 +333,10 @@ async function Ready()
     await smart_LoadCSS(dropDownMenuStyle, `${yt_gif}-dropDownMenuStyle`);
     await smart_LoadCSS(playerStyle, `${yt_gif}-playerStyle`);
 
-    await smart_CssThemes_UCS(css_theme.baseKey.sessionValue, themes, yt_gif); // UCS - user customizations
-    await smart_CssPlayer_UCS(player_span.baseKey.sessionValue, cssData);
+    await smart_CssThemes_UCS(css_theme.sessionValue, themes, yt_gif); // UCS - user customizations
+    await smart_CssPlayer_UCS(player_span.sessionValue, cssData);
 
-    links.html.fetched.playerControls = await PlayerHtml_UCS(playerControls, end_loop_sound_src.baseKey.sessionValue);
+    links.html.fetched.playerControls = await PlayerHtml_UCS(playerControls, end_loop_sound_src.sessionValue);
 
     await smart_Load_DDM_onTopbar(dropDownMenu); // DDM - drop down menu
 
@@ -556,8 +556,9 @@ async function Ready()
                 switch (parentKey)
                 {
                     case 'label':
-                    case 'defaultValues':
                     case 'InAndOutKeys':
+                    case 'defaultPlayerValues':
+                    case 'defaultValues':
                         continue;
                     case 'deploymentStyle': // special case...
                         child.addEventListener('change', function (e) { updateOverrideComponentSettingBlock(e, this, childKey, siblingKeys) }, true);
@@ -618,7 +619,7 @@ async function Ready()
         const classNames = [ddm_focus]; // used inside two local func
 
         icon.addEventListener('click', function (e) { GainFocus(e, this, mainDDM) }, true);
-        icon.addEventListener('blur', function (e) { LoosedFocus(e, this, mainDDM) }, true);
+        icon.addEventListener('blur', function (e) { LostFocus(e, this, mainDDM) }, true);
 
 
         // 2. for all infoMessages in html
@@ -637,7 +638,7 @@ async function Ready()
         for (const [keyMessageEl, valueEltarget] of validFocusMessage.entries())
         {
             keyMessageEl.addEventListener("click", function (e) { GainFocus(e, this, valueEltarget) });
-            keyMessageEl.addEventListener("blur", function (e) { LoosedFocus(e, this, valueEltarget) });
+            keyMessageEl.addEventListener("blur", function (e) { LostFocus(e, this, valueEltarget) });
         }
 
 
@@ -647,7 +648,7 @@ async function Ready()
             el.focus();
             UTILS.toggleClasses(true, classNames, targetEl);
         }
-        function LoosedFocus(e, el, targetEl)
+        function LostFocus(e, el, targetEl)
         {
             UTILS.toggleClasses(false, classNames, targetEl);
         }
@@ -2064,7 +2065,7 @@ function onStateChange(state)
 //#region Utils
 function validSoundURL()
 {
-    const src = window.YT_GIF_SETTINGS_PAGE.defaultValues.end_loop_sound_src.baseKey.sessionValue;
+    const src = window.YT_GIF_DIRECT_SETTINGS.get('end_loop_sound_src').sessionValue;
     if (UTILS.isValidUrl(src))
     {
         return src
@@ -2086,6 +2087,8 @@ I want to add ☐ ☑
         a litle bit earlier, a litle bit after...
         and inplement the changes, when the user the user enter the real edit block mode
             🙋
+
+    pause or mute when video plays with while using the inAndOutKeys ☐
 
 added
     visible_clips_start_to_play_unmuted synergy with fullscreenStyle ☑ ☑
