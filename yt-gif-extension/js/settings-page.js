@@ -137,7 +137,7 @@ window.YT_GIF_SETTINGS_PAGE = {
     LogStatus: {
         baseKey: BasePmt(`Everything looks alright :D`),
         DisplacedBlocks: {
-            baseKey: BasePmt(`invalid block settings, deleted or deprecated`),
+            baseKey: BasePmt(`invalid -> settings block - deleted - deprecated`),
         },
         UnknownBlocks: {
             baseKey: BasePmt(`... to the YT GIF SETTINGS PAGE script algorithm-functions`),
@@ -146,6 +146,7 @@ window.YT_GIF_SETTINGS_PAGE = {
     },
 }
 window.YT_GIF_SETTINGS_PAGE.Workflow.baseKey.string = `The ${Object.keys(window.YT_GIF_SETTINGS_PAGE).length} blocks will be -added on updates- and -removed if drepreacted- automatically. The last parameters "<>" are customizable. 🐕 👋 `;
+
 
 
 
@@ -162,17 +163,22 @@ async function init()
 
     if (TARGET_UID == null) // Brand new installation
     {
-        TARGET_UID = await RAP.getOrCreatePageUid(TARGET_PAGE); //navigateToUiOrCreate
+        TARGET_UID = await RAP.navigateToUiOrCreate(TARGET_PAGE); //navigateToUiOrCreate : getOrCreatePageUid
         const addedBlocks = await addAllMissingBlocks(); // 🐌
     }
     else // Read and store Session Values
     {
         window.YT_GIF_DIRECT_SETTINGS.set(TARGET_PAGE, { uid: TARGET_UID }); // the most special cases of them all... the actual page
-        const entirePageText = await Read_Write_SettingsPage(TARGET_UID, keyObjMap); // 🐌
+        const FinishRec_thenDisplace_cbArr = await Read_Write_SettingsPage(TARGET_UID, keyObjMap); // 🐌
         const addedBlocks = await addAllMissingBlocks(); // 🐌 // THEY WILL STACK UP AGAINS EACHOTHER IF THEY ARE NOT EXAMINED - careful, bud
+        // 2.
+        for (const displaceBlock_cb of FinishRec_thenDisplace_cbArr)
+        {
+            await displaceBlock_cb(); // this is fucking CRAZY!!
+        }
     }
     await RAP.SetNumberedViewWithUid(TARGET_UID);
-    await RAP.CollapseDirectcChildren(TARGET_UID, false);
+    //await RAP.CollapseDirectcChildren(TARGET_UID, false);
 }
 
 //#region HIDDEN FUNCTIONS
@@ -296,13 +302,9 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
     const entirePageText = await Rec_Read_Write_SettingsPage(ChildrenHierarchy[0][0], accObj);
 
 
-    // 2.
-    for (const displaceBlock_cb of FinishRec_thenDisplace_cbArr)
-    {
-        await displaceBlock_cb(); // this is fucking CRAZY!!
-    }
 
-    return entirePageText;
+
+    return FinishRec_thenDisplace_cbArr;
 
 
     async function Rec_Read_Write_SettingsPage(nextChildObj, accObj)
@@ -342,7 +344,7 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
                 const nextAccObj = {
                     accStr: accStr,
                     nextUID: uid,
-                    keyFromLevel0: key,
+                    keyFromLevel0: key || TARGET_PAGE, // well the page can't be avoided, can it?
                     selfOrder: child.order,
                     parentState: parentState,
                     RoamObj: child,
@@ -463,21 +465,27 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
                 }
 
                 // work in progress
-                // are you indented correclty? - and - are you nested under the proper block?
-                const validNestFromThePast = (targeObj.indent == indent && accObj.keyFromLevel0 == targeObj.parentKey);
+                // are you indented correclty? - is your relative sibling order alright? and - are you nested under the proper block?
+                const validNestFromThePast = (targeObj.indent == indent && accObj.selfOrder == targeObj.order && accObj.keyFromLevel0 == targeObj.parentKey);
                 if (validNestFromThePast)
                 {
                     parentState = {
                         displaced: true,
                     };
                 }
-                FinishRec_thenDisplace_cbArr.push(async function () 
+                FinishRec_thenDisplace_cbArr.push(async function ()
                 {
                     const relevantParentUID = validNestFromThePast ? parentUid : keyObjMap.get(targeObj.parentKey).uid; // block with proper indent? no, then nest it under it's most relevant parent
 
                     if (parentState.displaced == false) // shall stay with it's parent then
                     {
-                        await checkReorderBlockObj(relevantParentUID, selfOrder, crrObjKey);
+                        debugger;
+                        await TryToMoveBlock(relevantParentUID, crrObjKey.order, crrObjKey.uid);
+                        //console.log(key, accObj.keyFromLevel0, targeObj.parentKey, (accObj.keyFromLevel0 == targeObj.parentKey));
+                        if (accObj.keyFromLevel0 != targeObj.parentKey)
+                        {
+                            await TryToMoveBlock(keyObjMap.get(targeObj.parentKey).uid, crrObjKey.order, crrObjKey.uid);
+                        }
                     }
                 })
 
@@ -528,47 +536,49 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
             const uidToMove = uid || nextChildObj.uid || nextUID;
             if (uidToMove != TARGET_UID) // the nature of the recursive func makes it so the page uid can't be avoided, you don't want that - exit
             {
-                if (accObj?.parentState?.displaced === true)
+                // if (accObj?.parentState?.displaced === true)
+                // {
+                // don't move anything because it's parent was already displaced
+                // debugger;
+                // }
+                // else
+                // {
+                let Recylce_cb = null;
+                if (key)
                 {
-                    // don't move anything because it's parent was already displaced
-                }
-                else
-                {
-                    let Recylce_cb = null;
-                    if (key)
+                    if (keyFromLevel0 != 'DisplacedBlocks')
                     {
                         Recylce_cb = async () => await TryToMoveBlock(keyObjMap.get('DisplacedBlocks').uid, 0, uidToMove); // move one block at a time and it's children along with it
-
-                        //console.log(`${nextStr}           <= deprecated YT GIF setting!`);
                     }
-
-                    else
-                    {
-                        Recylce_cb = async () => await TryToMoveBlock(keyObjMap.get('UnknownBlocks').uid, 0, uidToMove); // well well well don't delete it if you don't know what it is
-
-                        //console.log(`${nextStr}           <= unknown block on the YT GIF Page Settings!`);
-                    }
+                }
+                else if (keyFromLevel0 != 'UnknownBlocks')
+                {
+                    Recylce_cb = async () => await TryToMoveBlock(keyObjMap.get('UnknownBlocks').uid, 0, uidToMove); // well well well don't delete it if you don't know what it is
+                }
+                if (Recylce_cb)
+                {
                     FinishRec_thenDisplace_cbArr.push(Recylce_cb);
                 }
+                // }
                 parentState = {
                     displaced: true,
                 };
             }
-            async function TryToMoveBlock(parentUid, order, selfUid)
+        }
+        async function TryToMoveBlock(parentUid, order, selfUid)
+        {
+            try
             {
-                try
+                if (parentUid == selfUid)
                 {
-                    if (parentUid == selfUid)
-                    {
-                        debugger;
-                        return
-                    }
-                    RAP.moveBlock(parentUid, order, selfUid);
+                    throw new Error(`STOP! Don't move block to itself =>         ${parentUid} ${childObjToMoveUID.string}`);
                 }
-                catch (err)
-                {
-                    debugger;
-                }
+                debugger;
+                RAP.moveBlock(parentUid, order, selfUid);
+            }
+            catch (err)
+            {
+                debugger;
             }
         }
     }
@@ -740,9 +750,14 @@ async function checkReorderBlockObj(parentUid, selfOrder, childObjToMoveUID)
     const validUid = childObjToMoveUID.uid;
     try
     {
-        await RAP.moveBlock(parentUid, validOrder, validUid);
+        if (parentUid == validUid)
+        {
+            throw new Error(`STOP! Don't move block to itself =>         ${parentUid} ${childObjToMoveUID.string}`);
+        }
         if (selfOrder != validOrder)
         {
+            debugger;
+            await RAP.moveBlock(parentUid, validOrder, validUid);
         }
     }
     catch (err)
