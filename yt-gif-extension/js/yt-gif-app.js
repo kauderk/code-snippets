@@ -38,7 +38,8 @@ let currentFullscreenPlayer = null;
 const YT_GIF_OBSERVERS_TEMP = {
     masterMutationObservers: [],
     masterIntersectionObservers: [],
-    creationCounter: -1, // crucial, bc the api won't reload iframes with the same id
+    masterIframeBuffer: [],
+    creationCounter: -1, // crucial, because the api won't reload iframes with the same id
     CleanMasterObservers: function ()
     {
         const mutObjRes = cleanObserverArr(this.masterMutationObservers);
@@ -353,10 +354,11 @@ async function Ready()
 
     // 3. set up events
     //#region relevant variables
-    const { ddm_icon, ddm_focus, ddm_info_message_selector, dropdown__hidden, awaitng_input_with_thumbnail } = cssData;
+    const { ddm_icon, ddm_focus, ddm_info_message_selector, dropdown__hidden, awaitng_input_with_thumbnail, dwn_no_input } = cssData;
     const { timestamp_display_scroll_offset, end_loop_sound_volume, iframe_buffer_slider } = UI.range;
     const { rangeValue, loop_volume_displayed, iframe_buffer_label } = UI.label;
     const { awaiting_with_video_thumnail_as_bg } = UI.experience;
+    const { iframe_buffer_btn, awaiting_for_mouseenter_to_initialize } = UI.experience;
     //#endregion
 
     DDM_IconFocusBlurEvents(ddm_icon, ddm_focus, ddm_info_message_selector);
@@ -370,6 +372,8 @@ async function Ready()
     TogglePlayerThumbnails_DDM_RTM(awaiting_with_video_thumnail_as_bg, awaitng_input_with_thumbnail);
 
     navigateToSettingsPageInSidebar("#navigate-to-yt-gif-settings-page"); // 🚧
+
+    IframeBuffer_AND_AwaitngToInitialize_SYNERGY_RTM(iframe_buffer_btn, awaiting_for_mouseenter_to_initialize);
 
 
     // 4. run extension and events - set up
@@ -769,6 +773,20 @@ async function Ready()
             UTILS.toggleClasses(open, ['settings-not-allowed'], settingsBtnWrapper);
         });
     }
+    function IframeBuffer_AND_AwaitngToInitialize_SYNERGY_RTM(iframe_buffer_btn, awaiting_for_mouseenter_to_initialize)
+    {
+        iframe_buffer_btn.addEventListener('change', async function (e)
+        {
+            if (iframe_buffer_btn.checked)
+            {
+                spliceIframeBuffer();
+            }
+            else
+            {
+                AwaitingBtn(false);
+            }
+        });
+    }
     //#endregion
 
 
@@ -933,6 +951,8 @@ async function Ready()
 
 }
 
+
+
 function ObserveIframesAndDelployYTPlayers(targetClass)
 {
     // 1. set up all visible YT GIFs
@@ -1083,6 +1103,7 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
     }
     else
     {
+        console.log(message);
         return DeployYT_IFRAME();
     }
 
@@ -1236,7 +1257,7 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
             UTILS.toggleClasses(false, mainAnimation, wrapper);
             UTILS.removeIMGbg(wrapper);
             wrapper.removeEventListener('mouseenter', CreateYTPlayer);
-
+            console.log(message);
             return DeployYT_IFRAME();
         }
     }
@@ -1392,13 +1413,17 @@ async function onPlayerReady(event)
     // 6. store relevant elements with event event listeners to clean them later
     const withEventListeners = [parent, parent.parentNode, timeDisplay, iframe]; // ready to be cleaned
 
-
+    const parentCssPath = UTILS.getUniqueSelector(parent.parentNode)
 
     // 7. clean data and ready 'previous' paramaters for next sesion with IframeRemmovedFromDom_callback
     const config = { subtree: true, childList: true };
     const RemovedObserver = new MutationObserver(IframeMutationRemoval_callback); // will fire IframeRemmovedFromDom_callback... the acutal logic
     RemovedObserver.observe(document.body, config);
 
+
+    // work in progress
+    window.YT_GIF_OBSERVERS.masterIframeBuffer.push(parentCssPath);
+    spliceIframeBuffer();
 
 
     // 8. 'auto pause' when an iframe goes out the viewport... stop playing and mute
@@ -1781,10 +1806,10 @@ async function onPlayerReady(event)
         ClearTimers();
         recordedIDs.delete(blockID);
         allVideoParameters.delete(key);
-        observer.disconnect();
         t.__proto__.enter = () => { };
 
 
+        observer.disconnect();
 
 
         // either save the target
@@ -1801,6 +1826,7 @@ async function onPlayerReady(event)
             if (!targetExist)
             {
                 t.destroy();
+
                 console.count('Destroyed! ' + key);
             }
         }
@@ -2095,6 +2121,71 @@ function validSoundURL()
     }
     return null
 }
+async function spliceIframeBuffer()
+{
+    // work in progress
+
+    if (!UI.experience.iframe_buffer_btn.checked)
+        return;
+
+    // make sure to have a proper list of wrappers
+    window.YT_GIF_OBSERVERS.masterIframeBuffer = [...new Set(window.YT_GIF_OBSERVERS.masterIframeBuffer)];
+
+    const current = window.YT_GIF_OBSERVERS.masterIframeBuffer.length;
+    const cap = parseInt(UI.range.iframe_buffer_slider.value, 10);
+    if (current < cap + 1)
+        return;
+
+    let atLeasOne = false;
+    for (let i = 0; i < current - cap; i++)
+    {
+        if (!atLeasOne) // don't spam it
+            AwaitingBtn(true);
+
+        const elm = window.YT_GIF_OBSERVERS.masterIframeBuffer[i];
+        window.YT_GIF_OBSERVERS.masterIframeBuffer.shift(elm); // https://stackoverflow.com/questions/8073673/how-can-i-add-new-array-elements-at-the-beginning-of-an-array-in-javascript#:~:text=var%20a%20%3D%20%5B23%2C%2045%2C%2012%2C%2067%5D%3B
+        await TryToFollowBuffer(elm);
+        atLeasOne = true;
+    }
+
+    async function TryToFollowBuffer(parentCssPath)
+    {
+        const span = UTILS.span([rm_components[rm_components.state.currentKey].classToObserve]);
+        try
+        {
+            document.querySelector(parentCssPath).querySelector('.yt-gif-wrapper').remove();
+        } catch (error)
+        {
+            debugger;
+        }
+
+        // load awaiting for command
+        await RAP.sleep(100);
+
+        const newYTGIF = document.querySelector(parentCssPath);
+        if (newYTGIF && span)
+        {
+            newYTGIF.appendChild(span);
+        }
+        else
+        {
+            const index = window.YT_GIF_OBSERVERS.masterIframeBuffer.indexOf(parentCssPath);
+            if (index > -1)
+                window.YT_GIF_OBSERVERS.masterIframeBuffer.splice(index, 1);
+        }
+    }
+}
+function AwaitingBtn(bol)
+{
+    const { awaiting_for_mouseenter_to_initialize } = UI.experience
+    const { dwn_no_input } = cssData;
+
+    awaiting_for_mouseenter_to_initialize.disabled = bol;
+    awaiting_for_mouseenter_to_initialize.checked = bol;
+    UTILS.toggleClasses(bol, [dwn_no_input], awaiting_for_mouseenter_to_initialize);
+
+    awaiting_for_mouseenter_to_initialize.dispatchEvent(new Event('change'));
+}
 //#endregion
 
 
@@ -2129,7 +2220,7 @@ TODO ☐ ☑
 
     fixed settings buttn clases ☑ ☑
 
-    create scroll iframe buffer amount in experience
+    create scroll iframe buffer amount in experience ☑ ☑
 
     re add yt icon on orientation change on mobile
         limit the size to 24 px max - square
