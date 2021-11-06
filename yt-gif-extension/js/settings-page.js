@@ -157,7 +157,6 @@ window.YT_GIF_SETTINGS_PAGE_INIT = async () => await init();
 
 
 
-init();
 async function init()
 {
     const { acc, keyObjMap } = await assignChildrenMissingValues();
