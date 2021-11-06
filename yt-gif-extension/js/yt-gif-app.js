@@ -13,6 +13,7 @@ const UTILS = window.kauderk.util;
 UI.label = {
     rangeValue: '',
     loop_volume_displayed: '',
+    iframe_buffer_label: '',
 }
 UI.deploymentStyle = {
     //menu
@@ -167,6 +168,7 @@ const cssData = {
 const attrData = {
     initialize_bg: 'initialize-bg',
     initialize_loop: 'initialize-loop',
+    iframe_buffer: 'iframe_buffer', // ok "_" and "-" is causing confusion... fix this later
 }
 const attrInfo = {
     videoUrl: 'data-video-url',
@@ -352,8 +354,8 @@ async function Ready()
     // 3. set up events
     //#region relevant variables
     const { ddm_icon, ddm_focus, ddm_info_message_selector, dropdown__hidden, awaitng_input_with_thumbnail } = cssData;
-    const { timestamp_display_scroll_offset, end_loop_sound_volume } = UI.range;
-    const { rangeValue, loop_volume_displayed } = UI.label;
+    const { timestamp_display_scroll_offset, end_loop_sound_volume, iframe_buffer_slider } = UI.range;
+    const { rangeValue, loop_volume_displayed, iframe_buffer_label } = UI.label;
     const { awaiting_with_video_thumnail_as_bg } = UI.experience;
     //#endregion
 
@@ -363,6 +365,7 @@ async function Ready()
 
     UpdateOnScroll_RTM(timestamp_display_scroll_offset, rangeValue);
     UpdateOnScroll_RTM(end_loop_sound_volume, loop_volume_displayed);
+    UpdateOnScroll_RTM(iframe_buffer_slider, iframe_buffer_label);
 
     TogglePlayerThumbnails_DDM_RTM(awaiting_with_video_thumnail_as_bg, awaitng_input_with_thumbnail);
 
@@ -1356,7 +1359,6 @@ async function onPlayerReady(event)
 
 
     // 2. play style | pause style
-    //#endregion
     for (const p in UI.playStyle)
     {
         UI.playStyle[p].addEventListener('change', playStyleDDMO);
@@ -2123,7 +2125,7 @@ added
         and update the actual block on the actual page ☑ ☑
 
 TODO ☐ ☑
-    delete useless src sound tags - player html
+    delete useless src sound tags - player html ☑ ☑
 
     fixed settings buttn clases ☑ ☑
 
