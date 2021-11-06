@@ -77,8 +77,8 @@ span.yt-gif-drop-down-menu-toolbar .bp3-popover-target > .dropdown {
   display: none;
 }
 svg.yt-gif-svg {
-  height: 100%;
-  width: 85%;
+  max-width: 24px;
+  max-height: 24px;
   aspect-ratio: 1 / 1;
 }
 path.yt-gif-svg-bg {
