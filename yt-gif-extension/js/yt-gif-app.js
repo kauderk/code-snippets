@@ -750,26 +750,26 @@ async function Ready()
         const settingsBtn = settingsBtnWrapper.querySelector('.dropdown-info-message[data-tooltip]')
 
         const originalTooltip = settingsBtn.getAttribute('data-tooltip');
-        const clause = 'An instance of the YT GIF Settings page is already open within the Sidebar';
-
+        const clause = `YT GIF Settings page instance already open within the Sidebar. It's pourpouse is to check values. Change them using this menu.`;
 
         settingsBtn.addEventListener('click', async function (e)
         {
             // ⚠️⚠️⚠️ how do you communicate with the other scripts? Interfaces? Events? WindowEvents?
+            await RAP.setSideBarState(3);
+            await RAP.sleep(50); // an observer is the safest option though
+
             if (!anySidebarInstance())
             {
+                UTILS.toggleClasses(true, ['settings-not-allowed'], settingsBtnWrapper);
                 settingsBtn.setAttribute('data-tooltip', clause);
-                RAP.openBlockInSidebar(TARGET_UID); // this is a back end execution... should it be here...? //https://stackoverflow.com/questions/12097381/communication-between-scripts-three-methods#:~:text=All%20JS%20scripts%20are%20run%20in%20the%20global%20scope.%20When%20the%20files%20are%20downloaded%20to%20the%20client%2C%20they%20are%20parsed%20in%20the%20global%20scope
+                await RAP.openBlockInSidebar(TARGET_UID); // this is a back end execution... should it be here...? //https://stackoverflow.com/questions/12097381/communication-between-scripts-three-methods#:~:text=All%20JS%20scripts%20are%20run%20in%20the%20global%20scope.%20When%20the%20files%20are%20downloaded%20to%20the%20client%2C%20they%20are%20parsed%20in%20the%20global%20scope
             }
         });
         settingsBtn.addEventListener('mouseenter', async function (e)
         {
-            const isSidebarOpen = anySidebarInstance();
-            if (!isSidebarOpen)
-            {
-                settingsBtn.setAttribute('data-tooltip', originalTooltip);
-            }
-            UTILS.toggleClasses(isSidebarOpen, ['settings-not-allowed'], settingsBtnWrapper);
+            const open = anySidebarInstance();
+            settingsBtn.setAttribute('data-tooltip', (open) ? clause : originalTooltip);
+            UTILS.toggleClasses(open, ['settings-not-allowed'], settingsBtnWrapper);
         });
     }
     //#endregion
@@ -2132,6 +2132,13 @@ added
 
 TODO ☐ ☑
     delete useless src sound tags - player html
+
+    fixed settings buttn clases ☑ ☑
+
+    create scroll iframe buffer amount in experience
+
+    re add yt icon on orientation change on mobile
+        limit the size to 24 px max - square
 
 features on hold btn at the bottom ☑ ☑
     focus & blus for sub ddm ☑ ☑
