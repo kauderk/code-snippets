@@ -57,6 +57,7 @@ window.YT_GIF_SETTINGS_PAGE = {
         sound_when_video_loops: dom('1'),
         awaiting_for_mouseenter_to_initialize: dom(),
         awaiting_with_video_thumnail_as_bg: dom('1'),
+        iframe_buffer_beta: dom('1'),
     },
     fullscreenStyle: {
         baseKey: BaseSetting(chk),
@@ -85,6 +86,10 @@ window.YT_GIF_SETTINGS_PAGE = {
         end_loop_sound_volume: {
             baseKey: BaseDom('50', int),
             elsv_opt: InlinePmt(`integers from 0 to 100`),
+        },
+        iframe_buffer_slider: {
+            baseKey: BaseDom('15', int),
+            ibs_opt: InlinePmt(`integers from 1 to 30`),
         },
     },
     InAndOutKeys: {
@@ -164,7 +169,7 @@ async function init()
 
     if (TARGET_UID == null) // Brand new installation
     {
-        TARGET_UID = await RAP.navigateToUiOrCreate(TARGET_PAGE); //navigateToUiOrCreate : getOrCreatePageUid
+        TARGET_UID = await RAP.getOrCreatePageUid(TARGET_PAGE); //navigateToUiOrCreate : getOrCreatePageUid
         const addedBlocks = await addAllMissingBlocks(); // 🐌
     }
     else // Read and store Session Values

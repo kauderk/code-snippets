@@ -358,7 +358,7 @@ async function Ready()
     const { timestamp_display_scroll_offset, end_loop_sound_volume, iframe_buffer_slider } = UI.range;
     const { rangeValue, loop_volume_displayed, iframe_buffer_label } = UI.label;
     const { awaiting_with_video_thumnail_as_bg } = UI.experience;
-    const { iframe_buffer_btn, awaiting_for_mouseenter_to_initialize } = UI.experience;
+    const { iframe_buffer_beta, awaiting_for_mouseenter_to_initialize } = UI.experience;
     //#endregion
 
     DDM_IconFocusBlurEvents(ddm_icon, ddm_focus, ddm_info_message_selector);
@@ -373,7 +373,7 @@ async function Ready()
 
     navigateToSettingsPageInSidebar("#navigate-to-yt-gif-settings-page"); // 🚧
 
-    IframeBuffer_AND_AwaitngToInitialize_SYNERGY_RTM(iframe_buffer_btn, awaiting_for_mouseenter_to_initialize);
+    IframeBuffer_AND_AwaitngToInitialize_SYNERGY_RTM(iframe_buffer_beta, awaiting_for_mouseenter_to_initialize);
 
 
     // 4. run extension and events - set up
@@ -773,11 +773,11 @@ async function Ready()
             UTILS.toggleClasses(open, ['settings-not-allowed'], settingsBtnWrapper);
         });
     }
-    function IframeBuffer_AND_AwaitngToInitialize_SYNERGY_RTM(iframe_buffer_btn, awaiting_for_mouseenter_to_initialize)
+    function IframeBuffer_AND_AwaitngToInitialize_SYNERGY_RTM(iframe_buffer_beta, awaiting_for_mouseenter_to_initialize)
     {
-        iframe_buffer_btn.addEventListener('change', async function (e)
+        iframe_buffer_beta.addEventListener('change', async function (e)
         {
-            if (iframe_buffer_btn.checked)
+            if (iframe_buffer_beta.checked)
             {
                 spliceIframeBuffer();
             }
@@ -2125,7 +2125,7 @@ async function spliceIframeBuffer()
 {
     // work in progress
 
-    if (!UI.experience.iframe_buffer_btn.checked)
+    if (!UI.experience.iframe_buffer_beta.checked)
         return;
 
     // make sure to have a proper list of wrappers
