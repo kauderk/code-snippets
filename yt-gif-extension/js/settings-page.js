@@ -1,4 +1,4 @@
-// version 3 - semi-refactored
+// version 4 - semi-refactored
 const TARGET_PAGE = 'roam/js/kauderk/yt-gif/settings';
 const UTIL_K = window.kauderk.util;
 const RAP = window.kauderk.rap;
@@ -25,100 +25,101 @@ const rad = 'radio',
 window.YT_GIF_SETTINGS_PAGE = {
     Workflow: {
         baseKey: BasePmt(`BIP BOP . . .`),
-        joins: InlinePmt(`either "ﾠ:ﾠ" for actual settings or "ﾠ/ﾠ" for prompt guidelines`), // he doesn't know... wait- he knows "ﾠ" != " "
-        parameters: {
-            baseKey: BasePmt("\n`(xxxuidxxx)` : `yt_gif_settings_key` : `<value>`"),
-            uid: InlinePmt("\n`(xxxuidxxx)`\nunique per user data base, without it the settings can't be written on this page"),
-            key: InlinePmt("\n`yt_gif_settings_key`\nsecond way to know which setting to change"),
-            value: InlinePmt("\n`<value>`\nin many cases optional and most of the time a binary switch, on - off"),
-        },
+        // joins: InlinePmt(`either "ﾠ:ﾠ" for actual settings or "ﾠ/ﾠ" for prompt guidelines`), // he doesn't know... wait- he knows "ﾠ" != " "
+        // parameters: {
+        //     baseKey: BasePmt("\n`(xxxuidxxx)` : `yt_gif_settings_key` : `<value>`"),
+        //     uid: InlinePmt("\n`(xxxuidxxx)`\nunique per user data base, without it the settings can't be written on this page"),
+        //     key: InlinePmt("\n`yt_gif_settings_key`\nsecond way to know which setting to change"),
+        //     value: InlinePmt("\n`<value>`\nin many cases optional and most of the time a binary switch, on - off"),
+        // },
         //reach: InlinePmt(`Blocks below "LogStatus" will be ignored`),
     },
-    display: {
-        baseKey: BaseSetting(chk),
-        clip_life_span_format: dom('1'),
-    },
-    previousTimestamp: {
-        baseKey: BaseSetting(rad),
-        /* one a time */
-        strict_start_timestamp: dom('1'),
-        start_timestamp: dom(),
-        fixed_start_timestamp: dom(),
-    },
-    previousVolume: {
-        baseKey: BaseSetting(rad),
-        /* one a time */
-        strict_start_volume: dom('1'),
-        start_volume: dom(),
-        fixed_start_volume: dom(),
-    },
-    experience: {
-        baseKey: BaseSetting(chk),
-        sound_when_video_loops: dom('1'),
-        awaiting_for_mouseenter_to_initialize: dom(),
-        awaiting_with_video_thumnail_as_bg: dom('1'),
-    },
-    fullscreenStyle: {
-        baseKey: BaseSetting(chk),
-        smoll_vid_when_big_ends: dom('1'),
-        mute_on_exit_fullscreenchange: dom(),
-        pause_on_exit_fullscreenchange: dom(),
-    },
-    muteStyle: {
-        baseKey: BaseSetting(chk),
-        strict_mute_everything_except_current: dom('1'),
-        muted_on_mouse_over: dom(),
-        muted_on_any_mouse_interaction: dom(),
-    },
-    playStyle: {
-        baseKey: BaseSetting(chk),
-        strict_play_current_on_mouse_over: dom('1'),
-        play_on_mouse_over: dom(),
-        visible_clips_start_to_play_unmuted: dom(),
-    },
-    range: {
-        baseKey: BaseSetting(rng),
-        timestamp_display_scroll_offset: {
-            baseKey: BaseDom('5', int),
-            tdso_opt: InlinePmt(`seconds up to 60`),
-        },
-        end_loop_sound_volume: {
-            baseKey: BaseDom('50', int),
-            elsv_opt: InlinePmt(`integers from 0 to 100`),
-        },
-    },
-    InAndOutKeys: {
-        baseKey: BaseSetting(chk),
-        ctrlKey: dom('1'),
-        shiftKey: dom(),
-        altKey: dom(),
-        iaok_opt: InlinePmt(`middle mouse button is on by default`),
-    },
-    defaultPlayerValues: {
-        baseKey: BaseSetting(),
-        player_span: {
-            baseKey: BaseInitSetting('50%', str),
-            ps_opt: InlinePmt(`empty means 50% - only valid css units like px  %  vw`),
-        },
-        player_volume: {
-            baseKey: BaseInitSetting(40, int),
-            vv_opt: InlinePmt(`integers from 0 to 100`),
-        },
-        player_interface_language: {
-            baseKey: BaseInitSetting('en', str),
-            pil_opt: InlinePmt('each block url parameter `&hl=` has priority over this'),
-            pli_guide: InlinePmt(`https://developers.google.com/youtube/player_parameters#:~:text=Sets%20the%20player%27s%20interface%20language.%20The%20parameter%20value%20is%20an%20ISO%20639-1%20two-letter%20language%20code%20or%20a%20fully%20specified%20locale.%20For%20example%2C%20fr%20and%20fr-ca%20are%20both%20valid%20values.%20Other%20language%20input%20codes%2C%20such%20as%20IETF%20language%20tags%20(BCP%2047)%20might%20also%20be%20handled%20properly.`),
-        },
-        player_captions_language: {
-            baseKey: BaseInitSetting('en', str),
-            pcl_opt: InlinePmt('each block url parameter `&cc=` has priority over this'),
-            pcl_guide: InlinePmt(`https://developers.google.com/youtube/player_parameters#:~:text=This%20parameter%20specifies%20the%20default%20language%20that%20the%20player%20will%20use%20to%20display%20captions.%20Set%20the%20parameter%27s%20value%20to%20an%20ISO%20639-1%20two-letter%20language%20code.`),
-        },
-        player_captions_on_load: {
-            baseKey: BaseInitSetting('true', bol),
-            pcol_guide: InlinePmt("Browsers love to cash data... if set to -true- most certently you'll get caption on load, but it's hard to tell otherwise... Also, the mix and match of diferent `&hl=` and `&cc=` can cause to not show the captions on load"),
-        },
-    },
+    // display: {
+    //     baseKey: BaseSetting(chk),
+    //     clip_life_span_format: dom('1'),
+    // },
+    // previousTimestamp: {
+    //     baseKey: BaseSetting(rad),
+    //     /* one a time */
+    //     strict_start_timestamp: dom('1'),
+    //     start_timestamp: dom(),
+    //     fixed_start_timestamp: dom(),
+    // },
+    // previousVolume: {
+    //     baseKey: BaseSetting(rad),
+    //     /* one a time */
+    //     strict_start_volume: dom('1'),
+    //     start_volume: dom(),
+    //     fixed_start_volume: dom(),
+    // },
+    // experience: {
+    //     baseKey: BaseSetting(chk),
+    //     sound_when_video_loops: dom('1'),
+    //     awaiting_for_mouseenter_to_initialize: dom(),
+    //     awaiting_with_video_thumnail_as_bg: dom('1'),
+    // },
+    // fullscreenStyle: {
+    //     baseKey: BaseSetting(chk),
+    //     smoll_vid_when_big_ends: dom('1'),
+    //     mute_on_exit_fullscreenchange: dom(),
+    //     pause_on_exit_fullscreenchange: dom(),
+    // },
+    // muteStyle: {
+    //     baseKey: BaseSetting(chk),
+    //     strict_mute_everything_except_current: dom('1'),
+    //     muted_on_mouse_over: dom(),
+    //     muted_on_any_mouse_interaction: dom(),
+    // },
+    // playStyle: {
+    //     baseKey: BaseSetting(chk),
+    //     strict_play_current_on_mouse_over: dom('1'),
+    //     play_on_mouse_over: dom(),
+    //     visible_clips_start_to_play_unmuted: dom(),
+    // },
+    // range: {
+    //     baseKey: BaseSetting(rng),
+    //     timestamp_display_scroll_offset: {
+    //         baseKey: BaseDom('5', int),
+    //         tdso_opt: InlinePmt(`seconds up to 60`),
+    //     },
+    //     end_loop_sound_volume: {
+    //         baseKey: BaseDom('50', int),
+    //         elsv_opt: InlinePmt(`integers from 0 to 100`),
+    //     },
+    // },
+    // InAndOutKeys: {
+    //     baseKey: BaseSetting(chk),
+    //     ctrlKey: dom('1'),
+    //     shiftKey: dom(),
+    //     altKey: dom(),
+    //     iaok_opt: InlinePmt(`middle mouse button is on by default`),
+    // },
+    // defaultPlayerValues: {
+    //     baseKey: BaseSetting(),
+    //     player_span: {
+    //         baseKey: BaseInitSetting('50%', str),
+    //         ps_opt: InlinePmt(`empty means 50% - only valid css units like px  %  vw`),
+    //     },
+    //     player_volume: {
+    //         baseKey: BaseInitSetting(40, int),
+    //         vv_opt: InlinePmt(`integers from 0 to 100`),
+    //         pv_opt: InlinePmt("each block's url parameter `&vl=` has priority over this"),
+    //     },
+    //     player_interface_language: {
+    //         baseKey: BaseInitSetting('en', str),
+    //         pil_opt: InlinePmt("each block's url parameter `&hl=` has priority over this"),
+    //         pli_guide: InlinePmt(`https://developers.google.com/youtube/player_parameters#:~:text=Sets%20the%20player%27s%20interface%20language.%20The%20parameter%20value%20is%20an%20ISO%20639-1%20two-letter%20language%20code%20or%20a%20fully%20specified%20locale.%20For%20example%2C%20fr%20and%20fr-ca%20are%20both%20valid%20values.%20Other%20language%20input%20codes%2C%20such%20as%20IETF%20language%20tags%20(BCP%2047)%20might%20also%20be%20handled%20properly.`),
+    //     },
+    //     player_captions_language: {
+    //         baseKey: BaseInitSetting('en', str),
+    //         pcl_opt: InlinePmt("each block's url parameter `&cc=` has priority over this"),
+    //         pcl_guide: InlinePmt(`https://developers.google.com/youtube/player_parameters#:~:text=This%20parameter%20specifies%20the%20default%20language%20that%20the%20player%20will%20use%20to%20display%20captions.%20Set%20the%20parameter%27s%20value%20to%20an%20ISO%20639-1%20two-letter%20language%20code.`),
+    //     },
+    //     player_captions_on_load: {
+    //         baseKey: BaseInitSetting('true', bol),
+    //         pcol_guide: InlinePmt("Browsers love to cash data... if set to -true- most certently you'll get caption on load, but it's hard to tell otherwise... Also, the mix and match of diferent `&hl=` and `&cc=` can cause to not show the captions on load"),
+    //     },
+    // },
     defaultValues: {
         baseKey: BaseSetting(),
         css_theme: {
@@ -156,11 +157,11 @@ window.YT_GIF_SETTINGS_PAGE_INIT = async () => await init();
 
 
 
-
+init();
 async function init()
 {
     const { acc, keyObjMap } = await assignChildrenMissingValues();
-    window.YT_GIF_DIRECT_SETTINGS = keyObjMap;    // the performance will increase dramatically if ONLY un-examined keyObjs are reviewd inside addAllMissingBlocks  keyObjMap.fiter(x=>!examined) or something like that...
+    window.YT_GIF_DIRECT_SETTINGS = keyObjMap;  // the performance will increase dramatically if ONLY un-examined keyObjs are reviewd inside addAllMissingBlocks  keyObjMap.fiter(x=>!examined) or something like that...
 
     if (TARGET_UID == null) // Brand new installation
     {
@@ -179,7 +180,7 @@ async function init()
         }
     }
     await RAP.SetNumberedViewWithUid(TARGET_UID);
-    await RAP.CollapseDirectcChildren(TARGET_UID, false);
+    //await RAP.CollapseDirectcChildren(TARGET_UID, false);
 }
 
 //#region HIDDEN FUNCTIONS
@@ -257,6 +258,11 @@ async function assignChildrenMissingValues()
                     }
 
                     directObjPpts.parentKey = accObj.parentKey || TARGET_PAGE;
+                    if (keyObjMap.has(property))
+                    {
+                        debugger;
+                        throw new Error(`${property} is already in the map`);
+                    }
                     keyObjMap.set(property, directObjPpts);
                 }
 
@@ -298,13 +304,11 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
         return 'Page is empty';
     }
 
-
     // 1.
+    let singleKeyEntries = []; // acc
     const entirePageText = await Rec_Read_Write_SettingsPage(ChildrenHierarchy[0][0], accObj);
 
-
-
-
+    // X
     return FinishRec_thenDisplace_cbArr;
 
 
@@ -320,8 +324,9 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
         const { tab, nextStr, indent, parentUid } = await RelativeChildInfo(nextChildObj); // var from obj .1
         const { uid, key, value, caputuredValue, caputureValueOk, splitedStrArr, join } = getKeywordsFromBlockString(nextStr); // var from obj .2
 
+        if (key == 'css_theme') debugger;
         // 1.
-        if (! await SuccessfulSettingsUpt(indent))
+        if (! await SuccessfulSettingsUpt())
         {
             // 1.1
             HandleMoveOrDeletion();
@@ -345,7 +350,7 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
                 const nextAccObj = {
                     accStr: accStr,
                     nextUID: uid,
-                    keyFromLevel0: key || TARGET_PAGE, // well the page can't be avoided, can it?
+                    keyFromLevel0: key || TARGET_PAGE, // well well well - the page can't be avoided, can it?
                     selfOrder: child.order,
                     parentState: parentState,
                     RoamObj: child,
@@ -431,23 +436,46 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
         // 1.
         async function SuccessfulSettingsUpt()
         {
+            const duplicateKeyword = '_InvalidDuplicate';
+            // if (!keyObjMap.has(key))
+            //     return false;
+
+
+            if (key && singleKeyEntries.includes(key))
+            {
+                if (keyObjMap.has(key))
+                {
+                    const invalidKey = `${key}`.concat(duplicateKeyword);
+                    splitedStrArr.splice(1, 1, invalidKey);
+                    splitedStrArr.splice(0, 1, `(${nextChildObj.uid})`);
+                    const v_string = splitedStrArr.join(join || PmtSplit);//.replace(/\(([^\)]+)\)/, `(${nextChildObj.uid})`);;
+                    await RAP.updateBlock(nextChildObj.uid, v_string);
+                    await HandleMoveOrDeletion(invalidKey, nextChildObj.uid, true);
+                    await RAP.sleep(50);
+                    return true;
+                }
+            }
+            console.log(key);
+            singleKeyEntries.push(key);
+
             const targeObj = keyObjMap.get(key);
+
             if (targeObj && key != TARGET_PAGE)
             {
-                let p_string = nextStr, p_uid = uid;
-                if (join == PmtSplit)
+                let p_string = nextStr;
+                const { v_uid, uidOk } = await validateBlockUid(uid, accObj.nextUID);
+                const { v_string, stringOK } = await validateBlockContent(targeObj, nextStr, splitedStrArr);
+
+                if (!uidOk || !stringOK)
                 {
-                    const { stringOK, v_string, v_uid } = await validateBlockContent(targeObj, nextStr, splitedStrArr, uid, accObj.nextUID);
-                    if (!stringOK)
-                    {
-                        console.log(`Updating block  ((${uid})) -> \n${nextStr} \nﾠ\nto ((${v_uid})) ->  \nﾠ\n${v_string}`)
-                        await RAP.updateBlock(v_uid, v_string);
-                        p_string = v_string;
-                        p_uid = v_uid;
-                    }
+                    debugger;
+                    p_string = v_string.replace(/\(([^\)]+)\)/, `(${v_uid})`); // FIRST match only
+                    console.log(`Updating block  ((${uid})) -> \n ${nextStr} \n\nto ((${v_uid})) -> \nﾠ\n${p_string}`);
+                    await RAP.updateBlock(v_uid, p_string);
+                    p_string = v_string;
                 }
 
-                const crrObjKey = assertObjPpt_base(targeObj, p_string, p_uid);
+                const crrObjKey = assertObjPpt_base(targeObj, p_string, v_uid);
 
                 if (join == fmtSplit && crrObjKey.hasOwnProperty('sessionValue'))
                 {
@@ -480,9 +508,7 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
 
                     if (parentState.displaced == false) // shall stay with it's parent then
                     {
-                        debugger;
                         await TryToMoveBlock(relevantParentUID, crrObjKey.order, crrObjKey.uid);
-                        //console.log(key, accObj.keyFromLevel0, targeObj.parentKey, (accObj.keyFromLevel0 == targeObj.parentKey));
                         if (accObj.keyFromLevel0 != targeObj.parentKey)
                         {
                             await TryToMoveBlock(keyObjMap.get(targeObj.parentKey).uid, crrObjKey.order, crrObjKey.uid);
@@ -493,20 +519,26 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
                 return true;
             }
             return false;
-            async function validateBlockContent(obj, nextStr, splitedStrArr, caputuredUID, nextUID)
+            async function validateBlockUid(caputuredUID)
             {
-
-                const caputuredString = splitedStrArr[2] || ''; // undefinded means it doens't requieres a third param, that's ok
-
-                const uidOk = await RAP.getBlockOrPageInfo(caputuredUID);
+                const uidOk = (caputuredUID == nextChildObj.uid); // kinda redundant
                 const v_uid = (uidOk) ? caputuredUID : nextChildObj.uid; // : nextUID;
+                return {
+                    uidOk,
+                    v_uid,
+                }
+            }
+            async function validateBlockContent(obj, nextStr, splitedStrArr)
+            {
+                const caputuredString = splitedStrArr[2] || ''; // undefinded means it doens't requieres a third param, that's ok
 
                 let v_string = nextStr;
                 let stringOK = true;
 
 
-                if (obj.string != caputuredString)
+                if (obj.string != caputuredString && obj.join == PmtSplit) // kinda hardcoded...
                 {
+                    debugger;
                     if (obj.uid != '' || obj.string.includes(" / ") || splitedStrArr[3] != undefined)
                     {
                         debugger;
@@ -518,34 +550,20 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
                     stringOK = false;
                 }
 
-                /*
-                obj -> (FCjU6icP_) / pcl_opt / inline url parameter `&cc=` has priority over this
-                caputuredString -> inline url parameter `&cc=` has priority over this
-
-                 */
-
                 return {
                     v_string,
-                    v_uid,
                     stringOK
                 }
             }
         }
         // 1.1
-        function HandleMoveOrDeletion()
+        function HandleMoveOrDeletion(crrKey = key, crrUid = uid, displaced = true)
         {
-            const uidToMove = uid || nextChildObj.uid || nextUID;
+            const uidToMove = crrUid || uid || nextChildObj.uid || nextUID;
             if (uidToMove != TARGET_UID) // the nature of the recursive func makes it so the page uid can't be avoided, you don't want that - exit
             {
-                // if (accObj?.parentState?.displaced === true)
-                // {
-                // don't move anything because it's parent was already displaced
-                // debugger;
-                // }
-                // else
-                // {
                 let Recylce_cb = null;
-                if (key)
+                if (crrKey)
                 {
                     if (keyFromLevel0 != 'DisplacedBlocks')
                     {
@@ -560,9 +578,9 @@ async function Read_Write_SettingsPage(UID, keyObjMap = new Map())
                 {
                     FinishRec_thenDisplace_cbArr.push(Recylce_cb);
                 }
-                // }
+
                 parentState = {
-                    displaced: true,
+                    displaced: displaced,
                 };
             }
         }
