@@ -325,7 +325,7 @@ async function Ready()
 
     // 1. set up looks
     //#region relevant variables
-    const { css_theme, player_span, end_loop_sound_src } = Object.fromEntries(window.YT_GIF_DIRECT_SETTINGS);;
+    const { css_theme, player_span } = Object.fromEntries(window.YT_GIF_DIRECT_SETTINGS);;
     const { themes, playerStyle, dropDownMenuStyle } = links.css;
     const { playerControls, dropDownMenu } = links.html;
     const { yt_gif } = cssData; // CssThemes_UCS
@@ -337,7 +337,7 @@ async function Ready()
     await smart_CssThemes_UCS(css_theme.sessionValue, themes, yt_gif); // UCS - user customizations
     await smart_CssPlayer_UCS(player_span.sessionValue, cssData);
 
-    links.html.fetched.playerControls = await PlayerHtml_UCS(playerControls, end_loop_sound_src.sessionValue);
+    links.html.fetched.playerControls = await PlayerHtml_UCS(playerControls);
 
     await smart_Load_DDM_onTopbar(dropDownMenu); // DDM - drop down menu
 
@@ -477,15 +477,9 @@ async function Ready()
 
         rm_moreIcon.insertAdjacentHTML('afterend', htmlText);
     }
-    async function PlayerHtml_UCS()
+    async function PlayerHtml_UCS(playerControls)
     {
-        let htmlText = await UTILS.FetchText(links.html.playerControls);
-        const soundSrc = validSoundURL();
-        if (soundSrc)
-        {
-            htmlText = htmlText.replace(/(?<=<source src=\")(?=")/gm, soundSrc);
-        }
-        return htmlText
+        return await UTILS.FetchText(playerControls);
     }
     //#endregion
 
@@ -1057,9 +1051,7 @@ async function onYouTubePlayerAPIReady(wrapper, message = 'I dunno')
     wrapper.parentElement.classList.add(`${cssData.yt_gif_wrapper}-parent`);
     wrapper.className = `${cssData.yt_gif_wrapper} dont-focus-block`;
     wrapper.innerHTML = '';
-    let htmlText = links.html.fetched.playerControls;
-    htmlText = htmlText.replace(/(?<=<audio id=\").*(?=")/gm, `${cssData.yt_gif_audio}-${uid}`);
-    wrapper.insertAdjacentHTML('afterbegin', htmlText);
+    wrapper.insertAdjacentHTML('afterbegin', links.html.fetched.playerControls);
     wrapper.querySelector('.yt-gif-player').id = newId;
 
 
