@@ -1,0 +1,17 @@
+// Within Roam Research
+// under a {{[[roam/js]]}} block,
+// nest a ```javascript``` code block 
+// paste this code snippet there 
+// and click the button "Yes, I know what I'm doing."
+//
+// YT GIF Extension - version 0.02 beta
+var existing = document.getElementById('yt-gif-main');
+if (!existing) 
+{
+    var extension = document.createElement("script");
+    extension.src = "https://kauderk.github.io/code-snippets/yt-gif-extension/yt-gif-main.js";
+    extension.id = "yt-gif-main";
+    extension.async = true;
+    extension.type = "text/javascript";
+    document.getElementsByTagName("head")[0].appendChild(extension);
+}
