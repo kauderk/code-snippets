@@ -1,6 +1,6 @@
 // Within Roam Research
 // under a {{[[roam/js]]}} block,
-// nest a ```javascript``` code block 
+// nest a javascript code block 
 // paste this code snippet there 
 // and click the button "Yes, I know what I'm doing."
 //
