@@ -5,6 +5,7 @@
 // and click the button "Yes, I know what I'm doing."
 //
 // YT GIF Extension - version 0.02 beta
+// Persistent settings, interface language customizations & iframe buffer.
 var existing = document.getElementById('yt-gif-main');
 if (!existing) 
 {
