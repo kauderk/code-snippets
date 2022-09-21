@@ -12,7 +12,7 @@ var existing = document.getElementById('yt-gif-main');
 if (!existing) 
 {
     var extension = document.createElement("script");
-    extension.src = "https://kauderk.github.io/code-snippets/yt-gif-extension/yt-gif-main.js";
+    extension.src = "https://kauderk.github.io/yt-gif-extension/version-0.2/js/yt-gif-main.js";
     extension.id = "yt-gif-main";
     extension.async = true;
     extension.type = "text/javascript";
