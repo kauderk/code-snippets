@@ -123,7 +123,7 @@
     function space() {
         return text(' ');
     }
-    function empty() {
+    function empty$1() {
         return text('');
     }
     function listen(node, event, handler, options) {
@@ -173,6 +173,9 @@
     }
     function children(element) {
         return Array.from(element.childNodes);
+    }
+    function set_input_value(input, value) {
+        input.value = value == null ? '' : value;
     }
     function set_style(node, key, value, important) {
         if (value === null) {
@@ -4353,7 +4356,7 @@
     			if (if_block0) if_block0.c();
     			t1 = space();
     			if (if_block1) if_block1.c();
-    			if_block1_anchor = empty();
+    			if_block1_anchor = empty$1();
     			attr(div, "draggable", false);
     			attr(div, "class", "svlt-grid-item svelte-5a4fuj");
 
@@ -4852,7 +4855,7 @@
     				each_blocks[i].c();
     			}
 
-    			each_1_anchor = empty();
+    			each_1_anchor = empty$1();
     		},
     		m(target, anchor) {
     			for (let i = 0; i < each_blocks.length; i += 1) {
@@ -5047,7 +5050,7 @@
     		key: key_1,
     		first: null,
     		c() {
-    			first = empty();
+    			first = empty$1();
     			create_component(moveresize.$$.fragment);
     			this.first = first;
     		},
@@ -5387,57 +5390,1755 @@
       },
     };
 
+    const ObjectKeys = (o) => Object.keys(o);
+    const exitFullscreen = () => {
+        if (document.exitFullscreen) {
+            document.exitFullscreen(); //@ts-ignore
+        }
+        else if (document.mozCancelFullScreen) {
+            //@ts-ignore
+            document.mozCancelFullScreen(); //@ts-ignore
+        }
+        else if (document.webkitExitFullscreen) {
+            //@ts-ignore
+            document.webkitExitFullscreen();
+        }
+    };
+    const isValidUrl = (value) => {
+        return /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:[/?#]\S*)?$/i.test(value);
+    };
+    // linearly maps value from the range (a..b) to (c..d)
+    const mapRange = (value, a, b, c, d) => {
+        // first map value from (a..b) to (0..1)
+        value = (value - a) / (b - a);
+        // then map it from (0..1) to (c..d) and return it
+        return c + value * (d - c);
+    };
+    const assertSelector = (sel) => {
+        var _a;
+        if (sel.includes('@')) {
+            // if string begins with invalid character, such as '@---.com' -> '\\@---.com\\
+            let selArr = sel.split(' > ');
+            for (let i = 0; i < selArr.length; i++) {
+                if (!selArr[i].includes('@'))
+                    continue;
+                const rgx = new RegExp(/(@.*)\.com/, 'gm');
+                const replaceWith = (_a = rgx.exec(selArr[i])) === null || _a === void 0 ? void 0 : _a[1];
+                selArr[i] = selArr[i].replace(rgx, `\\${replaceWith}\\.com`);
+            }
+            sel = selArr.join(' > ');
+        }
+        return sel;
+    };
+    const simHover = () => {
+        return simMouseEvent('mouseenter');
+    };
+    const isTrue = (value) => {
+        if (typeof value === 'string')
+            value = value.trim().toLowerCase();
+        switch (value) {
+            case true:
+            case 'true':
+            case 1:
+            case '1':
+            case 'on':
+            case 'yes':
+                return true;
+            default:
+                return false;
+        }
+    };
+    function GetClosestRate(rates, x) {
+        return [...rates].sort((a, b) => Math.abs(a - x) - Math.abs(b - x))[0];
+    }
+    const sleep = (ms) => {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    };
+    const isElementVisible = (elem) => {
+        // https://stackoverflow.com/questions/19669786/check-if-element-is-visible-in-dom#:~:text=function%20isElementVisible(elem)%20%7B%0A%20%20%20%20if%20(!(elem%20instanceof%20Element))%20throw%20Error(%27DomUtil%3A%20elem%20is%20not%20an%20element.%27)%3B%0A%20%20%20%20const%20style%20%3D%20getComputedStyle(elem)%3B
+        const style = getComputedStyle(elem);
+        if (style.display === 'none')
+            return false;
+        if (style.visibility !== 'visible')
+            return false;
+        // @ts-ignore
+        if (style.opacity === 0)
+            return false;
+        if (elem.offsetWidth +
+            elem.offsetHeight +
+            elem.getBoundingClientRect().height +
+            elem.getBoundingClientRect().width ===
+            0) {
+            return false;
+        }
+        let elementPoints = {
+            center: {
+                x: elem.getBoundingClientRect().left + elem.offsetWidth / 2,
+                y: elem.getBoundingClientRect().top + elem.offsetHeight / 2,
+            },
+            'top-left': {
+                x: elem.getBoundingClientRect().left,
+                y: elem.getBoundingClientRect().top,
+            },
+            'top-right': {
+                x: elem.getBoundingClientRect().right,
+                y: elem.getBoundingClientRect().top,
+            },
+            'bottom-left': {
+                x: elem.getBoundingClientRect().left,
+                y: elem.getBoundingClientRect().bottom,
+            },
+            'bottom-right': {
+                x: elem.getBoundingClientRect().right,
+                y: elem.getBoundingClientRect().bottom,
+            },
+        };
+        for (let index in elementPoints) {
+            // @ts-ignore
+            let point = elementPoints[index];
+            if (point.x < 0)
+                return false;
+            if (point.x >
+                (document.documentElement.clientWidth || window.innerWidth))
+                return false;
+            if (point.y < 0)
+                return false;
+            if (point.y >
+                (document.documentElement.clientHeight || window.innerHeight))
+                return false;
+            let pointContainer = document.elementFromPoint(point.x, point.y);
+            if (pointContainer !== null) {
+                do {
+                    if (pointContainer === elem)
+                        return true;
+                    //@ts-ignore
+                } while ((pointContainer = pointContainer.parentNode));
+            }
+        }
+        return false;
+    };
+    const toggleAttribute = (bol, Name, el, value = '') => {
+        if (bol) {
+            el.setAttribute(Name, value);
+        }
+        else {
+            el.removeAttribute(Name);
+        }
+    };
+    const closestBlockID = (el) => {
+        var _a;
+        return (_a = el === null || el === void 0 ? void 0 : el.closest('.rm-block__input')) === null || _a === void 0 ? void 0 : _a.id;
+    };
+    const getUniqueSelectorSmart = (el) => {
+        const _sel = getUniqueSelector(el);
+        return assertSelector(_sel);
+    };
+    function isRendered$1(el) {
+        return document.body.contains(el);
+    }
+    const getUniqueSelector = (el) => {
+        // https://stackoverflow.com/questions/3620116/get-css-path-from-dom-element#:~:text=Doing%20a%20reverse%20CSS%20selector%20lookup%20is%20an%20inherently%20tricky%20thing.%20I%27ve%20generally%20come%20across%20two%20types%20of%20solutions%3A
+        let sSel, aAttr = ['name', 'value', 'title', 'placeholder', 'data-*'], // Common attributes
+        aSel = [], 
+        // Derive selector from element
+        getSelector = function (el) {
+            // 1. Check ID first
+            // NOTE: ID must be unique amongst all IDs in an HTML5 document.
+            // https://www.w3.org/TR/html5/dom.html#the-id-attribute
+            if (el.id) {
+                aSel.unshift('#' + el.id);
+                return true;
+            }
+            aSel.unshift((sSel = el.nodeName.toLowerCase()));
+            // 2. Try to select by classes
+            if (el.className) {
+                aSel[0] = sSel += '.' + el.className.trim().replace(/ +/g, '.');
+                if (uniqueQuery())
+                    return true;
+            }
+            // 3. Try to select by classes + attributes
+            for (const element of aAttr) {
+                if (element === 'data-*') {
+                    // Build array of data attributes
+                    const aDataAttr = [].filter.call(el.attributes, function (attr) {
+                        return attr.name.indexOf('data-') === 0;
+                    });
+                    for (const element of aDataAttr) {
+                        aSel[0] = sSel +=
+                            '[' +
+                                // @ts-ignore TODO:
+                                element.name +
+                                '="' +
+                                // @ts-ignore TODO:
+                                element.value +
+                                '"]';
+                        if (uniqueQuery())
+                            return true;
+                    }
+                    //@ts-ignore
+                }
+                else if (el[element]) {
+                    aSel[0] = sSel +=
+                        //@ts-ignore
+                        '[' + element + '="' + el[element] + '"]';
+                    if (uniqueQuery())
+                        return true;
+                }
+            }
+            // 4. Try to select by nth-of-type() as a fallback for generic elements
+            let elChild = el, n = 1;
+            while ((elChild = elChild.previousElementSibling)) {
+                if (elChild.nodeName === el.nodeName)
+                    ++n;
+            }
+            aSel[0] = sSel += ':nth-of-type(' + n + ')';
+            if (uniqueQuery())
+                return true;
+            // 5. Try to select by nth-child() as a last resort
+            elChild = el;
+            n = 1;
+            while ((elChild = elChild.previousElementSibling))
+                ++n;
+            aSel[0] = sSel = sSel.replace(/:nth-of-type\(\d+\)/, n > 1 ? ':nth-child(' + n + ')' : ':first-child');
+            if (uniqueQuery())
+                return true;
+            return false;
+        }, 
+        // Test query to see if it returns one element
+        uniqueQuery = function () {
+            return document.querySelectorAll(aSel.join('>')).length === 1;
+        };
+        // Walk up the DOM tree to compile a unique selector
+        while (el.parentNode) {
+            if (getSelector(el))
+                return aSel.join(' > ');
+            //@ts-ignore
+            el = el.parentNode;
+        }
+    };
+    const getYouTubeVideoID = (url) => {
+        //https://stackoverflow.com/questions/28735459/how-to-validate-youtube-url-in-client-side-in-text-box#:~:text=function%20matchYoutubeUrl(url)%20%7B
+        const urls = url.split(/(vi\/|v=|\/v\/|youtu\.be\/|\/embed\/)/);
+        return urls[2] !== undefined ? urls[2].split(/[^0-9a-z_\-]/i)[0] : urls[0];
+    };
+    const simMouseEvent = (eventName) => {
+        return new MouseEvent(eventName, {
+            view: window,
+            bubbles: true,
+            cancelable: true,
+        });
+    };
+    const div = (classList = Array()) => elm(classList, 'div');
+    const elm = (classList = Array(), nodeType) => {
+        const span = document.createElement(nodeType);
+        span.classList.add(...classList);
+        return span;
+    };
+    //window.kauderk.util = util
+    //export default util
+
+    const cssData = {
+        yt_gif: 'yt-gif',
+        yt_gif_wrapper: 'yt-gif-wrapper',
+        yg_wrapper_p: 'yt-gif-wrapper-parent',
+        yt_gif_iframe_wrapper: 'yt-gif-iframe-wrapper',
+        yt_gif_timestamp: 'yt-gif-timestamp',
+        yt_gif_audio: 'yt-gif-audio',
+        yt_gif_custom_player_span_first_usage: 'ty-gif-custom-player-span-first-usage',
+        awiting_player_pulse_anim: 'yt-gif-awaiting-palyer--pulse-animation',
+        awaitng_player_user_input: 'yt-gif-awaiting-for-user-input',
+        awaitng_input_with_thumbnail: 'yt-gif-awaiting-for-user-input-with-thumbnail',
+        ddm_icon: 'ty-gif-icon',
+        dwn_no_input: 'dropdown_not-allowed_input',
+        dropdown_fadeIt_bg_animation: 'dropdown_fadeIt-bg_animation',
+        dropdown_forbidden_input: 'dropdown_forbidden-input',
+        dropdown_allright_input: 'dropdown_allright-input',
+        dropdown__hidden: 'dropdown--hidden',
+        dropdown_deployment_style: 'dropdown_deployment-style',
+        dwp_message: 'dropdown-info-message',
+        ddm_info_message_selector: `.dropdown .dropdown-info-message`,
+        dwn_pulse_anim: 'drodown_item-pulse-animation',
+        ddm_exist: 'yt-gif-drop-down-menu-toolbar',
+        ddm_focus: 'dropdown-focus',
+        stt_allow: 'settings-not-allowed',
+        ditem_allow: 'dropdown-item_not-allowed_input',
+        p_controls: 'yt-gif-controls',
+        ddn_tut_awaiting: 'ddm-tut-awaiting-input',
+        id: {
+            navigate_btn: '#navigate-to-yt-gif-settings-page',
+            toogle_theme: '#yt-gif-ddm-theme',
+            ddm_main_theme: '#yt-gif-ddm-main-theme',
+        },
+        raw_anchorSel: 'rm-xparser-default-anchor',
+    };
+    const attrInfo = {
+        url: {
+            path: 'data-video-url',
+            index: 'data-video-index',
+        },
+        target: 'data-target',
+        uid: 'data-uid',
+        creation: {
+            name: 'data-creation',
+            forceAwaiting: 'force-awaiting',
+            cleaning: 'cleaning',
+            displaced: 'displaced',
+            buffer: 'buffer',
+        },
+    };
+    /*-----------------------------------*/
+    const ytGifAttr = {
+        sound: {
+            mute: 'yt-mute',
+            unMute: 'yt-unmute',
+        },
+        play: {
+            playing: 'yt-playing',
+            paused: 'yt-paused',
+        },
+        extra: {
+            readyToEnable: 'readyToEnable',
+        },
+    };
+
+    class Wild_Config {
+    }
+    Wild_Config.componentPage = '[^:]+';
+    Wild_Config.targetStringRgx = /{{([^}]*)/gm;
+
+    function properBlockIDSufix(url, urlIndex) {
+        return '_' + [url, urlIndex].join('_');
+    }
+    function preRgxComp(rgxPage) {
+        return `{{(\\[\\[)?(${rgxPage})((?=:):|[^:|\\/]+?(:))(|[^{]+)}}`;
+    }
+    function BlockRegexObj(componentPage = Wild_Config.componentPage, targetStringRgx) {
+        const componentRgx = new RegExp(preRgxComp(componentPage), 'gm');
+        const anyPossibleComponentsRgx = Wild_Config.targetStringRgx; // https://stackoverflow.com/questions/30787438/how-to-stop-match-until-before-a-character-in-regex#:~:text=assisterId%3D-,(%5B%5E%22%5D*),-%5B%5E%22%5D*%20matches%20any%20character
+        const aliasPlusUidsRgx = /\[(.*?(?=\]))]\(\(\((.*?(?=\)))\)\)\)/gm;
+        const tooltipCardRgx = /{{=:(.+?)\|([^}]*)/gm;
+        const anyUidRgx = /(?<=\(\()([^(].*?[^)])(?=\)\))/gm;
+        // set in the order in which roam renders them - anyPossibleComponents is kinda like a joker card, it will trap components along with irrelevant uids
+        const baseBlockRgx = [
+            tooltipCardRgx,
+            componentRgx,
+            anyPossibleComponentsRgx,
+            aliasPlusUidsRgx,
+            anyUidRgx,
+        ];
+        if (targetStringRgx)
+            baseBlockRgx.push(targetStringRgx);
+        const blockRgx = reduceRgxArr(baseBlockRgx);
+        return {
+            blockRgx,
+            aliasPlusUidsRgx,
+            tooltipCardRgx,
+            anyPossibleComponentsRgx,
+            componentRgx,
+            anyUidRgx,
+        };
+    }
+    function reduceRgxArr(regexArr) {
+        // https://masteringjs.io/tutorials/fundamentals/concat-regexp
+        return regexArr.reduce((acc, v, i, a) => new RegExp(acc.source != '(?:)' ? acc.source + '|' + v.source : v.source, 'gm'), 
+        // @ts-ignore // TODO:
+        new RegExp());
+    }
+    function time2sec(raw) {
+        if (/[hms]/.test(raw)) {
+            const hms = raw.split(/(?<=h)|(?<=m)|(?<=s)/);
+            return hms.reduce((acc, crr) => {
+                const t = parseInt(crr) || 0;
+                if (/s/.test(crr))
+                    return t + acc;
+                if (/m/.test(crr))
+                    return t * 60 + acc;
+                if (/h/.test(crr))
+                    return t * 3600 + acc;
+                return acc;
+            }, 0);
+        }
+        return parseFloat(raw);
+    }
+    function CleanAndBrandNewWrapper(wrapper_p, attr_name = attrInfo.creation.name, attr_value = '') {
+        var _a, _b;
+        const targetClass = wrapper_p.getAttribute(`${attrInfo.target}`);
+        const parentSel = getUniqueSelectorSmart(wrapper_p.parentNode);
+        (_a = wrapper_p.parentNode) === null || _a === void 0 ? void 0 : _a.removeChild(wrapper_p);
+        const el = div([targetClass]);
+        toggleAttribute(true, attr_name, el, attr_value);
+        (_b = document.querySelector(parentSel)) === null || _b === void 0 ? void 0 : _b.appendChild(el);
+        return el;
+    }
+
+    function set(arg) {
+        if (typeof arg === 'function') {
+            this.value = arg(this.value);
+        }
+        else {
+            this.value = arg;
+        }
+    }
+    function setDefault(arg) {
+        this.value = arg;
+        this.default = arg;
+    }
+    class Param {
+        constructor(_value, args) {
+            var _a, _b;
+            this.set = set;
+            this.value = (_a = args === null || args === void 0 ? void 0 : args.value) !== null && _a !== void 0 ? _a : _value;
+            this.alias = (_b = args === null || args === void 0 ? void 0 : args.alias) !== null && _b !== void 0 ? _b : [];
+        }
+    }
+    class NumHistory extends Param {
+        constructor(args) {
+            super(0, args);
+            this.update = this.value;
+            this.history = [];
+        }
+    }
+    class TNumParam extends Param {
+        constructor(args) {
+            super(0, args);
+            this.default = this.value;
+            this.setDefault = setDefault;
+        }
+    }
+    class StrParam extends Param {
+        constructor(args) {
+            super('', args);
+        }
+    }
+    class BolParam extends Param {
+        constructor(args) {
+            super(false, args);
+        }
+    }
+    const getPlayerVol = () => {
+        var _a, _b;
+        return (_b = (_a = window.YT_GIF_DIRECT_SETTINGS.get('player_volume')) === null || _a === void 0 ? void 0 : _a.sessionValue) !== null && _b !== void 0 ? _b : 40;
+    };
+    class TVideoParams {
+        constructor() {
+            this.id = new StrParam({ value: '---------' });
+            this.src = new StrParam({
+                value: 'https://www.youtube.com/embed/---------?',
+            });
+            this.speed = new TNumParam({ value: 1, alias: ['s'] });
+            this.start = new TNumParam({ alias: ['t'] });
+            this.end = new TNumParam();
+            this.updateTime = new TNumParam();
+            this.timestamps = new NumHistory();
+            this.volume = new NumHistory({ value: getPlayerVol(), alias: ['vl'] });
+        }
+    }
+    class IExtendedVideoParams extends TVideoParams {
+        constructor() {
+            super(...arguments);
+            this.hl = new StrParam();
+            this.cc = new StrParam();
+            this.sp = new StrParam();
+            this.mute = new BolParam();
+            this.playRightAway = new BolParam();
+        }
+    }
+
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    const NotImplementationWarning = () => {
+        console.warn('Not implemented');
+        return {};
+    };
+    class T_YT_RECORD {
+        constructor(wTarget) {
+            this.uid = '';
+            this.seekToUpdatedTime = NotImplementationWarning;
+            this.sameBoundaries = NotImplementationWarning;
+            this.isSoundingFine = NotImplementationWarning;
+            this.togglePlay = NotImplementationWarning;
+            this.bounded = NotImplementationWarning;
+            this.wTarget = wTarget;
+        }
+    }
+    class YT_TargetWrapper {
+        constructor(target) {
+            var _a;
+            this.GetIframeID = () => this.t.i.id || this.t.g.id;
+            this.GetVideoID = () => this.t.j.i.videoId;
+            this.GetVars = () => this.t.j.i.playerVars;
+            // any should do, because sometimes it holds
+            this.ApiIsWorking = () => this.t.seekTo;
+            this.WhileApiHolds = async (iframe, delay = 500) => {
+                var _a, _b;
+                while (isRendered$1(iframe) && isNaN((_b = (_a = this.t) === null || _a === void 0 ? void 0 : _a.getCurrentTime) === null || _b === void 0 ? void 0 : _b.call(_a))) {
+                    await sleep(delay);
+                }
+            };
+            this.loadVideoById = o => this.t.loadVideoById(o);
+            this.getDuration = () => this.t.getDuration();
+            this.setVolume = (n) => this.t.setVolume(n);
+            this.getVolume = () => this.t.getVolume();
+            this.seekTo = (n) => this.t.seekTo(n);
+            this.getCurrentTime = () => this.t.getCurrentTime();
+            this.getPlayerState = () => this.t.getPlayerState();
+            this.setPlaybackRate = (n) => this.t.setPlaybackRate(n);
+            this.getPlaybackRate = () => this.t.getPlaybackRate();
+            this.setPlayerState = (s) => (this.t.playerInfo.playerState = s);
+            this.playVideo = () => this.t.playVideo();
+            this.pauseVideo = () => this.t.pauseVideo();
+            this.unMute = () => this.t.unMute();
+            this.mute = () => this.t.mute();
+            this.getIframe = () => this.t.getIframe();
+            this.destroy = () => this.t.destroy();
+            this.getAvailablePlaybackRates = () => this.t.getAvailablePlaybackRates();
+            this.t = target;
+            (_a = target.ytgif) !== null && _a !== void 0 ? _a : (target.ytgif = new m());
+            this.ytgif = target.ytgif;
+        }
+        DestroyTarget() {
+            if (!this.t)
+                return;
+            this.ytgif.enter = () => {
+                /* empty */
+            };
+            this.t.destroy();
+        }
+        setOnStateChange(cb) {
+            this.t.m.i[5] = cb;
+        }
+    }
+    class m {
+        constructor() {
+            this.previousTick = 0;
+            this.timers = Array();
+            this.timerID = 0;
+            this.globalHumanInteraction = false;
+        }
+        ClearTimers() {
+            window.clearInterval(this.timerID);
+            this.timerID = 0;
+            if (this.timers.length != 0) {
+                for (const tmr of this.timers) {
+                    clearInterval(tmr);
+                }
+                this.timers = [];
+            }
+        }
+        PushSingleInterval(cb, delay = 1000) {
+            this.ClearTimers();
+            this.timerID = window.setInterval(cb, delay);
+            this.timers.push(this.timerID);
+        }
+        enter() {
+            /*NewIntervalUpdate*/
+        }
+    }
+
+    const recordedIDs = new Map();
+    const allVideoParameters = new Map();
+    const lastBlockIDParameters = new Map();
+    const UIDtoURLInstancesMapMap = new Map(); // since it store recursive maps, once per instance it's enough
+    class YTGIF_Config {
+    }
+    YTGIF_Config.componentPage = 'yt-gif|video'; // this needs to change dynamically
+    YTGIF_Config.targetStringRgx = /https\:\/\/(www\.)?(youtu(be.com\/watch|.be\/))?(.*?(?=\s|$|\}|\]|\)))/;
+    YTGIF_Config.minimalRgx = /(?<!\S)\/[^:|\s|}|\]|\)]{11,}/;
+    YTGIF_Config.guardClause = (url) => typeof url == 'string' && !!url.match('https://(www.)?youtube|youtu.be');
+    YTGIF_Config.targetStringRgx;
+    const anchorsRgx = BlockRegexObj('yt-gif/anchor|yt-gif');
+    new RegExp(`${YTGIF_Config.targetStringRgx.source}|${anchorsRgx.anyUidRgx.source}`, 'gm');
+    /* ------------------ */
+    const videoParams = new TVideoParams();
+    const sessionIDs = new T_YT_RECORD();
+
+    // I shouldn't be able to do this...
+    let UI = {};
+    let currentFullscreenPlayer;
+    const setCurrentFullscreenPlayer = (id) => (currentFullscreenPlayer = id);
+    /*-----------------------------------*/
+    const YT_GIF_OBSERVERS_TEMP = {
+        masterMutationObservers: Array(),
+        masterIntersectionObservers: Array(),
+        masterIntersectionObservers_buffer: Array(),
+        masterIframeBuffer: Array(),
+        //slashMenuObserver: null,
+        timestampObserver: null,
+        keyupEventHandler: (e) => { },
+        creationCounter: -1,
+        CleanMasterObservers: function () {
+            const mutObjRes = cleanObserverArr(this.masterMutationObservers);
+            this.masterMutationObservers = mutObjRes.observer;
+            const insObjRes = cleanObserverArr(this.masterIntersectionObservers);
+            this.masterIntersectionObservers = insObjRes.observer;
+            const bufObjRes = cleanObserverArr(this.masterIntersectionObservers_buffer);
+            this.masterIntersectionObservers_buffer = insObjRes.observer;
+            console.log(`${mutObjRes.counter} mutation, ${insObjRes.counter} intersection and ${bufObjRes.counter} iframe buffer master observers cleaned`);
+            function cleanObserverArr(observer) {
+                //https://www.codegrepper.com/code-examples/javascript/how+to+do+a+reverse+loop+in+javascript#:~:text=www.techiedelight.com-,how%20to%20reverse%20loop%20in%20javascript,-javascript%20by%20Dark
+                let counter = 0;
+                for (let i = observer.length - 1; i >= 0; i--) {
+                    observer[i].disconnect();
+                    observer.splice(i, 1);
+                    counter++;
+                }
+                return {
+                    observer,
+                    counter,
+                };
+            }
+        },
+        CleanLoadedWrappers: function () {
+            const wrappers = document.queryAllasArr(`[${attrInfo.target}]`);
+            for (let i = wrappers.length - 1; i >= 0; i--) {
+                CleanAndBrandNewWrapper(document.querySelector(getUniqueSelectorSmart(wrappers[i])), attrInfo.creation.name, attrInfo.creation.cleaning); //wrapperParent -> nest new span
+            }
+        },
+        dmm_html: window.ddm_html,
+    };
+    window.YT_GIF_OBSERVERS = !window.YT_GIF_OBSERVERS
+        ? YT_GIF_OBSERVERS_TEMP
+        : window.YT_GIF_OBSERVERS;
+    function GetPlayerState() {
+        return window.YT.PlayerState;
+    }
+
+    /* ********************* */
+    function isSelected(select, ...value) {
+        return Array.from(select.selectedOptions).find(o => value.includes(o.value));
+    }
+
+    function closestBlock(el) {
+        return el ? el.closest('.rm-block__input') : null;
+    }
+    function isRendered(el) {
+        return document.body.contains(el);
+    }
+    function closest_container_request(el) {
+        if (isSelected(UI.timestamps.tm_options, 'anchor'))
+            return closest_anchor_container(el);
+        else
+            return closest_container(el);
+    }
+    function closest_anchor_container(el) {
+        const anc = (el) => { var _a; return (_a = el === null || el === void 0 ? void 0 : el.closest('[yt-gif-anchor-container]')) !== null && _a !== void 0 ? _a : null; };
+        const yuid = (el) => el === null || el === void 0 ? void 0 : el.getAttribute('yt-gif-anchor-container');
+        const buid = (el) => el === null || el === void 0 ? void 0 : el.getAttribute('yt-gif-block-uid');
+        const rm = closest_container(el);
+        const yt = anc(el);
+        if (buid(rm) == yuid(anc(rm)))
+            return anc(rm);
+        return rm || yt;
+    }
+    function closest_container(el) {
+        var _a;
+        return (_a = el === null || el === void 0 ? void 0 : el.closest('.roam-block-container')) !== null && _a !== void 0 ? _a : null;
+    }
+    function closestYTGIFparentID(el) {
+        var _a;
+        return (_a = (closestBlock(el) || (el === null || el === void 0 ? void 0 : el.closest('.dwn-yt-gif-player-container')))) === null || _a === void 0 ? void 0 : _a.id;
+    }
+    function getWrapperUrlSufix(wrapper, uid = '') {
+        const url = wrapper === null || wrapper === void 0 ? void 0 : wrapper.getAttribute(attrInfo.url.path);
+        const urlIndex = wrapper === null || wrapper === void 0 ? void 0 : wrapper.getAttribute(attrInfo.url.index);
+        const urlSufix = properBlockIDSufix(url, urlIndex);
+        return uid + urlSufix;
+    }
+
+    function ElementsPerBlock(block, selector) {
+        if (!block)
+            return [];
+        return block
+            .queryAllasArr(selector)
+            .filter(b => { var _a; return ((_a = closestBlock(b)) === null || _a === void 0 ? void 0 : _a.id) == block.id; }); // FIXME: could be null checks
+    }
+
+    function GetParamFunc(key, media, tm) {
+        // check yourself and your aliases
+        const alias = [key, ...media[key].alias];
+        // @ts-ignore
+        const init = media[key].value;
+        return alias.reduce((acc, crr) => {
+            var _a;
+            const val = (_a = tm(crr)) !== null && _a !== void 0 ? _a : init;
+            // valid? then keep it
+            return val ? val : acc;
+        }, init);
+    }
+
+    function ExtractParamsFromUrl(url) {
+        const media = new IExtendedVideoParams();
+        const matches = {};
+        if (YTGIF_Config.guardClause(url)) {
+            for (const pair of [...url.matchAll(/(\w+)=([^&]+)/gm)]) {
+                matches[pair[1]] = pair[2];
+            }
+            media.id.set(getYouTubeVideoID(url));
+            media.src.set(url);
+            media.start.setDefault(GetStartEndParam('start'));
+            media.end.setDefault(GetStartEndParam('end'));
+            media.volume.set(GetNumParam('volume'));
+            media.speed.setDefault(GetNumParam('speed'));
+            media.hl.set(GetStrParam('hl'));
+            media.cc.set(GetStrParam('cc'));
+            media.sp.set(GetStrParam('sp'));
+            return media;
+        }
+        return {}; // TODO: used to return null, don't know if this brakes anything
+        function GetStartEndParam(key) {
+            return GetParamFunc(key, media, (str) => time2sec(matches[str]));
+        }
+        function GetNumParam(key) {
+            return GetParamFunc(key, media, (str) => parseFloat(matches[str]));
+        }
+        function GetStrParam(key) {
+            return GetParamFunc(key, media, (str) => matches[str]);
+        }
+    }
+
+    function CreateRecordID(o) {
+        const record = new T_YT_RECORD();
+        sessionIDs.uid = o.uid;
+        const blockID = o.grandParentBlock.id + properBlockIDSufix(o.url, o.accUrlIndex);
+        if (blockID != null)
+            recordedIDs.set(blockID, record);
+        return { blockID, record };
+    }
+    function CreateConfigParams(newId, url) {
+        debugger;
+        allVideoParameters.set(newId, ExtractParamsFromUrl(url));
+        const configParams = allVideoParameters.get(newId); // I just created it!
+        return configParams;
+    }
+    function CheckFalsePositive(o) {
+        if (!o.url || o.accUrlIndex < 0 || !o.uid) {
+            UIDtoURLInstancesMapMap.delete(o.uid);
+            o.wrapper.setAttribute('invalid-yt-gif', '');
+            console.log(`YT GIF: Couldn't find yt-gif component number ${o.accUrlIndex + 1} within the block ((${o.uid}))`);
+            return true;
+        }
+        return false;
+    }
+
+    function parse(id, videoId) {
+        const wrapper = document.getElementById(id);
+        const uidResult = {
+            uid: '123456789',
+            preUrlIndex: 0,
+            accUrlIndex: 0,
+            url: 'https://www.youtube.com/watch?v=' + videoId,
+            grandParentBlock: wrapper.parentNode,
+            nestedComponentMap: {},
+        };
+        // don't add up false positives
+        if (CheckFalsePositive(Object.assign(Object.assign({}, uidResult), { wrapper })))
+            return null;
+        return State(uidResult, id);
+    }
+    function State(uidResult, id) {
+        // OnPlayerReady video params point of reference
+        const configParams = CreateConfigParams(id, uidResult.url);
+        // target's point of reference
+        const { blockID, record } = CreateRecordID(uidResult);
+        return { uidResult, configParams, blockID, record, id };
+    }
+
+    function TimestampsInHierarchy(rm_container, targetWrapper, allSelector) {
+        const badSets = rm_container
+            .queryAllasArr('.yt-gif-wrapper')
+            .filter(w => w != targetWrapper)
+            .map(w => { var _a; return (_a = closest_container_request(w)) === null || _a === void 0 ? void 0 : _a.queryAllasArr(allSelector); })
+            .flat(Infinity);
+        const actives = Array.from(rm_container.querySelectorAll(allSelector)).filter(tm => !badSets.includes(tm));
+        return actives;
+    }
+
+    //#region validate - check values utils
+    function CanUnmute() {
+        // NotMuteAnyHover
+        return !muteIs('soft') && !muteIs('all_muted');
+    }
+    //#endregion
+    //#region play/pause utils
+    function muteIs(v) {
+        return 'strict' == v;
+    }
+    function playIs(v) {
+        const play = 'strict';
+        const is = play == v;
+        return is; // && !getOption(play, v).disabled;
+    }
+
+    //#region hover/interactions utils
+    function anyValidInAndOutKey(e) {
+        if (e.buttons == 4) {
+            return true;
+        }
+        return (
+        //UI.defaultValues.InAndOutKeys.split(',')
+        ['altKey', 'shiftKey', 'ctrlKey']
+            .map(s => s.trim())
+            .filter(s => !!s)
+            // @ts-ignore
+            .some(k => e[k]));
+    }
+    function AnyPlayOnHover() {
+        return playIs('soft') || playIs('strict');
+    }
+
+    // 3. hover over the frame - mute | pause
+    function GetHoverStates(q) {
+        return {
+            stop(e) {
+                q.parent.others.toggleActive();
+                q.target.others.StrictFlow();
+                q.UpdateLocalVolume();
+                q.UpdateHumanInteraction(false);
+                if (anyValidInAndOutKey(e) && !muteIs('all_muted')) {
+                    q.parent.toggleActive(true);
+                    q.videoIsPlayingWithSound();
+                }
+                else {
+                    q.parent.toggleActive(false);
+                    q.togglePlay(!AnyPlayOnHover() && q.isPlaying());
+                    q.isSoundingFine(false);
+                }
+            },
+            play() {
+                // if (
+                // 	isSelected(
+                // 		UI.playerSettings.ps_options,
+                // 		'mantain_last_active_player'
+                // 	)
+                // )
+                q.parent.others.toggleActive();
+                q.target.others.StrictFlow();
+                q.UpdateHumanInteraction(true);
+                q.togglePlay(true);
+                if (CanUnmute()) {
+                    q.isSoundingFine();
+                }
+                else if (muteIs('soft')) {
+                    q.isSoundingFine(false);
+                }
+            },
+        };
+    }
+
+    //#region 1. previous parameters
+    function setupPreviousParams(o, q) {
+        const session = lastBlockIDParameters.get(o.entry.blockID);
+        if (!session) {
+            return;
+        }
+        const { url_boundaries, url_volume } = UI.playerSettings;
+        // TODO: add noun types: strict | soft
+        // prettier-ignore
+        const start = GetPreviousStart(session, url_boundaries.value, o.entry.start, q.isBounded);
+        if (start != undefined) {
+            q.seekToUpdatedTime(start);
+        }
+        const volume = GetPreviousVolume(session, url_volume.value, o.entry.volume);
+        if (volume != undefined) {
+            o.update.volume = volume;
+        }
+    }
+    /* ******************* */
+    function GetPreviousVolume(session, value, entryVal) {
+        if (value == 'strict') {
+            const vl_Hist = session.volume.history;
+            if (vl_Hist[vl_Hist.length - 1] != entryVal) {
+                // new entry is valid ≡ user updated "&vl="
+                vl_Hist.push(entryVal);
+                return entryVal;
+            }
+            // updateVolume has priority
+            else
+                return session.volume.update;
+        }
+        //
+        else if (value == 'soft')
+            return session.volume.update;
+        //if (value == 'start-only')
+        //else return getMapVolume()
+    }
+    function GetPreviousStart(session, value, entryVal, isBounded) {
+        if (value == 'strict') {
+            const timeHist = session.timestamps.history;
+            if (timeHist[timeHist.length - 1] != entryVal) {
+                // new entry is valid ≡ user updated "?t="
+                timeHist.push(entryVal);
+                return entryVal;
+            }
+            //
+            else {
+                return session.updateTime.value;
+            }
+        }
+        //
+        else if (value == 'soft' && isBounded(session.updateTime.value)) {
+            return session.updateTime.value;
+        }
+    }
+
+    function GetStyleCallbacks(iframe, q, t, map, local) {
+        return {
+            play: GetFuncPlay(iframe, q),
+            mute: GetFuncMute(iframe, q),
+            playback: GetFuncPlayback(t, map, local),
+        };
+    }
+    /* ********** */
+    function GetFuncPlay(iframe, q) {
+        return function () {
+            if (!isElementVisible(iframe))
+                return; //play all VISIBLE Players, this will be called on all visible iframes
+            if (playIs('all_visible')) {
+                q.togglePlay(true);
+                q.isSoundingFine(false);
+            }
+            else if (AnyPlayOnHover()) {
+                q.togglePlay(!AnyPlayOnHover());
+            }
+        };
+    }
+    function GetFuncMute(iframe, q) {
+        return function () {
+            if (!isElementVisible(iframe))
+                return; //mute all VISIBLE Players, this will be called on all visible iframes
+            if (muteIs('strict') || muteIs('all_muted')) {
+                q.isSoundingFine(false);
+            }
+        };
+    }
+    function GetFuncPlayback(t, map, local) {
+        return function () {
+            const speed = map.speed.value ;
+            local.update.tickOffset = 1000 / speed;
+            t.setPlaybackRate(speed);
+        };
+    }
+
+    /* ***************** */
+    async function TryReloadVideo({ t, start, end, }) {
+        var _a;
+        if (!t)
+            return;
+        const vars = t.GetVars();
+        const map = allVideoParameters.get(t.GetIframeID());
+        if (!map) {
+            console.warn(`YT GIF: ReloadYTVideo: Couldn't find VideoConfigParameters for ${t.GetIframeID()}`);
+        }
+        const iframe = t.getIframe();
+        start = start || 0;
+        end = end || t.getDuration();
+        if ((map === null || map === void 0 ? void 0 : map.start.value) == start && (map === null || map === void 0 ? void 0 : map.end.value) == end) {
+            while (isRendered(iframe) && !t.ApiIsWorking()) {
+                await sleep(50);
+            }
+            return t.seekTo(start);
+        }
+        map === null || map === void 0 ? void 0 : map.start.set((vars.start = start));
+        map === null || map === void 0 ? void 0 : map.end.set((vars.end = end));
+        const vol = t.getVolume();
+        while (isRendered(iframe) && !t.ApiIsWorking()) {
+            await sleep(50);
+        }
+        // the only way...
+        if ((_a = t.getPlayerState()) !== null && _a !== void 0 ? _a : 0) {
+            t.setPlayerState('F');
+        }
+        try {
+            t.setOnStateChange(async () => { });
+        }
+        catch (error) {
+            console.warn('YT GIF: ReloadYTVideo | onStateChange assignment to undefined');
+        }
+        // ...to prevent double "endState"
+        await t.loadVideoById({
+            // ...it requirers to set "endSeconds" once again
+            videoId: t.GetVideoID(),
+            startSeconds: start,
+            endSeconds: end,
+        });
+        while (isRendered(iframe) && !t.getCurrentTime()) {
+            await sleep(50);
+        }
+        t.setVolume(vol);
+        try {
+            t.setOnStateChange(window.AvoidCircularDependency.getOnStateChange());
+        }
+        catch (error) {
+            console.error('YT GIF: ReloadYTVideo | onStateChange assignment to undefined');
+        }
+    }
+
+    function GetElementsObj(key, t) {
+        const iframe = document.getElementById(key) || t.getIframe();
+        const parent = getParent(iframe);
+        // const timeDisplay = parent.querySelector(
+        // 	'div.' + cssData.yt_gif_timestamp
+        // ) as HTMLElement
+        // const timeDisplayStart = timeDisplay.querySelector(
+        // 	'.yt-gif-timestamp-start'
+        // )!
+        // const timeDisplayEnd = timeDisplay.querySelector('.yt-gif-timestamp-end')!
+        // const resetBtn = parent.querySelector(
+        // 	'[yt-gif-url-btn="reset"]'
+        // ) as HTMLResetBtn
+        const withEventListeners = [
+            parent,
+            parent.parentNode,
+            //timeDisplay,
+            iframe,
+        ]; // ready to be cleaned
+        return {
+            blockID: getBlockID(iframe),
+            iframe,
+            parent,
+            withEventListeners,
+            // timeDisplay,
+            // resetBtn,
+            // timeDisplayStart,
+            // timeDisplayEnd,
+        };
+    }
+    function getBlockID(iframe) {
+        return closestYTGIFparentID(iframe) + getWrapperUrlSufix(getParent(iframe));
+    }
+    function getParent(i) {
+        return i.closest('.' + cssData.yt_gif_wrapper) || i.parentElement;
+    }
+
+    function TryToPauseIfBlurred(q, play) {
+        const bol = playIs('all_visible');
+        play(bol); // pause?
+        if (bol && !q.parent.Hover() && q.isPlaying()) {
+            // if mouse is outside parent and video is playing
+            play(false);
+        }
+    }
+    function TryToPauseAfterASecond(q, play) {
+        setTimeout(() => {
+            if (!q.parent.isActive() && !q.parent.Hover()) {
+                play(false);
+            }
+        }, 1000);
+    }
+    function GetAutoplayParent(iframe) {
+        return (iframe.closest('.rm-alias-tooltip__content') || //tooltip
+            iframe.closest('.bp3-card') || //card
+            iframe.closest('.myPortal'));
+    }
+    function TryToRunPreviousParams(t, local, styleCallbacks) {
+        // volume
+        try {
+            t.setVolume(local.update.volume);
+        }
+        catch (error) {
+            console.log(error);
+        }
+        // playback rate
+        styleCallbacks.playback();
+    }
+
+    async function AutoPlayToUpdate(iframe, t, q, map) {
+        var _a;
+        await t.WhileApiHolds(iframe);
+        q.seekToUpdatedTime((_a = map.updateTime.value) !== null && _a !== void 0 ? _a : map.start.value);
+        q.togglePlay(true);
+        q.isSoundingFine(!map.mute.value);
+        map.playRightAway.set(false);
+    }
+    //#region 11. last - let me watch would you
+    async function TryFreezeAutoplay(iframe, t, q) {
+        const parent = GetAutoplayParent(iframe);
+        const play = (bol) => q.videoIsPlayingWithSound(bol);
+        if (parent) {
+            parent.dispatchEvent(simHover());
+        } // human wants to hear and watch
+        else if (q.parent.Hover()) {
+            play(true);
+            TryToPauseAfterASecond(q, play);
+        } //
+        else {
+            await t.WhileApiHolds(iframe, 200);
+            const humanInteraction = t.ytgif.globalHumanInteraction;
+            // or if mouse is inside parent
+            if (humanInteraction) {
+                // user wants to listen, don't interrupt
+                play(true);
+            } //
+            else if (isElementVisible(iframe) && !humanInteraction) {
+                TryToPauseIfBlurred(q, play);
+            } //
+            else if (!q.parent.Hover()) {
+                play(false); // pause
+            }
+        }
+    }
+
+    function SoundIs(style, el) {
+        StyleAttribute(ytGifAttr.sound, style, el);
+    }
+    function PlayIs(style, el) {
+        StyleAttribute(ytGifAttr.play, style, el);
+    }
+    function StyleAttribute(subStyle, style, el) {
+        ObjectKeys(subStyle).forEach(k => el.removeAttribute(subStyle[k]));
+        el.setAttribute(style, '');
+    }
+
+    /* ************************************************* */
+    function HandleOthers(iframe) {
+        return {
+            StrictFlow() {
+                // FIXME:
+                Pause();
+                Mute();
+            },
+            Mute,
+            Pause,
+        };
+        function Mute() {
+            LoopTroughYTGIFs(GetMuteOthersCongif);
+        }
+        function Pause() {
+            LoopTroughYTGIFs(GetPauseOthersCongif);
+        }
+        function LoopTroughYTGIFs(config = fallback) {
+            const frames = document.queryAllasArr(`[${config.styleQuery}]`);
+            for (const i of frames) {
+                const o = { el: i, id: getBlockID(i) };
+                if (i != iframe) {
+                    config.others_callback(o);
+                } //
+                else if (config.self_callback) {
+                    config.self_callback(o);
+                }
+            }
+        }
+    }
+    const empty = (_o) => {
+        /* empty */
+    };
+    const GetMuteOthersCongif = {
+        styleQuery: 'yt-unmute',
+        others_callback: (o) => {
+            var _a, _b;
+            SoundIs('yt-unmute', o.el);
+            (_b = (_a = recordedIDs.get(o.id)) === null || _a === void 0 ? void 0 : _a.wTarget) === null || _b === void 0 ? void 0 : _b.mute();
+        },
+        self_callback: empty,
+    };
+    const GetPauseOthersCongif = {
+        styleQuery: 'yt-playing',
+        others_callback: (o) => {
+            var _a, _b;
+            PlayIs('yt-paused', o.el);
+            (_b = (_a = recordedIDs.get(o.id)) === null || _a === void 0 ? void 0 : _a.wTarget) === null || _b === void 0 ? void 0 : _b.pauseVideo();
+        },
+        self_callback: empty,
+    };
+    const fallback = {
+        styleQuery: '',
+        others_callback: empty,
+        self_callback: empty,
+    };
+
+    function GetElementsMethods(parent, iframe, 
+    //timeDisplay: HTMLElement,
+    // FIXME: get me out of here
+    t) {
+        const active = 'yt-active';
+        return {
+            parent: {
+                others: {
+                    toggleActive(bol = false) {
+                        document
+                            .queryAllasArr(`[${active}]`)
+                            .filter(el => el != parent)
+                            .forEach(el => toggleAttribute(bol, active, el));
+                    },
+                },
+                toggleActive: (bol) => toggleAttribute(bol, active, parent),
+                Hover: () => parent.matches(':hover'),
+                isActive: () => parent.hasAttribute(active),
+            },
+            // timeDisplay: {
+            // 	Hover: () => timeDisplay.matches(':hover'),
+            // 	OnCustomVideoEnded() {
+            // 		if (timeDisplay.classList.contains('yt-gif-timestamp-update')) {
+            // 			timeDisplay.onmousemove = null
+            // 			this.visible(false)
+            // 			t.ytgif.ClearTimers()
+            // 		}
+            // 	},
+            // 	visible(bol: b) {
+            // 		toggleClasses(bol, ['yt-gif-timestamp-update'], timeDisplay)
+            // 		toggleClasses(!bol, ['yt-gif-invisible-element'], timeDisplay)
+            // 	},
+            // },
+            whole: {
+                anyHover() {
+                    return parent.matches(':hover'); // || timeDisplay.matches(':hover')
+                },
+            },
+            target: {
+                others: HandleOthers(iframe),
+            },
+        };
+    }
+    function GetTarget(t) {
+        return {
+            tick: (_ = t) => _ === null || _ === void 0 ? void 0 : _.getCurrentTime(),
+            closestRate(x) {
+                const rates = t.getAvailablePlaybackRates() || [];
+                return GetClosestRate(rates, x) || 1;
+            },
+            UpdateHumanInteraction(b) {
+                t.ytgif.globalHumanInteraction = b;
+            },
+            isPlaying() {
+                return t.getPlayerState() === 1;
+            },
+        };
+    }
+    function GetConfig(map) {
+        return {
+            clipSpan: () => map.end.value - map.start.value,
+            isBounded: (x) => map.start.value < x && x < map.end.value,
+            getMapVolume: () => {
+                return videoParams.volume.value || 40;
+            },
+        };
+    }
+
+    function GetQuery(params) {
+        const { parent, /* timeDisplay, */ iframe } = params;
+        const { map, t, local } = params;
+        return Object.assign(Object.assign(Object.assign(Object.assign({}, GetElementsMethods(parent, iframe)), GetConfig(map)), GetTarget(t)), { videoIsPlayingWithSound(boo = true) {
+                this.isSoundingFine(boo);
+                this.togglePlay(boo);
+            },
+            togglePlay(bol, el = iframe) {
+                if (bol) {
+                    PlayIs('yt-playing', el);
+                    t.playVideo();
+                }
+                else {
+                    PlayIs('yt-paused', el);
+                    t.pauseVideo();
+                }
+            },
+            isSoundingFine(bol = true, el = iframe) {
+                if (bol) {
+                    SoundIs('yt-unmute', el);
+                    t.unMute();
+                    t.setVolume(local.update.volume);
+                }
+                else {
+                    SoundIs('yt-mute', el);
+                    t.mute();
+                }
+            },
+            UpdateLocalVolume(v) {
+                v = v !== null && v !== void 0 ? v : t.getVolume();
+                local.update.volume = v;
+            },
+            seekToUpdatedTime(desiredTime) {
+                local.update.start = desiredTime;
+                t.seekTo(local.update.start);
+            } });
+    }
+
+    function TrySetupRecordID(recording, t, q) {
+        if (!recording) {
+            return;
+        }
+        recording.wTarget = t;
+        recording.sameBoundaries = function (tg = t) {
+            if (!tg)
+                return false;
+            const key = tg.GetIframeID();
+            const { start: startM, end: endM } = allVideoParameters.get(key);
+            const { start, end } = tg.GetVars();
+            return startM.value == start && endM.value == end;
+        };
+        recording.seekToUpdatedTime = q.seekToUpdatedTime;
+        recording.isSoundingFine = q.isSoundingFine;
+        recording.togglePlay = q.togglePlay;
+        recording.bounded = function (sec) {
+            var _a;
+            const d = (_a = t.getDuration()) !== null && _a !== void 0 ? _a : 0;
+            return sec >= 0 && sec <= d;
+        };
+    }
+
+    async function Refurbish(local, t, q, iframe) {
+        const session = lastBlockIDParameters.get(local.entry.blockID);
+        if (session) {
+            session.updateTime.set(t.ytgif.previousTick);
+        }
+        setupPreviousParams(local, q); // The YT API reloads the iframe onload, it disorients the users, this a counter-measurement
+        await TryFreezeAutoplay(iframe, t, q);
+        //TryToRunPreviousParams(t, local)
+    }
+
+    async function onPlayerReady(event) {
+        var _a;
+        // setup
+        const t = new YT_TargetWrapper(event.target);
+        const key = t.GetIframeID();
+        const l = GetElementsObj(key, t);
+        const { iframe, parent /* timeDisplay, resetBtn */ } = l;
+        const map = allVideoParameters.get(key);
+        map.start.set(map.start.value || 0);
+        map.end.set(map.end.value || t.getDuration());
+        const local = GetLocalObj(map, l, iframe);
+        const q = GetQuery({
+            map,
+            parent,
+            //timeDisplay,
+            t,
+            iframe,
+            local,
+        });
+        map.speed.set(q.closestRate(map.speed.value || 1));
+        TrySetupRecordID(recordedIDs.get(local.entry.blockID), t, q);
+        const styleCallbacks = GetStyleCallbacks(iframe, q, t, map, local);
+        if (parent.hasAttribute('loaded')) {
+            await Refurbish(local, t, q, iframe);
+            TryToRunPreviousParams(t, local, styleCallbacks);
+            return;
+        }
+        iframe.removeAttribute('title');
+        // 1. previous parameters if available
+        setupPreviousParams(local, q);
+        // 2. play style | pause style
+        // const flipIterator = FlipStyleGenerator(styleCallbacks)
+        // flipIterator.next()
+        // 3. Mouse over the frame functionality
+        const hover = GetHoverStates(q);
+        parent.addEventListener('mouseenter', hover.play);
+        parent.addEventListener('mouseleave', hover.stop);
+        // parent.addEventListener(
+        // 	'customVideoEnded',
+        // 	q.timeDisplay.OnCustomVideoEnded
+        // )
+        // 4. scroll wheel - timestamp display feature
+        // const time = TimeTargetObj(q, iframe, map, local, t, l)
+        // t.ytgif.enter = time.NewIntervalUpdate
+        // timeDisplay.addEventListener('wheel', time.SeekToScroll)
+        // timeDisplay.addEventListener('mouseenter', time.NewIntervalUpdate)
+        // timeDisplay.addEventListener('mouseleave', () => t.ytgif.ClearTimers())
+        // 5. fullscreenStyle
+        // const fullscreen = GetFullscreenCallbacks(q, t)
+        // iframe.addEventListener('fullscreenchange', fullscreen.default)
+        // iframe.addEventListener('fullscreenchange', fullscreen.autoplaySynergy)
+        // 6. Reload boundaries
+        // const ResetBoundaries = GetFuncResetBoundaries(t, q, l, map, time, local)
+        // resetBtn.addEventListener('click', ResetBoundaries)
+        // resetBtn.ResetBoundaries_smart = ResetBoundaries
+        // 7. store relevant elements with event event listeners to clean them later
+        // 8. clean data and ready 'previous' parameters for next session with IframeRemovedFromDom_callback
+        // Expensive? think so. Elegant? no, but works
+        // RemovedElementObserver({
+        // 	el: iframe as IFRH,
+        // 	OnRemovedFromDom_cb: GetOnIframeRemovedFromDom(
+        // 		flipIterator,
+        // 		t,
+        // 		q,
+        // 		map,
+        // 		local.entry,
+        // 		l
+        // 	),
+        // })
+        // 9. Performance Mode - Iframe Buffer & Initialize on interaction - synergy
+        // if (local.entry.canBeCleanedByBuffer && parent) {
+        // 	// sometimes the parent is already gone - while loading iframe
+        // 	const parentCssPath = getUniqueSelectorSmart(parent)
+        // 	PushNew_ShiftAllOlder_IframeBuffer(parentCssPath)
+        // }
+        // 10. 'auto pause' when an iframe goes out the viewport... stop playing and mute
+        // FIXME:
+        // const ViewportObserver = new IntersectionObserver(
+        // 	GetFuncPauseOffscreen(q, t, local),
+        // 	{ threshold: [0] }
+        // )
+        // ViewportObserver.observe(iframe)
+        // 11. well well well
+        if (((_a = map.playRightAway) === null || _a === void 0 ? void 0 : _a.value) && map.hasOwnProperty('updateTime')) {
+            await AutoPlayToUpdate(iframe, t, q, map);
+        }
+        else {
+            // pause if user doesn't intents to watch
+            await TryFreezeAutoplay(iframe, t, q); // this being the last one, does matter
+        }
+        // 12. Guard clause - onPlayerReady executed
+        TryToRunPreviousParams(t, local, styleCallbacks);
+        parent.setAttribute('loaded', '');
+        iframe.addEventListener('load', () => (t.ytgif.previousTick = q.tick()));
+        //ValidateHierarchyTimestamps(parent, t)
+    }
+    function GetLocalObj(map, l, iframe) {
+        const stats = {
+            start: map.start.value,
+            volume: map.volume.value,
+            end: map.end.value,
+        };
+        const local = {
+            entry: Object.assign(Object.assign({}, stats), { blockID: l.blockID, blcokID_prfx: closestYTGIFparentID(iframe), canBeCleanedByBuffer: !!closestBlockID(iframe), key: iframe.id }),
+            update: Object.assign(Object.assign({}, stats), { tickOffset: 0 }),
+        };
+        return local;
+    }
+
+    async function ClickResetWrapper(targetWrapper, assignObj = null) {
+        var _a;
+        if (!targetWrapper)
+            return;
+        const reset = targetWrapper.querySelector('[yt-gif-url-btn="reset"]');
+        if (assignObj && 'delete-obs-tm' in assignObj)
+            // alright
+            reset.dispatchEvent(new CustomEvent('customDelObsTimestmp', {
+                bubbles: true,
+                cancelBubble: true,
+                cancelable: true,
+                detail: {
+                    blockID: assignObj.blockID,
+                },
+            }));
+        await ((_a = reset === null || reset === void 0 ? void 0 : reset.ResetBoundaries_smart) === null || _a === void 0 ? void 0 : _a.call(reset, assignObj));
+    }
+
+    async function ClickOnTimestamp(target, override = {}) {
+        var _a;
+        const seekToMessage = UI.timestamps.tm_seek_to.value == 'soft'
+            ? 'seekTo-soft'
+            : 'seekTo-strict';
+        const event = Object.assign(Object.assign({}, {}), { currentTarget: target, which: 1, mute: UI.timestamps.tm_seek_action.value == 'mute', simMessage: override.simMessage || '', seekToMessage: override.seekToMessage || seekToMessage });
+        // how do you resolve/return a promise using a CustomEvent handler?
+        await ((_a = target === null || target === void 0 ? void 0 : target.OnClicks) === null || _a === void 0 ? void 0 : _a.call(target, event));
+    }
+
+    function ReloadFlow(o) {
+        if (o.activeIdx === -1 && // din't find any active
+            // and ( only on active or there are no targets)
+            (UI.timestamps.tm_loop_hierarchy.value == 'active' ||
+                o.targets.length == 0)) {
+            return { message: 'reload-this' };
+        }
+        let nextIdx = (o.activeIdx + 1) % o.targets.length;
+        if (o.includesPlayerOpt) {
+            // include player in the loop
+            if (o.activeIdx == o.targets.length - 1) {
+                // the only scenario where we need to go back to the beginning
+                return { message: 'update-timestamp' };
+            } //
+            else if (o.activeIdx == -1) {
+                // assuming there are targets and the player was reset, go on the next one
+                nextIdx = 0;
+            }
+        }
+        const nextTarget = o.targets[nextIdx];
+        if (isRendered(nextTarget)) {
+            return { message: 'seekTo-strict', target: nextTarget };
+        }
+        else {
+            return { message: 'reload-this' };
+        }
+    }
+    function QueryTimestampObj(iframe, rm_container) {
+        var _a, _b;
+        const options = Array.from(UI.timestamps.tm_loop_options.selectedOptions).map(o => o.value); // skip - include_player
+        const page = UI.timestamps.tm_loop_to.value || 'start';
+        const sel = `[timestamp-set][timestamp-style="${page}"]`;
+        const boundedSel = `${sel}:not([out-of-bounds])`;
+        const tmSel = options.includes('skip') ? boundedSel : sel; // Skip if target is missing or if it is out of bounds
+        const wrapper = iframe.closest('.yt-gif-wrapper');
+        const lastActive = (_a = TimestampsInHierarchy(rm_container, wrapper, '[last-active-timestamp]')) === null || _a === void 0 ? void 0 : _a[0];
+        const activeSel = (_b = ElementsPerBlock(closestBlock(lastActive), tmSel)) === null || _b === void 0 ? void 0 : _b[0]; // go one level up and search for an "start" timestamp, bc does it doesn't make sense to loop through "end" boundaries,
+        const targets = TimestampsInHierarchy(rm_container, wrapper, tmSel);
+        return {
+            query: {
+                activeIdx: targets.indexOf(activeSel),
+                targets,
+                includesPlayerOpt: options.includes('include_player'),
+            },
+            wrapper,
+        };
+    }
+    async function newFunction(iframe) {
+        if (!iframe)
+            return {};
+        const rm_container = closest_container_request(iframe);
+        if (!rm_container)
+            return {};
+        return { rm_container };
+    }
+
+    async function TryToLoadNextTimestampSet(iframe, Reload) {
+        await sleep(10);
+        const o = await newFunction(iframe);
+        if (!o.rm_container) {
+            return Reload();
+        }
+        const { query, wrapper } = QueryTimestampObj(iframe, o.rm_container);
+        const { message, target } = ReloadFlow(query);
+        if (message == 'reload-this') {
+            return Reload();
+        }
+        else if (message == 'update-timestamp') {
+            return ClickResetWrapper(wrapper, { message });
+        }
+        else if (message == 'seekTo-strict' && target) {
+            return ClickOnTimestamp(target, { seekToMessage: message });
+        }
+        else {
+            console.error('Unknown Reload Message', message);
+        }
+    }
+    function TryToPlayEndSound() {
+        var _a;
+        const url = (_a = window.YT_GIF_DIRECT_SETTINGS.get('end_loop_sound_src')) === null || _a === void 0 ? void 0 : _a.sessionValue;
+        if (!isValidUrl(url))
+            return Promise.resolve();
+        return new Promise(function (resolve, reject) {
+            // return a promise
+            const audio = new Audio(); // create audio wo/ src
+            audio.preload = 'auto'; // intend to play through
+            audio.volume = mapRange(Number(UI.range.end_loop_sound_volume.value), 0, 100, 0, 1.0);
+            audio.autoplay = true; // autoplay when loaded
+            audio.onerror = reject; // on error, reject
+            audio.onended = resolve; // when done, resolve
+            audio.src = url;
+        });
+    }
+    function ResetFullscreenPlayer() {
+        exitFullscreen();
+        setCurrentFullscreenPlayer('');
+    }
+
+    async function HandleEndState(Args) {
+        var _a;
+        (_a = Args.iframe
+            .closest('.yt-gif-wrapper')) === null || _a === void 0 ? void 0 : _a.dispatchEvent(new CustomEvent('customVideoEnded'));
+        if (UI.timestamps.tm_loop_hierarchy.value != 'disabled') {
+            await TryToLoadNextTimestampSet(Args.iframe, Args.Reload);
+        }
+        else {
+            await Args.Reload();
+        }
+        if (UI.range.end_loop_sound_volume.value != '0') {
+            TryToPlayEndSound();
+        }
+        if (isSelected(UI.playerSettings.ps_options, 'minimize_on_video_ended') &&
+            currentFullscreenPlayer === Args.id &&
+            document.fullscreenElement) {
+            ResetFullscreenPlayer();
+        }
+    }
+
+    window.AvoidCircularDependency.getOnStateChange = () => onStateChange;
+    async function onStateChange(state) {
+        const t = new YT_TargetWrapper(state.target);
+        const id = t.GetIframeID();
+        const map = allVideoParameters.get(id);
+        const iframe = t.getIframe();
+        if (!isRendered(iframe))
+            return t.DestroyTarget();
+        if (state.data === GetPlayerState().ENDED) {
+            await HandleEndState({
+                Reload: async () => {
+                    var _a, _b;
+                    return TryReloadVideo({
+                        t,
+                        start: (_a = map === null || map === void 0 ? void 0 : map.start.value) !== null && _a !== void 0 ? _a : 0,
+                        end: (_b = map === null || map === void 0 ? void 0 : map.end.value) !== null && _b !== void 0 ? _b : 0,
+                    });
+                },
+                iframe,
+                id,
+            });
+        }
+        if (state.data === GetPlayerState().PLAYING && t.ytgif.timerID === null) {
+            // NON NewIntervalUpdate
+            t.ytgif.enter();
+        }
+        if (state.data === GetPlayerState().PAUSED) {
+            t.ytgif.ClearTimers();
+        }
+    }
+
+    // last - customize the iframe - api
+    function playerConfig(configParams) {
+        // in progress
+        const { player_interface_language, player_captions_language, player_captions_on_load, } = Object.fromEntries(window.YT_GIF_DIRECT_SETTINGS); // https://stackoverflow.com/questions/49569682/destructuring-a-map#:~:text=let%20%7B%20b%2C%20d%20%7D%20%3D%20Object.fromEntries(m)
+        const playerVars = {
+            autoplay: 1,
+            controls: 1,
+            mute: 1,
+            start: configParams === null || configParams === void 0 ? void 0 : configParams.start.value,
+            end: configParams === null || configParams === void 0 ? void 0 : configParams.end.value,
+            hl: (configParams === null || configParams === void 0 ? void 0 : configParams.hl.value) || player_interface_language.sessionValue,
+            cc_lang_pref: (configParams === null || configParams === void 0 ? void 0 : configParams.cc.value) || player_captions_language.sessionValue,
+            cc_load_policy: isTrue(player_captions_on_load.sessionValue)
+                ? 1
+                : 3,
+            iv_load_policy: 3,
+            vq: 'hd1080',
+            autohide: 1,
+            showinfo: 0,
+            modestbranding: 1,
+            fs: 1,
+            rel: 0,
+            version: 3,
+            feature: 'oembed',
+            enablejsapi: 1,
+            origin: 'https://www.roamresearch.com',
+        };
+        return {
+            height: '100%',
+            width: '100%',
+            videoId: configParams === null || configParams === void 0 ? void 0 : configParams.id.value,
+            playerVars,
+            events: {
+                onReady: onPlayerReady,
+                onStateChange: onStateChange,
+            },
+        };
+    }
+
+    function Deploy({ record, id, configParams }, 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    YT) {
+        record.wTarget = new YT.Player(id, playerConfig(configParams));
+    }
+
+    let src = 'https://www.youtube.com/iframe_api';
+    let loading = false;
+    let loaded = false;
+    let listeners = [];
+    function load(callback) {
+        // @ts-ignore
+        listeners.push(callback);
+        if (loaded) {
+            setTimeout(done);
+            return;
+        }
+        if (loading) {
+            return;
+        }
+        loading = true;
+        // @ts-ignore
+        window.onYouTubeIframeAPIReady = function () {
+            loaded = true;
+            done();
+        };
+        let script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = src;
+        document.body.appendChild(script);
+    }
+    async function done() {
+        // @ts-ignore
+        delete window.onYouTubeIframeAPIReady;
+        while (listeners.length) {
+            // @ts-ignore
+            await listeners.pop()(window.YT);
+        }
+    }
+
     /* src\v0.3.0\components\ytgif\components\Player.svelte generated by Svelte v3.50.1 */
 
-    function create_fragment$d(ctx) {
-    	let div4;
-    	let div3;
-    	let div1;
-    	let t;
-    	let div2;
-    	let current;
-    	const default_slot_template = /*#slots*/ ctx[1].default;
-    	const default_slot = create_slot(default_slot_template, ctx, /*$$scope*/ ctx[0], null);
+    function create_key_block(ctx) {
+    	let div;
 
     	return {
     		c() {
-    			div4 = element("div");
-    			div3 = element("div");
-    			div1 = element("div");
-    			div1.innerHTML = `<div id="yt-gif-empty-player"></div>`;
-    			t = space();
-    			div2 = element("div");
-    			if (default_slot) default_slot.c();
-    			attr(div1, "class", "iframe-wrapper svelte-1cd5eb0");
-    			attr(div2, "class", "controls svelte-1cd5eb0");
-    			attr(div3, "class", "wrapper dont-focus-block svelte-1cd5eb0");
-    			attr(div3, "data-anim", "pulse input thumbnail");
-    			attr(div4, "class", "outter svelte-1cd5eb0");
+    			div = element("div");
+    			attr(div, "id", /*id*/ ctx[3]);
     		},
     		m(target, anchor) {
-    			insert(target, div4, anchor);
-    			append(div4, div3);
-    			append(div3, div1);
-    			append(div3, t);
+    			insert(target, div, anchor);
+    		},
+    		p: noop,
+    		d(detaching) {
+    			if (detaching) detach(div);
+    		}
+    	};
+    }
+
+    function create_fragment$d(ctx) {
+    	let div3;
+    	let div2;
+    	let div0;
+    	let previous_key = /*videoId*/ ctx[0];
+    	let t;
+    	let div1;
+    	let current;
+    	let mounted;
+    	let dispose;
+    	let key_block = create_key_block(ctx);
+    	const default_slot_template = /*#slots*/ ctx[6].default;
+    	const default_slot = create_slot(default_slot_template, ctx, /*$$scope*/ ctx[5], null);
+
+    	return {
+    		c() {
+    			div3 = element("div");
+    			div2 = element("div");
+    			div0 = element("div");
+    			key_block.c();
+    			t = space();
+    			div1 = element("div");
+    			if (default_slot) default_slot.c();
+    			attr(div0, "class", "iframe-wrapper svelte-107mkrr");
+    			attr(div1, "class", "controls svelte-107mkrr");
+    			set_style(div1, "display", `none`, false);
+    			attr(div2, "class", "wrapper dont-focus-block svelte-107mkrr");
+    			attr(div2, "data-anim", "pulse input thumbnail");
+    			attr(div3, "class", "outter svelte-107mkrr");
+    		},
+    		m(target, anchor) {
+    			insert(target, div3, anchor);
     			append(div3, div2);
+    			append(div2, div0);
+    			key_block.m(div0, null);
+    			/*div0_binding*/ ctx[8](div0);
+    			append(div2, t);
+    			append(div2, div1);
 
     			if (default_slot) {
-    				default_slot.m(div2, null);
+    				default_slot.m(div1, null);
     			}
 
     			current = true;
+
+    			if (!mounted) {
+    				dispose = listen(window, "keydown", /*keydown_handler*/ ctx[7]);
+    				mounted = true;
+    			}
     		},
     		p(ctx, [dirty]) {
+    			if (dirty & /*videoId*/ 1 && safe_not_equal(previous_key, previous_key = /*videoId*/ ctx[0])) {
+    				key_block.d(1);
+    				key_block = create_key_block(ctx);
+    				key_block.c();
+    				key_block.m(div0, null);
+    			} else {
+    				key_block.p(ctx, dirty);
+    			}
+
     			if (default_slot) {
-    				if (default_slot.p && (!current || dirty & /*$$scope*/ 1)) {
+    				if (default_slot.p && (!current || dirty & /*$$scope*/ 32)) {
     					update_slot_base(
     						default_slot,
     						default_slot_template,
     						ctx,
-    						/*$$scope*/ ctx[0],
+    						/*$$scope*/ ctx[5],
     						!current
-    						? get_all_dirty_from_scope(/*$$scope*/ ctx[0])
-    						: get_slot_changes(default_slot_template, /*$$scope*/ ctx[0], dirty, null),
+    						? get_all_dirty_from_scope(/*$$scope*/ ctx[5])
+    						: get_slot_changes(default_slot_template, /*$$scope*/ ctx[5], dirty, null),
     						null
     					);
     				}
@@ -5453,26 +7154,93 @@
     			current = false;
     		},
     		d(detaching) {
-    			if (detaching) detach(div4);
+    			if (detaching) detach(div3);
+    			key_block.d(detaching);
+    			/*div0_binding*/ ctx[8](null);
     			if (default_slot) default_slot.d(detaching);
+    			mounted = false;
+    			dispose();
     		}
     	};
     }
 
-    function instance$c($$self, $$props, $$invalidate) {
-    	let { $$slots: slots = {}, $$scope } = $$props;
+    let count = -1;
 
-    	$$self.$$set = $$props => {
-    		if ('$$scope' in $$props) $$invalidate(0, $$scope = $$props.$$scope);
+    let available = [
+    	'oBM4Ip3ibjo',
+    	'qTgPSKKjfVg',
+    	'fuDbpn8aZr8',
+    	'eGJ2an8_ujU',
+    	'I2ziPw1SlH4',
+    	'XNpqNXN8KL8',
+    	'kYdOljz7NPg',
+    	'B7ecyNfJOwo'
+    ];
+
+    function instance$c($$self, $$props, $$invalidate) {
+    	let handler;
+    	let { $$slots: slots = {}, $$scope } = $$props;
+    	count += 1;
+    	const id = 'yt-gif-player-' + count;
+    	let YT;
+    	onMount(() => load(yt => YT = yt));
+    	let { videoId = '' } = $$props;
+    	let { type = 'click' } = $$props;
+
+    	if (!videoId) {
+    		videoId = available[Math.floor(Math.random() * available.length)];
+    	}
+
+    	const Fire = () => {
+    		const res = parse(id, videoId);
+    		if (!res) return console.warn('failed to load video');
+    		Deploy(Object.assign({}, res), YT);
     	};
 
-    	return [$$scope, slots];
+    	let player;
+
+    	const keydown_handler = () => {
+    		if (player?.matches(':hover')) {
+    			handler?.();
+    		}
+    	};
+
+    	function div0_binding($$value) {
+    		binding_callbacks[$$value ? 'unshift' : 'push'](() => {
+    			player = $$value;
+    			$$invalidate(1, player);
+    		});
+    	}
+
+    	$$self.$$set = $$props => {
+    		if ('videoId' in $$props) $$invalidate(0, videoId = $$props.videoId);
+    		if ('type' in $$props) $$invalidate(4, type = $$props.type);
+    		if ('$$scope' in $$props) $$invalidate(5, $$scope = $$props.$$scope);
+    	};
+
+    	$$self.$$.update = () => {
+    		if ($$self.$$.dirty & /*type*/ 16) {
+    			$$invalidate(2, handler = type === 'click' ? Fire : null);
+    		}
+    	};
+
+    	return [
+    		videoId,
+    		player,
+    		handler,
+    		id,
+    		type,
+    		$$scope,
+    		slots,
+    		keydown_handler,
+    		div0_binding
+    	];
     }
 
     class Player extends SvelteComponent {
     	constructor(options) {
     		super();
-    		init(this, options, instance$c, create_fragment$d, safe_not_equal, {});
+    		init(this, options, instance$c, create_fragment$d, safe_not_equal, { videoId: 0, type: 4 });
     	}
     }
 
@@ -7389,13 +9157,18 @@
     	let div;
     	let player;
     	let current;
+    	const player_spread_levels = [/*props*/ ctx[1]];
 
-    	player = new Player({
-    			props: {
-    				$$slots: { default: [create_default_slot$1] },
-    				$$scope: { ctx }
-    			}
-    		});
+    	let player_props = {
+    		$$slots: { default: [create_default_slot$1] },
+    		$$scope: { ctx }
+    	};
+
+    	for (let i = 0; i < player_spread_levels.length; i += 1) {
+    		player_props = assign(player_props, player_spread_levels[i]);
+    	}
+
+    	player = new Player({ props: player_props });
 
     	return {
     		c() {
@@ -7410,13 +9183,19 @@
     			current = true;
     		},
     		p(ctx, [dirty]) {
-    			const player_changes = {};
+    			const player_changes = (dirty & /*props*/ 2)
+    			? get_spread_update(player_spread_levels, [get_spread_object(/*props*/ ctx[1])])
+    			: {};
 
-    			if (dirty & /*$$scope*/ 2) {
+    			if (dirty & /*$$scope*/ 4) {
     				player_changes.$$scope = { dirty, ctx };
     			}
 
     			player.$set(player_changes);
+
+    			if (!current || dirty & /*width*/ 1) {
+    				set_style(div, "width", /*width*/ ctx[0]);
+    			}
     		},
     		i(local) {
     			if (current) return;
@@ -7435,18 +9214,21 @@
     }
 
     function instance$3($$self, $$props, $$invalidate) {
-    	const width = '240px';
-    	return [width];
+    	let { width = '240px' } = $$props;
+    	let { props = {} } = $$props;
+
+    	$$self.$$set = $$props => {
+    		if ('width' in $$props) $$invalidate(0, width = $$props.width);
+    		if ('props' in $$props) $$invalidate(1, props = $$props.props);
+    	};
+
+    	return [width, props];
     }
 
     class Player_1 extends SvelteComponent {
     	constructor(options) {
     		super();
-    		init(this, options, instance$3, create_fragment$3, safe_not_equal, { width: 0 });
-    	}
-
-    	get width() {
-    		return this.$$.ctx[0];
+    		init(this, options, instance$3, create_fragment$3, safe_not_equal, { width: 0, props: 1 });
     	}
     }
 
@@ -7455,7 +9237,12 @@
     function create_fragment$2(ctx) {
     	let div3;
     	let div1;
-    	let t7;
+    	let h1;
+    	let t1;
+    	let input;
+    	let t2;
+    	let div0;
+    	let t3;
     	let div2;
     	let player;
     	let current;
@@ -7467,38 +9254,55 @@
     		c() {
     			div3 = element("div");
     			div1 = element("div");
-
-    			div1.innerHTML = `<h1 class="svelte-1b9q4xn">Click the card</h1> 
-		<div class="scrollable svelte-1b9q4xn"><p class="svelte-1b9q4xn">Toggle image to cover text on card click.</p> 
-			<p class="svelte-1b9q4xn">Something descriptive goes here.</p> 
-			<p class="svelte-1b9q4xn">Another click brings the description back into view.</p></div>`;
-
-    			t7 = space();
+    			h1 = element("h1");
+    			h1.textContent = "Click the card";
+    			t1 = space();
+    			input = element("input");
+    			t2 = space();
+    			div0 = element("div");
+    			div0.innerHTML = `<textarea id="field" placeholder="Type Here" class="svelte-mrz8y5"></textarea>`;
+    			t3 = space();
     			div2 = element("div");
     			create_component(player.$$.fragment);
-    			attr(div1, "class", "text-holder svelte-1b9q4xn");
-    			attr(div2, "class", "media-holder svelte-1b9q4xn");
-    			attr(div3, "class", "card svelte-1b9q4xn");
+    			attr(h1, "class", "svelte-mrz8y5");
+    			attr(input, "type", "text");
+    			attr(input, "placeholder", "T33NN_pPeNI");
+    			attr(input, "class", "svelte-mrz8y5");
+    			attr(div0, "class", "scrollable svelte-mrz8y5");
+    			attr(div1, "class", "text-holder svelte-mrz8y5");
+    			attr(div2, "class", "media-holder svelte-mrz8y5");
+    			attr(div3, "class", "card svelte-mrz8y5");
     			toggle_class(div3, "toggled", /*toggled*/ ctx[0]);
     		},
     		m(target, anchor) {
     			insert(target, div3, anchor);
     			append(div3, div1);
-    			append(div3, t7);
+    			append(div1, h1);
+    			append(div1, t1);
+    			append(div1, input);
+    			set_input_value(input, /*videoId*/ ctx[1]);
+    			append(div1, t2);
+    			append(div1, div0);
+    			append(div3, t3);
     			append(div3, div2);
     			mount_component(player, div2, null);
     			current = true;
 
     			if (!mounted) {
     				dispose = [
-    					listen(div2, "click", stop_propagation(prevent_default(/*click_handler_1*/ ctx[2]))),
-    					listen(div3, "click", stop_propagation(prevent_default(/*click_handler*/ ctx[1])))
+    					listen(input, "input", /*input_input_handler*/ ctx[3]),
+    					listen(div2, "click", stop_propagation(prevent_default(/*click_handler_1*/ ctx[4]))),
+    					listen(div3, "click", stop_propagation(prevent_default(/*click_handler*/ ctx[2])))
     				];
 
     				mounted = true;
     			}
     		},
     		p(ctx, [dirty]) {
+    			if (dirty & /*videoId*/ 2 && input.value !== /*videoId*/ ctx[1]) {
+    				set_input_value(input, /*videoId*/ ctx[1]);
+    			}
+
     			if (!current || dirty & /*toggled*/ 1) {
     				toggle_class(div3, "toggled", /*toggled*/ ctx[0]);
     			}
@@ -7523,13 +9327,19 @@
 
     function instance$2($$self, $$props, $$invalidate) {
     	let toggled = false;
+    	let videoId;
 
     	function click_handler(event) {
     		bubble.call(this, $$self, event);
     	}
 
+    	function input_input_handler() {
+    		videoId = this.value;
+    		$$invalidate(1, videoId);
+    	}
+
     	const click_handler_1 = () => $$invalidate(0, toggled = !toggled);
-    	return [toggled, click_handler, click_handler_1];
+    	return [toggled, videoId, click_handler, input_input_handler, click_handler_1];
     }
 
     class Temp extends SvelteComponent {
@@ -7543,7 +9353,7 @@
     const get_item_slot_changes = dirty => ({ "data-hash": dirty & /*dataItem*/ 16384 });
     const get_item_slot_context = ctx => ({ "data-hash": /*dataItem*/ ctx[14].id });
 
-    // (101:4) {#if item.customDragger}
+    // (93:4) {#if item.customDragger}
     function create_if_block(ctx) {
     	let div;
     	let mounted;
@@ -7577,7 +9387,7 @@
     	};
     }
 
-    // (108:46)        
+    // (100:46)        
     function fallback_block(ctx) {
     	let temp;
     	let current;
@@ -7606,7 +9416,7 @@
     	};
     }
 
-    // (86:1) <Grid    bind:items    rowHeight={100}    let:item    let:dataItem    {cols}    let:movePointerDown>
+    // (77:1) <Grid    bind:items    rowHeight={150}    let:item    let:dataItem    gap={[10, 10]}    {cols}    let:movePointerDown>
     function create_default_slot(ctx) {
     	let div2;
     	let div0;
@@ -7718,17 +9528,13 @@
     }
 
     function create_fragment$1(ctx) {
-    	let meta0;
-    	let meta1;
-    	let meta2;
-    	let t0;
     	let div0;
     	let button;
-    	let t2;
+    	let t1;
     	let label;
     	let input;
+    	let t2;
     	let t3;
-    	let t4;
     	let div1;
     	let grid;
     	let updating_items;
@@ -7741,7 +9547,8 @@
     	}
 
     	let grid_props = {
-    		rowHeight: 100,
+    		rowHeight: 150,
+    		gap: [10, 10],
     		cols: /*cols*/ ctx[2],
     		$$slots: {
     			default: [
@@ -7766,43 +9573,28 @@
 
     	return {
     		c() {
-    			meta0 = element("meta");
-    			meta1 = element("meta");
-    			meta2 = element("meta");
-    			t0 = space();
     			div0 = element("div");
     			button = element("button");
     			button.textContent = "Add Note";
-    			t2 = space();
+    			t1 = space();
     			label = element("label");
     			input = element("input");
-    			t3 = text("\r\n\t\tAdjust elements after removing an item");
-    			t4 = space();
+    			t2 = text("\r\n\t\tAdjust elements after removing an item");
+    			t3 = space();
     			div1 = element("div");
     			create_component(grid.$$.fragment);
-    			document.title = "Example — Add/Remove";
-    			attr(meta0, "name", "description");
-    			attr(meta0, "content", "Svelte-grid — Example — Add/Remove");
-    			attr(meta1, "name", "keywords");
-    			attr(meta1, "content", "draggable,resizable,grid,layout,responsive,breakpoints,Svelte,svelte,svelte.js,sveltejs,usage,example,examples,samples,add,remove,dynamic");
-    			attr(meta2, "name", "author");
-    			attr(meta2, "content", "Vahe Araqelyan");
     			attr(input, "type", "checkbox");
     			attr(div1, "class", "wrapper svelte-1ntl4c3");
     		},
     		m(target, anchor) {
-    			append(document.head, meta0);
-    			append(document.head, meta1);
-    			append(document.head, meta2);
-    			insert(target, t0, anchor);
     			insert(target, div0, anchor);
     			append(div0, button);
-    			append(div0, t2);
+    			append(div0, t1);
     			append(div0, label);
     			append(label, input);
     			input.checked = /*adjustAfterRemove*/ ctx[1];
-    			append(label, t3);
-    			insert(target, t4, anchor);
+    			append(label, t2);
+    			insert(target, t3, anchor);
     			insert(target, div1, anchor);
     			mount_component(grid, div1, null);
     			current = true;
@@ -7845,12 +9637,8 @@
     			current = false;
     		},
     		d(detaching) {
-    			detach(meta0);
-    			detach(meta1);
-    			detach(meta2);
-    			if (detaching) detach(t0);
     			if (detaching) detach(div0);
-    			if (detaching) detach(t4);
+    			if (detaching) detach(t3);
     			if (detaching) detach(div1);
     			destroy_component(grid);
     			mounted = false;
@@ -7959,7 +9747,7 @@
     function create_fragment(ctx) {
     	let graph;
     	let current;
-    	graph = new Graph({ props: { slot: "main-footer" } });
+    	graph = new Graph({});
 
     	return {
     		c() {
