@@ -708,7 +708,7 @@ Middle mouse button is on by default`
       }
       return s;
     } else if (/h|m|s/.test(str2)) {
-      const hms = str2.split(/(?<=h)|(?<=m)|(?<=s)/);
+      const hms = [...str2.matchAll(/\w+h|\w+m|\w+s/g)].map((m2) => m2[0]);
       return hms.reduce((acc, crr) => {
         let t = parseInt(crr) || 0;
         if (/s/.test(crr))
@@ -1628,8 +1628,7 @@ ${v_string}`
   const urlFolder_js = (f) => urlFolder(`js/${f}`);
   const links = {
     css: {
-      dropDownMenuStyle: urlFolder_css("drop-down-menu.css"),
-      playerStyle: urlFolder_css("player.css"),
+      index: `https://kauderk.github.io/code-snippets/yt-gif/roamresearch/dev/yt-gif-app.css`,
       themes: {
         dark: urlFolder_css("themes/dark-drop-down-menu.css"),
         light: urlFolder_css("themes/light-drop-down-menu.css"),
@@ -1758,7 +1757,7 @@ ${v_string}`
     const anyPossibleComponentsRgx = Wild_Config.targetStringRgx;
     const aliasPlusUidsRgx = /\[(.*?(?=\]))]\(\(\((.*?(?=\)))\)\)\)/gm;
     const tooltipCardRgx = /{{=:(.+?)\|([^}]*)/gm;
-    const anyUidRgx = /(?<=\(\()([^(].*?[^)])(?=\)\))/gm;
+    const anyUidRgx = /(?:\(\()([^(].*?[^)])(?=\)\))/gm;
     const baseBlockRgx = [
       tooltipCardRgx,
       componentRgx,
@@ -1793,7 +1792,7 @@ ${v_string}`
   }
   function time2sec(raw) {
     if (/[hms]/.test(raw)) {
-      const hms = raw.split(/(?<=h)|(?<=m)|(?<=s)/);
+      const hms = [...raw.matchAll(/\w+h|\w+m|\w+s/g)].map((m2) => m2[0]);
       return hms.reduce((acc, crr) => {
         const t = parseInt(crr) || 0;
         if (/s/.test(crr))
@@ -2061,7 +2060,7 @@ ${v_string}`
   }
   __publicField(YTGIF_Config, "componentPage", "yt-gif|video");
   __publicField(YTGIF_Config, "targetStringRgx", /https\:\/\/(www\.)?(youtu(be.com\/watch|.be\/))?(.*?(?=\s|$|\}|\]|\)))/);
-  __publicField(YTGIF_Config, "minimalRgx", /(?<!\S)\/[^:|\s|}|\]|\)]{11,}/);
+  __publicField(YTGIF_Config, "minimalRgx", /(?:\s|^)(\/[^:|\s|}|\]|\)]{11,})/);
   __publicField(YTGIF_Config, "guardClause", (url2) => typeof url2 == "string" && !!url2.match("https://(www.)?youtube|youtu.be"));
   class URL_Config {
   }
@@ -2752,7 +2751,7 @@ ${v_string}`
     const { targetStringRgx: urlRgx, minimalRgx } = YTGIF_Config;
     if (!searchThrough)
       return new TIndexPair();
-    return indexPairObj(rgx2Gm(urlRgx), searchThrough, "url")?.[0] || indexPairObj(rgx2Gm(minimalRgx), searchThrough, "minimal")?.[0] || new TIndexPair();
+    return indexPairObj(rgx2Gm(urlRgx), searchThrough, "url")?.[0] || indexPairObj(rgx2Gm(minimalRgx), searchThrough, "minimal")?.[1] || new TIndexPair();
   }
   function ExtractParamsFromUrl(url2) {
     const media = new IExtendedVideoParams();
@@ -5906,6 +5905,16 @@ ${v_string}`
       link.onload = () => resolve();
     });
   }
+  async function smart_LoadStyle(cssString, id) {
+    return new Promise(function(resolve, reject) {
+      DeleteDOM_Els(id, id);
+      var style = document.createElement("style");
+      style.id = id;
+      style.innerHTML = cssString;
+      document.head.appendChild(style);
+      style.onload = () => resolve();
+    });
+  }
   function DeleteDOM_Els(id, cssURL) {
     const stylesAlready = document.queryAllasArr(`[id='${id}']`);
     if (stylesAlready?.length > 0) {
@@ -5926,9 +5935,9 @@ ${v_string}`
       );
     }
   }
-  async function smart_Load_DDM_onTopbar(dropDownMenu) {
+  async function smart_Load_DDM_onTopbar(dropDownMenu2) {
     const rm_moreIcon = document.querySelector(".bp3-icon-more")?.closest(".rm-topbar .rm-topbar__spacer-sm + .bp3-popover-wrapper");
-    const htmlText = window.YT_GIF_OBSERVERS.dmm_html ?? await FetchText(dropDownMenu);
+    const htmlText = window.YT_GIF_OBSERVERS.dmm_html ?? await FetchText(dropDownMenu2);
     const previousList = DDM_Els();
     if (previousList?.length > 0) {
       for (const el of previousList) {
@@ -6489,19 +6498,30 @@ ${v_string}`
       console.log("Reinstalling the YT GIF Extension");
     }
   }
+  const browserIs = (keywords) => {
+    return navigator.userAgent.split(" ").map((w) => w.toLowerCase()).some((w) => keywords.includes(w));
+  };
+  const isApple = () => {
+    return browserIs(["safari", "applewebkit"]);
+  };
   function confirmUrlBtnUsage(bol2, e) {
     const canUse = ValidUrlBtnUsage();
     if (!bol2 || canUse)
       return;
     const yesMessage = canUse ? "Simulate because I have both graph and localStorage keys" : "Simulate, but first take me to the caution prompt - localStorage key is missing";
-    const userMind = confirm(
-      `YT GIF Url Button: Simulation Request
+    let userMind = false;
+    if (isApple()) {
+      userMind = true;
+    } else {
+      userMind = confirm(
+        `YT GIF Url Button: Simulation Request
 
 YES: ${yesMessage} 
    -  https://github.com/kauderk/kauderk.github.io/blob/main/yt-gif-extension/install/faq/README.md#simulate-url-button-to-video-component 
 
 NO: Don't simulate`
-    );
+      );
+    }
     if (userMind) {
       localStorage.setItem(s_u_f_key, "true");
       if (!canUse)
@@ -7598,8 +7618,11 @@ NO: Don't simulate`
     await smart_Load_DDM_onTopbar(links.html.dropDownMenu);
   }
   async function LoadCSS() {
-    await smart_LoadCSS(links.css.dropDownMenuStyle, `yt-gif-dropDownMenuStyle`);
-    await smart_LoadCSS(links.css.playerStyle, `yt-gif-playerStyle`);
+    await smart_LoadCSS(links.css.index, `yt-gif-styles`);
+    if (isApple()) {
+      const apple = await Promise.resolve().then(() => safari$1);
+      await smart_LoadStyle(apple.default, `yt-gif-styles-apple`);
+    }
     smart_CssPlayer_UCS(
       window.YT_GIF_DIRECT_SETTINGS.get("player_span")?.sessionValue
     );
@@ -7696,6 +7719,8 @@ NO: Don't simulate`
     ListenForUrlOptions(urlObserver);
     console.log("YT GIF extension activated");
   }
+  const player = "";
+  const dropDownMenu = "";
   init();
   async function init() {
     await CreateXload("https://www.youtube.com/player_api");
@@ -7704,5 +7729,10 @@ NO: Don't simulate`
     await init$1().then(TryCreateUserInputObject);
     await Ready();
   }
+  const safari = ".yt-gif-awaiting-for-user-input-with-thumbnail {\r\n	/* https://stackoverflow.com/a/69008956 */\r\n	background-size: 100% 100%;\r\n}\r\n.yt-gif-awaiting-palyer--pulse-animation {\r\n	cursor: pointer;\r\n	animation: none;\r\n}\r\n";
+  const safari$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    default: safari
+  }, Symbol.toStringTag, { value: "Module" }));
 });
-//# sourceMappingURL=dev.app.js.map
+//# sourceMappingURL=yt-gif-app.js.map

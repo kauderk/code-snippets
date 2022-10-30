@@ -1,0 +1,7 @@
+{
+  "src/v0.3.0/index.ts": {
+    "file": "roamresearch/dev/yt-gif-app.js",
+    "src": "src/v0.3.0/index.ts",
+    "isEntry": true
+  }
+}

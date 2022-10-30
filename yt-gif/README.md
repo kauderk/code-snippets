@@ -32,7 +32,7 @@ var existing = document.getElementById('yt-gif-main');
 if (!existing) 
 {
 	var extension = document.createElement("script");
-	extension.src = "https://kauderk.github.io/code-snippets/yt-gif/roamresearch/prod.app.js";
+	extension.src = "https://kauderk.github.io/code-snippets/yt-gif/roamresearch/prod/yt-gif-app.js";
 	extension.id = "yt-gif-main";
 	extension.async = true;
 	extension.type = "text/javascript";
@@ -83,14 +83,28 @@ This deployment ships with `yt-gif/roamresearch/dev` (development) and `yt-gif/r
 If someone were to find errors or bugs, changing the extension source:
 ```js
 // ...
-// notice /dev/
-extension.src = "https://kauderk.github.io/code-snippets/yt-gif/roamresearch/dev.app.js";
+// notice: it went from /dev/ to /prod/
+extension.src = "https://kauderk.github.io/code-snippets/yt-gif/roamresearch/prod/yt-gif-app.js";
 // ...
 ```
 Will output more comprehensive error descriptions.
 
 - But, why doing it this way?
 The `development` build is way lighter than the `production` build. Which means faster load times.
+
+</details>
+
+<br>
+
+<details open>
+<summary>I'm experimenting random errors</summary>
+
+***Create an [github issue](https://github.com/kauderk/code-snippets/issues/new?assignees=&labels=&template=bug_report.md&title=)*** or explain the problem through [twitter](https://twitter.com/kauDerk_).
+
+- Some examples and what to do:
+	- The most common errors are the `feature compatibility` ones, for example: Safari doesn't support `Regex's LookAhead and LookBehind`, thus now there's a [counter measurement](https://github.com/kauderk/yt-gif-monorepo/commit/780eb65ecc99d9aff6606aa8d0986122eef6f22a) for that.
+	- Others will be `run time errors`, and for those if you're running the `production` build, the `trace-call (log)` will look like *gibberish*. So, to fix them or at least understand the context change the build to `development`.
+- Keep in mind this build is being tested on a high level using `"@playwright/test": "^1.27.1"` targeting `Safari`, `Chromium` and `Firefox` browsers. Though the main development was on a Chrome Browser.
 
 </details>
 
