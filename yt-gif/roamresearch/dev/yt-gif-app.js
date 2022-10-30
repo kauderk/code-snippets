@@ -558,7 +558,7 @@ Middle mouse button is on by default`
     }
   };
   YT_GIF_SETTINGS_PAGE.Workflow.baseKey.string = `The ${Object.keys(YT_GIF_SETTINGS_PAGE).length} blocks will be -added on updates- and -removed if deprecated- automatically. The last parameters "<>" are customizable. \u{1F415} \u{1F44B}`;
-  const TARGET_PAGE = "roam/js/kauderk/yt-gif/other";
+  const TARGET_PAGE = "roam/js/kauderk/yt-gif/settings";
   let TARGET_UID = getPageUidSync(TARGET_PAGE);
   async function TryToSetTargetUID() {
     TARGET_UID = await getOrCreatePageUid(TARGET_PAGE);
