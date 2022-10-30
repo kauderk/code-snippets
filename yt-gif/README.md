@@ -96,7 +96,7 @@ The `development` build is way lighter than the `production` build. Which means 
 
 <br>
 
-<details open>
+<details>
 <summary>I'm experimenting random errors</summary>
 
 ***Create an [github issue](https://github.com/kauderk/code-snippets/issues/new?assignees=&labels=&template=bug_report.md&title=)*** or explain the problem through [twitter](https://twitter.com/kauDerk_).
